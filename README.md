@@ -107,18 +107,20 @@ Para testar instalação: `cd web && npm run build && npm run preview` (HTTPS/lo
 
 ## Deploy (Vercel)
 
-`vercel.json` na raiz:
+**Root Directory no projeto Vercel:** `web` (não a raiz do monorepo).
+
+`vercel.json` na raiz do repo (comandos relativos a `web/`):
 
 | Campo | Valor |
 |-------|--------|
-| Install | `npm install --prefix web` |
-| Build | `npm run build --prefix web` |
-| Output | `web/dist` |
+| Install | `npm install` |
+| Build | `npm run build` |
+| Output | `dist` |
 | SPA | rewrite para `index.html` (rotas `/admin/*`, `/login`, etc.) |
 
 ### Checklist
 
-1. Import do repositório (Root Directory = `.`).  
+1. Import do repositório · **Root Directory = `web`**.  
 2. Env (Production + Preview): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_DEFAULT_TENANT_SLUG`, opcional `VITE_N8N_WEBHOOK_URL`.  
 3. Supabase Auth → Site URL / Redirect URLs com o domínio Vercel.  
 4. Deploy. Domínio customizado / subdomínio de tenant fica para o passo seguinte.

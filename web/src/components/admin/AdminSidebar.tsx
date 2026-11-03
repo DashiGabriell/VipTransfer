@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 export type AdminNavId =
@@ -7,6 +7,24 @@ export type AdminNavId =
   | 'frota'
   | 'frete'
   | 'perfil'
+
+export const ADMIN_NAV_IDS: AdminNavId[] = [
+  'reservas',
+  'agenda',
+  'frota',
+  'frete',
+  'perfil',
+]
+
+export function isAdminNavId(value: string | undefined): value is AdminNavId {
+  return (
+    value === 'reservas' ||
+    value === 'agenda' ||
+    value === 'frota' ||
+    value === 'frete' ||
+    value === 'perfil'
+  )
+}
 
 type NavItem = {
   id: AdminNavId
@@ -25,11 +43,9 @@ const NAV: NavItem[] = [
 type Props = {
   collapsed: boolean
   mobileOpen: boolean
-  active: AdminNavId
   brand: string
   email?: string | null
   role?: string | null
-  onNavigate: (id: AdminNavId) => void
   onToggleCollapsed: () => void
   onCloseMobile: () => void
   onSignOut: () => void
@@ -78,11 +94,9 @@ function NavIcon({ name }: { name: NavItem['icon'] }) {
 export function AdminSidebar({
   collapsed,
   mobileOpen,
-  active,
   brand,
   email,
   role,
-  onNavigate,
   onToggleCollapsed,
   onCloseMobile,
   onSignOut,
@@ -110,22 +124,21 @@ export function AdminSidebar({
         {NAV.map((item) => {
           const label = t(item.labelKey)
           return (
-            <button
+            <NavLink
               key={item.id}
-              type="button"
-              className={`admin-sidebar__item${active === item.id ? ' is-active' : ''}`}
-              onClick={() => {
-                onNavigate(item.id)
-                onCloseMobile()
-              }}
+              to={`/admin/${item.id}`}
+              className={({ isActive }) =>
+                `admin-sidebar__item${isActive ? ' is-active' : ''}`
+              }
+              onClick={onCloseMobile}
               title={collapsed ? label : undefined}
-              aria-current={active === item.id ? 'page' : undefined}
+              end
             >
               <span className="admin-sidebar__icon">
                 <NavIcon name={item.icon} />
               </span>
               <span className="admin-sidebar__label">{label}</span>
-            </button>
+            </NavLink>
           )
         })}
       </nav>
@@ -155,7 +168,7 @@ export function AdminSidebar({
           <span>{collapsed ? t('admin.expand') : t('admin.collapse')}</span>
         </button>
 
-        <Link
+        <NavLink
           to="/"
           className="admin-sidebar__link"
           onClick={onCloseMobile}
@@ -167,7 +180,7 @@ export function AdminSidebar({
             </svg>
           </span>
           <span>{t('admin.site')}</span>
-        </Link>
+        </NavLink>
 
         <button
           type="button"

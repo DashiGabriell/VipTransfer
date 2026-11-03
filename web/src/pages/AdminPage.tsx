@@ -1,6 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { AdminDashboard } from './admin/AdminDashboard'
 
 export function AdminPage() {
   const { user, loading } = useAuth()
@@ -18,7 +17,7 @@ export function AdminPage() {
     const next = `${location.pathname}${location.search}`
     return (
       <Navigate
-        to={`/login?next=${encodeURIComponent(next || '/admin')}`}
+        to={`/login?next=${encodeURIComponent(next || '/admin/reservas')}`}
         replace
       />
     )
@@ -26,7 +25,7 @@ export function AdminPage() {
 
   return (
     <div className="admin-shell">
-      <AdminDashboard />
+      <Outlet />
     </div>
   )
 }

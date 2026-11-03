@@ -6,8 +6,8 @@ import { useAuth } from '../context/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 function safeNextPath(raw: string | null): string {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/admin'
-  if (raw === '/login') return '/admin'
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/admin/reservas'
+  if (raw === '/login' || raw === '/admin') return '/admin/reservas'
   return raw
 }
 

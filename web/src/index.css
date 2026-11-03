@@ -232,8 +232,21 @@
 }
 
 .lang-toggle__flag {
-  font-size: 0.95rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.lang-toggle__flag-svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent);
 }
 
 .lang-toggle__code {

@@ -124,6 +124,15 @@
     "refresh": "Atualizar",
     "confirm": "Confirmar",
     "cancel": "Cancelar",
+    "status": {
+      "all": "Todas",
+      "hold": "Em espera",
+      "hold_expirado": "Espera expirada",
+      "confirmado": "Confirmada",
+      "cancelado": "Cancelada",
+      "concluido": "Concluída"
+    },
+    "holdExpires": "expira · {{time}}",
     "agendaVisual": "Agenda visual",
     "slotReservations": "Reservas no slot",
     "slotHint": "Clique em um horário para ver ocupação e reservas.",
@@ -159,7 +168,32 @@
     "preferredLocale": "Idioma preferido",
     "saveProfile": "Salvar perfil",
     "profileSaved": "Perfil atualizado.",
-    "emailReadonly": "E-mail (somente leitura)"
+    "emailReadonly": "E-mail (somente leitura)",
+    "notifPrefsSaved": "Preferências de notificação salvas.",
+    "notif": {
+      "title": "Notificações",
+      "lead": "Escolha canais e eventos. Novas reservas em hold geram alerta na caixa de entrada.",
+      "channels": "Canais",
+      "events": "Eventos",
+      "email_enabled": "E-mail (via webhook / n8n)",
+      "in_app_enabled": "Notificações no painel",
+      "whatsapp_enabled": "WhatsApp (quando configurado)",
+      "event_reservation_hold": "Nova reserva em hold",
+      "event_reservation_confirmed": "Reserva confirmada",
+      "event_reservation_cancelled": "Reserva cancelada",
+      "event_hold_expired": "Hold expirado",
+      "inboxTitle": "Caixa de entrada",
+      "inboxLead": "{{count}} não lida(s)",
+      "markRead": "Marcar lida",
+      "markAllRead": "Marcar todas",
+      "empty": "Nenhuma notificação ainda.",
+      "event": {
+        "reservation_hold": "Hold",
+        "reservation_confirmed": "Confirmada",
+        "reservation_cancelled": "Cancelada",
+        "hold_expired": "Expirada"
+      }
+    }
   },
 
   "auth": {

@@ -5,12 +5,13 @@ import {
   useState,
   type FormEvent,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useTenant } from '../../context/TenantContext'
 import {
   AdminSidebar,
+  isAdminNavId,
   type AdminNavId,
 } from '../../components/admin/AdminSidebar'
 import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
@@ -70,9 +71,10 @@ function localeFromLang(lang: string): string {
 export function AdminDashboard() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const { section } = useParams<{ section: string }>()
   const { user, signOut } = useAuth()
   const tenant = useTenant()
-  const [tab, setTab] = useState<Tab>('reservas')
+  const tab: Tab = isAdminNavId(section) ? section : 'reservas'
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [membership, setMembership] = useState<Membership | null>(null)
@@ -227,6 +229,10 @@ export function AdminDashboard() {
     .filter(Boolean)
     .join(' ')
 
+  if (!isAdminNavId(section)) {
+    return <Navigate to="/admin/reservas" replace />
+  }
+
   return (
     <div className={layoutClass}>
       <button
@@ -239,11 +245,9 @@ export function AdminDashboard() {
       <AdminSidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}
-        active={tab}
         brand={tenant.name}
         email={user?.email}
         role={role}
-        onNavigate={setTab}
         onToggleCollapsed={() => {
           // Mobile: toggle acts as close; desktop: collapse/expand
           if (window.matchMedia('(max-width: 900px)').matches) {
@@ -254,7 +258,9 @@ export function AdminDashboard() {
         }}
         onCloseMobile={() => setMobileOpen(false)}
         onSignOut={() => {
-          void signOut().then(() => navigate('/admin', { replace: true }))
+          void signOut().then(() =>
+            navigate('/admin/reservas', { replace: true }),
+          )
         }}
       />
 
@@ -386,7 +392,8 @@ export function AdminDashboard() {
                               className="rounded-lg border border-border-light px-3 py-2"
                             >
                               <div className="font-medium">
-                                {r.customer_name} · {r.status}
+                                {r.customer_name} ·{' '}
+                                {t(`admin.status.${r.status}`)}
                               </div>
                               <div className="text-xs text-text-secondary-light">
                                 {r.customer_phone} · {r.service_type}
@@ -487,7 +494,7 @@ function ReservationsPanel(props: {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        {STATUS_FILTERS.map((status) => (
+            {STATUS_FILTERS.map((status) => (
           <button
             key={status}
             type="button"
@@ -498,7 +505,7 @@ function ReservationsPanel(props: {
                 : 'bg-surface-light text-text-secondary-light'
             }`}
           >
-            {status}
+            {t(`admin.status.${status}`)}
           </button>
         ))}
         <button
@@ -539,8 +546,11 @@ function ReservationsPanel(props: {
                   {new Date(r.slot_start).toLocaleString(locale)}
                   {r.hold_expires_at && r.status === 'hold' && (
                     <div className="text-[11px] text-amber-700">
-                      hold ·{' '}
-                      {new Date(r.hold_expires_at).toLocaleTimeString(locale)}
+                      {t('admin.holdExpires', {
+                        time: new Date(r.hold_expires_at).toLocaleTimeString(
+                          locale,
+                        ),
+                      })}
                     </div>
                   )}
                 </td>
@@ -556,7 +566,7 @@ function ReservationsPanel(props: {
                     → {r.destination_address}
                   </div>
                 </td>
-                <td className="px-4 py-3">{r.status}</td>
+                <td className="px-4 py-3">{t(`admin.status.${r.status}`)}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {r.estimated_price != null
                     ? `R$ ${Number(r.estimated_price).toFixed(2)}`

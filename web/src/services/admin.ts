@@ -191,6 +191,49 @@ export type Profile = {
   updated_at?: string
 }
 
+export type NotificationEventType =
+  | 'reservation_hold'
+  | 'reservation_confirmed'
+  | 'reservation_cancelled'
+  | 'hold_expired'
+
+export type NotificationPreferences = {
+  user_id: string
+  email_enabled: boolean
+  in_app_enabled: boolean
+  whatsapp_enabled: boolean
+  event_reservation_hold: boolean
+  event_reservation_confirmed: boolean
+  event_reservation_cancelled: boolean
+  event_hold_expired: boolean
+  updated_at?: string
+}
+
+export type StaffNotification = {
+  id: string
+  user_id: string
+  organization_id: string
+  event_type: NotificationEventType
+  title: string
+  body: string | null
+  payload: Record<string, unknown>
+  read_at: string | null
+  created_at: string
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: Omit<
+  NotificationPreferences,
+  'user_id' | 'updated_at'
+> = {
+  email_enabled: true,
+  in_app_enabled: true,
+  whatsapp_enabled: false,
+  event_reservation_hold: true,
+  event_reservation_confirmed: true,
+  event_reservation_cancelled: true,
+  event_hold_expired: true,
+}
+
 export type AvailabilityWindow = {
   id: string
   organization_id: string
@@ -238,6 +281,94 @@ export async function updateMyProfile(input: {
     .single()
   if (error) throw error
   return data as Profile
+}
+
+export async function getMyNotificationPreferences(): Promise<NotificationPreferences> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('NOT_AUTHENTICATED')
+
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) throw error
+
+  if (data) return data as NotificationPreferences
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('notification_preferences')
+    .upsert(
+      { user_id: userId, ...DEFAULT_NOTIFICATION_PREFS },
+      { onConflict: 'user_id' },
+    )
+    .select('*')
+    .single()
+  if (insertError) throw insertError
+  return inserted as NotificationPreferences
+}
+
+export async function updateMyNotificationPreferences(
+  input: Partial<Omit<NotificationPreferences, 'user_id' | 'updated_at'>>,
+): Promise<NotificationPreferences> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('NOT_AUTHENTICATED')
+
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .upsert(
+      {
+        user_id: userId,
+        ...DEFAULT_NOTIFICATION_PREFS,
+        ...input,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' },
+    )
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as NotificationPreferences
+}
+
+export async function listMyNotifications(
+  limit = 40,
+): Promise<StaffNotification[]> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('NOT_AUTHENTICATED')
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as StaffNotification[]
+}
+
+export async function markNotificationRead(
+  notificationId: string,
+): Promise<StaffNotification> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase.rpc('mark_notification_read', {
+    p_notification_id: notificationId,
+  })
+  if (error) throw error
+  return data as StaffNotification
+}
+
+export async function markAllNotificationsRead(): Promise<number> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase.rpc('mark_all_notifications_read')
+  if (error) throw error
+  return Number(data ?? 0)
 }
 
 export async function listAvailabilityWindows(

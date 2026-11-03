@@ -110,6 +110,7 @@
   min-height: 2.65rem;
   padding: 0 0.7rem;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
@@ -184,6 +185,7 @@
   border: 1px solid color-mix(in srgb, var(--admin-paper) 18%, transparent);
   background: transparent;
   color: var(--admin-paper);
+  text-decoration: none;
   min-height: 2.4rem;
   display: flex;
   align-items: center;

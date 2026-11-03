@@ -124,6 +124,15 @@
     "refresh": "Refresh",
     "confirm": "Confirm",
     "cancel": "Cancel",
+    "status": {
+      "all": "All",
+      "hold": "On hold",
+      "hold_expirado": "Hold expired",
+      "confirmado": "Confirmed",
+      "cancelado": "Cancelled",
+      "concluido": "Completed"
+    },
+    "holdExpires": "expires · {{time}}",
     "agendaVisual": "Visual schedule",
     "slotReservations": "Reservations in slot",
     "slotHint": "Click a time to see occupancy and bookings.",
@@ -159,7 +168,32 @@
     "preferredLocale": "Preferred language",
     "saveProfile": "Save profile",
     "profileSaved": "Profile updated.",
-    "emailReadonly": "Email (read-only)"
+    "emailReadonly": "Email (read-only)",
+    "notifPrefsSaved": "Notification preferences saved.",
+    "notif": {
+      "title": "Notifications",
+      "lead": "Choose channels and events. New holds create alerts in your inbox.",
+      "channels": "Channels",
+      "events": "Events",
+      "email_enabled": "Email (via webhook / n8n)",
+      "in_app_enabled": "In-app notifications",
+      "whatsapp_enabled": "WhatsApp (when configured)",
+      "event_reservation_hold": "New reservation hold",
+      "event_reservation_confirmed": "Reservation confirmed",
+      "event_reservation_cancelled": "Reservation cancelled",
+      "event_hold_expired": "Hold expired",
+      "inboxTitle": "Inbox",
+      "inboxLead": "{{count}} unread",
+      "markRead": "Mark read",
+      "markAllRead": "Mark all read",
+      "empty": "No notifications yet.",
+      "event": {
+        "reservation_hold": "Hold",
+        "reservation_confirmed": "Confirmed",
+        "reservation_cancelled": "Cancelled",
+        "hold_expired": "Expired"
+      }
+    }
   },
 
   "auth": {

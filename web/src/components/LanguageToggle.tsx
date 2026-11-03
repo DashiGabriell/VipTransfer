@@ -1,5 +1,7 @@
+import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { writeStoredLang, type AppLang } from '../lib/lang'
+import { FlagBrazil, FlagUS } from './flags/FlagIcons'
 
 type Props = {
   className?: string
@@ -13,6 +15,7 @@ export function LanguageToggle({
   onChanged,
 }: Props) {
   const { i18n, t } = useTranslation()
+  const uid = useId().replace(/:/g, '')
   const isEn = i18n.language.startsWith('en')
 
   async function setLang(next: AppLang) {
@@ -35,7 +38,7 @@ export function LanguageToggle({
         title="Português (Brasil)"
       >
         <span className="lang-toggle__flag" aria-hidden="true">
-          🇧🇷
+          <FlagBrazil className="lang-toggle__flag-svg" />
         </span>
         <span className="lang-toggle__code">PT</span>
       </button>
@@ -47,7 +50,7 @@ export function LanguageToggle({
         title="English"
       >
         <span className="lang-toggle__flag" aria-hidden="true">
-          🇺🇸
+          <FlagUS className="lang-toggle__flag-svg" clipId={`flag-us-${uid}`} />
         </span>
         <span className="lang-toggle__code">EN</span>
       </button>

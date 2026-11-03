@@ -61,6 +61,25 @@
     "password": "Senha",
     "placeholder": "Auth Supabase · leads, agenda, frete e frota entram nas próximas iterações."
   },
+  "agenda": {
+    "title": "Agenda de horários",
+    "prevDay": "Dia anterior",
+    "nextDay": "Próximo dia",
+    "refresh": "Atualizar",
+    "loading": "Carregando slots…",
+    "loadError": "Não foi possível carregar a agenda",
+    "empty": "Nenhum horário neste dia",
+    "blackout": "Bloqueado",
+    "past": "Passado",
+    "full": "Esgotado",
+    "free": "{{available}}/{{capacity}} livres",
+    "legendAvailable": "Livre",
+    "legendLimited": "Parcial",
+    "legendBlocked": "Indisponível",
+    "pickSlot": "Selecione um horário na agenda",
+    "selected": "Selecionado",
+    "slotTaken": "Horário indisponível. Escolha outro na agenda."
+  },
   "footer": {
     "contact": "Fale Conosco",
     "whatsapp": "Atendimento via WhatsApp",

@@ -31,8 +31,10 @@ import type {
   ReservationStatus,
   VehicleCategory,
 } from '../../types/database'
+import { SlotAgenda } from '../../components/SlotAgenda'
+import type { DaySlot } from '../../domain/agenda'
 
-type Tab = 'reservas' | 'frota' | 'frete'
+type Tab = 'reservas' | 'agenda' | 'frota' | 'frete'
 
 const STATUS_FILTERS: Array<ReservationStatus | 'all'> = [
   'all',
@@ -57,9 +59,21 @@ export function AdminDashboard() {
   const [vehicles, setVehicles] = useState<VehicleCategory[]>([])
   const [freightRules, setFreightRules] = useState<FreightRule[]>([])
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [agendaFocus, setAgendaFocus] = useState<DaySlot | null>(null)
 
   const orgId = tenant.organizationId
   const role: OrgRole | null = membership?.role ?? null
+
+  const agendaDayReservations = useMemo(() => {
+    if (!agendaFocus) return []
+    const start = new Date(agendaFocus.slot_start).getTime()
+    const end = new Date(agendaFocus.slot_end).getTime()
+    return reservations.filter((r) => {
+      const rs = new Date(r.slot_start).getTime()
+      const re = new Date(r.slot_end).getTime()
+      return rs < end && re > start
+    })
+  }, [agendaFocus, reservations])
 
   const refreshMembership = useCallback(async () => {
     if (!orgId) return
@@ -69,9 +83,10 @@ export function AdminDashboard() {
 
   const refreshReservations = useCallback(async () => {
     if (!orgId || !canOperate(role)) return
-    const rows = await listReservations(orgId, statusFilter)
+    const filter = tab === 'agenda' ? 'all' : statusFilter
+    const rows = await listReservations(orgId, filter)
     setReservations(rows)
-  }, [orgId, role, statusFilter])
+  }, [orgId, role, statusFilter, tab])
 
   const refreshCatalogAdmin = useCallback(async () => {
     if (!orgId || !canAdmin(role)) return
@@ -204,6 +219,7 @@ export function AdminDashboard() {
               {(
                 [
                   ['reservas', 'Reservas'],
+                  ['agenda', 'Agenda'],
                   ['frota', 'Frota'],
                   ['frete', 'Frete'],
                 ] as const
@@ -235,6 +251,80 @@ export function AdminDashboard() {
               />
             )}
 
+            {tab === 'agenda' && canOperate(role) && (
+              <section className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-2xl border border-border-light bg-surface-light p-5">
+                  <h2 className="mb-3 font-semibold text-primary">
+                    Agenda visual
+                  </h2>
+                  <SlotAgenda
+                    organizationId={orgId}
+                    selectedStart={agendaFocus?.slot_start ?? null}
+                    onSelect={setAgendaFocus}
+                    mode="admin"
+                  />
+                </div>
+                <div className="rounded-2xl border border-border-light bg-surface-light p-5">
+                  <h2 className="mb-3 font-semibold text-primary">
+                    Reservas no slot
+                  </h2>
+                  {!agendaFocus && (
+                    <p className="text-sm text-text-secondary-light">
+                      Clique em um horário para ver ocupação e reservas.
+                    </p>
+                  )}
+                  {agendaFocus && (
+                    <>
+                      <p className="mb-3 text-sm">
+                        {new Date(agendaFocus.slot_start).toLocaleString('pt-BR')}{' '}
+                        · {agendaFocus.occupied}/{agendaFocus.capacity} ocupados
+                        · {agendaFocus.available} livres
+                      </p>
+                      <ul className="space-y-2 text-sm">
+                        {agendaDayReservations.map((r) => (
+                          <li
+                            key={r.id}
+                            className="rounded-lg border border-border-light px-3 py-2"
+                          >
+                            <div className="font-medium">
+                              {r.customer_name} · {r.status}
+                            </div>
+                            <div className="text-xs text-text-secondary-light">
+                              {r.customer_phone} · {r.service_type}
+                            </div>
+                            {(r.status === 'hold' ||
+                              r.status === 'hold_expirado') && (
+                              <div className="mt-2 flex gap-2">
+                                <button
+                                  type="button"
+                                  className="rounded bg-primary px-2 py-1 text-xs text-text-primary-dark"
+                                  onClick={() => void onConfirm(r.id)}
+                                >
+                                  Confirmar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="rounded border border-border-light px-2 py-1 text-xs"
+                                  onClick={() => void onCancel(r.id)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                        {!agendaDayReservations.length && (
+                          <li className="text-text-secondary-light">
+                            Sem reservas neste intervalo.
+                          </li>
+                        )}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              </section>
+            )}
+
             {tab === 'frota' && canAdmin(role) && (
               <FleetPanel
                 organizationId={orgId!}
@@ -254,7 +344,7 @@ export function AdminDashboard() {
               />
             )}
 
-            {tab !== 'reservas' && !canAdmin(role) && (
+            {(tab === 'frota' || tab === 'frete') && !canAdmin(role) && (
               <p className="text-sm text-text-secondary-light">
                 Seu papel ({role}) não edita frota/frete.
               </p>

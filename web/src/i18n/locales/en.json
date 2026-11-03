@@ -61,6 +61,25 @@
     "password": "Password",
     "placeholder": "Supabase Auth · leads, calendar, freight and fleet come in the next iterations."
   },
+  "agenda": {
+    "title": "Schedule",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "refresh": "Refresh",
+    "loading": "Loading slots…",
+    "loadError": "Could not load the schedule",
+    "empty": "No times on this day",
+    "blackout": "Blocked",
+    "past": "Past",
+    "full": "Full",
+    "free": "{{available}}/{{capacity}} free",
+    "legendAvailable": "Open",
+    "legendLimited": "Limited",
+    "legendBlocked": "Unavailable",
+    "pickSlot": "Pick a time on the schedule",
+    "selected": "Selected",
+    "slotTaken": "Slot unavailable. Pick another time."
+  },
   "footer": {
     "contact": "Contact us",
     "whatsapp": "WhatsApp support",

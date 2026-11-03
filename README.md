@@ -40,9 +40,14 @@ Migration inicial: multi-tenant, roles/RLS, frete, capacidade, reservas/hold, au
 
 Cron `expire-reservation-holds` roda a cada 5 min no Postgres (`pg_cron`).
 
+## Agenda visual
+
+- Público: grade de slots no formulário de reserva (`list_day_slots`)  
+- Admin: aba **Agenda** com ocupação e atalhos confirmar/cancelar  
+- Janelas seed JMD: seg–sáb 06:00–22:00 (America/Sao_Paulo)
+
 ## Próximas entregas
 
 1. OpenRouteService (km/autocomplete)  
-2. Agenda visual de capacidade / slots públicos  
-3. Webhook n8n + personificação `dev`  
-4. Deploy Vercel + domínio `jmd.`
+2. Webhook n8n + personificação `dev`  
+3. Deploy Vercel + domínio `jmd.`

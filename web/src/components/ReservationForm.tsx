@@ -1,8 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTenant } from '../context/TenantContext'
+import type { DaySlot } from '../domain/agenda'
+import { formatSlotLabel } from '../domain/agenda'
 import { calculateFreightEstimate } from '../domain/freight'
-import { buildSlotRange, formatCurrencyBRL } from '../domain/slots'
+import { formatCurrencyBRL } from '../domain/slots'
 import { buildWhatsAppUrl } from '../domain/whatsapp'
 import {
   createReservationWithHold,
@@ -11,6 +13,7 @@ import {
 } from '../services/reservations'
 import { pickFreightRule } from '../services/tenantCatalog'
 import type { AirportCode, ServiceType } from '../types/database'
+import { SlotAgenda } from './SlotAgenda'
 
 const SERVICE_TYPES: ServiceType[] = [
   'aeroporto',
@@ -44,8 +47,7 @@ export function ReservationForm({ className = '' }: Props) {
   const [airport, setAirport] = useState<AirportCode | ''>('')
   const [hours, setHours] = useState('4')
   const [vehicleId, setVehicleId] = useState('')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
+  const [selectedSlot, setSelectedSlot] = useState<DaySlot | null>(null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
@@ -53,11 +55,11 @@ export function ReservationForm({ className = '' }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackError, setFeedbackError] = useState(false)
+  const [agendaKey, setAgendaKey] = useState(0)
 
   const vehicles = tenant.catalog?.vehicles ?? []
   const freightRules = tenant.catalog?.freightRules ?? []
   const airportFees = tenant.catalog?.airportFees ?? []
-  const slotMinutes = tenant.catalog?.capacity?.slot_minutes ?? 30
 
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
 
@@ -95,7 +97,11 @@ export function ReservationForm({ className = '' }: Props) {
     setFeedback(null)
     setFeedbackError(false)
 
-    if (!serviceType || !date || !time || !estimate) return
+    if (!serviceType || !selectedSlot || !estimate) {
+      setFeedbackError(true)
+      setFeedback(t('agenda.pickSlot'))
+      return
+    }
 
     if (!tenant.organizationId) {
       setFeedbackError(true)
@@ -107,7 +113,6 @@ export function ReservationForm({ className = '' }: Props) {
       return
     }
 
-    const { slotStart, slotEnd } = buildSlotRange(date, time, slotMinutes)
     const vehicleLabel = selectedVehicle
       ? localizedName(selectedVehicle.name_i18n, locale)
       : '—'
@@ -124,8 +129,8 @@ export function ReservationForm({ className = '' }: Props) {
         service_type: serviceType,
         vehicle_category_id: vehicleId || null,
         airport: serviceType === 'aeroporto' ? airport || null : null,
-        slot_start: slotStart.toISOString(),
-        slot_end: slotEnd.toISOString(),
+        slot_start: selectedSlot.slot_start,
+        slot_end: selectedSlot.slot_end,
         hours_requested:
           serviceType === 'horas_a_disposicao' ? Number(hours) || null : null,
         estimated_km: Number(demoKm) || null,
@@ -140,6 +145,7 @@ export function ReservationForm({ className = '' }: Props) {
       const holdLabel = reservation.hold_expires_at
         ? new Date(reservation.hold_expires_at).toLocaleString(locale)
         : ''
+      const slotLabel = new Date(selectedSlot.slot_start).toLocaleString(locale)
 
       if (tenant.whatsapp) {
         const url = buildWhatsAppUrl(tenant.whatsapp, {
@@ -150,7 +156,7 @@ export function ReservationForm({ className = '' }: Props) {
           destination,
           serviceLabel: t(`reserve.services.${serviceType}`),
           vehicleLabel,
-          slotLabel: `${slotStart.toLocaleString(locale)} (hold até ${holdLabel})`,
+          slotLabel: `${slotLabel} (hold até ${holdLabel})`,
           estimateLabel,
           locale,
         })
@@ -162,14 +168,14 @@ export function ReservationForm({ className = '' }: Props) {
           ? `Reservation held until ${holdLabel}.`
           : `Reserva em hold até ${holdLabel}.`,
       )
+      setSelectedSlot(null)
+      setAgendaKey((k) => k + 1)
     } catch (err) {
       setFeedbackError(true)
       if (err instanceof SlotUnavailableError) {
-        setFeedback(
-          locale === 'en'
-            ? 'This time slot is unavailable. Please choose another.'
-            : 'Horário indisponível. Escolha outro período.',
-        )
+        setFeedback(t('agenda.slotTaken'))
+        setAgendaKey((k) => k + 1)
+        setSelectedSlot(null)
       } else {
         setFeedback(err instanceof Error ? err.message : 'Falha ao reservar')
       }
@@ -271,24 +277,24 @@ export function ReservationForm({ className = '' }: Props) {
           ))}
         </select>
 
-        <div className="flex space-x-4">
-          <input
-            className={`${fieldClass} w-1/2`}
-            type="date"
-            aria-label={t('reserve.date')}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
+        <div className="rounded-2xl border border-border-light p-3">
+          <p className="mb-2 text-xs font-semibold tracking-wide text-primary uppercase">
+            {t('agenda.title')}
+          </p>
+          <SlotAgenda
+            key={agendaKey}
+            organizationId={tenant.organizationId}
+            selectedStart={selectedSlot?.slot_start ?? null}
+            onSelect={setSelectedSlot}
+            mode="book"
           />
-          <input
-            className={`${fieldClass} w-1/2`}
-            type="time"
-            step={1800}
-            aria-label={t('reserve.time')}
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
+          {selectedSlot && (
+            <p className="mt-2 text-xs text-primary">
+              {t('agenda.selected')}:{' '}
+              {new Date(selectedSlot.slot_start).toLocaleString(locale)} (
+              {formatSlotLabel(selectedSlot.slot_start, locale)})
+            </p>
+          )}
         </div>
 
         <input
@@ -341,7 +347,7 @@ export function ReservationForm({ className = '' }: Props) {
 
         <button
           type="submit"
-          disabled={submitting || tenant.loading}
+          disabled={submitting || tenant.loading || !selectedSlot}
           className="mt-2 w-full rounded-lg bg-gray-900 py-3 font-medium text-text-primary-dark transition hover:bg-gray-800 disabled:opacity-60"
         >
           {submitting ? '…' : t('reserve.submit')}

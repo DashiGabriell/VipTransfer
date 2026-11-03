@@ -2,12 +2,14 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTenant } from '../context/TenantContext'
 import { calculateFreightEstimate } from '../domain/freight'
-import {
-  buildSlotRange,
-  formatCurrencyBRL,
-  holdExpiresAt,
-} from '../domain/slots'
+import { buildSlotRange, formatCurrencyBRL } from '../domain/slots'
 import { buildWhatsAppUrl } from '../domain/whatsapp'
+import {
+  createReservationWithHold,
+  notifyReservationWebhook,
+  SlotUnavailableError,
+} from '../services/reservations'
+import { pickFreightRule } from '../services/tenantCatalog'
 import type { AirportCode, ServiceType } from '../types/database'
 
 const SERVICE_TYPES: ServiceType[] = [
@@ -19,16 +21,16 @@ const SERVICE_TYPES: ServiceType[] = [
 
 const AIRPORTS: AirportCode[] = ['GRU', 'CGH', 'VCP']
 
-/** Demo rates until admin freight_rules are wired */
-const DEMO_RATES = {
-  pricePerKm: 8,
-  minimumFare: 120,
-  pricePerHour: 180,
-  airportFlatFee: 40,
-}
-
 type Props = {
   className?: string
+}
+
+function localizedName(
+  name: { pt?: string; en?: string },
+  locale: string,
+): string {
+  if (locale.startsWith('en')) return name.en || name.pt || '—'
+  return name.pt || name.en || '—'
 }
 
 export function ReservationForm({ className = '' }: Props) {
@@ -41,54 +43,138 @@ export function ReservationForm({ className = '' }: Props) {
   const [serviceType, setServiceType] = useState<ServiceType | ''>('')
   const [airport, setAirport] = useState<AirportCode | ''>('')
   const [hours, setHours] = useState('4')
-  const [vehicleLabel, setVehicleLabel] = useState('')
+  const [vehicleId, setVehicleId] = useState('')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [demoKm, setDemoKm] = useState('25')
-  const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [feedbackError, setFeedbackError] = useState(false)
+
+  const vehicles = tenant.catalog?.vehicles ?? []
+  const freightRules = tenant.catalog?.freightRules ?? []
+  const airportFees = tenant.catalog?.airportFees ?? []
+  const slotMinutes = tenant.catalog?.capacity?.slot_minutes ?? 30
+
+  const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
+
+  const freightRule = useMemo(
+    () =>
+      pickFreightRule(freightRules, {
+        vehicleCategoryId: vehicleId || null,
+        serviceType: serviceType || null,
+      }),
+    [freightRules, vehicleId, serviceType],
+  )
+
+  const airportFee = useMemo(() => {
+    if (!airport) return 0
+    return airportFees.find((f) => f.airport === airport)?.flat_fee ?? 0
+  }, [airport, airportFees])
 
   const estimate = useMemo(() => {
-    if (!serviceType) return null
+    if (!serviceType || !freightRule) return null
     return calculateFreightEstimate({
       km: Number(demoKm) || 0,
-      pricePerKm: DEMO_RATES.pricePerKm,
-      minimumFare: DEMO_RATES.minimumFare,
-      pricePerHour: DEMO_RATES.pricePerHour,
+      pricePerKm: Number(freightRule.price_per_km),
+      minimumFare: Number(freightRule.minimum_fare),
+      pricePerHour: freightRule.price_per_hour
+        ? Number(freightRule.price_per_hour)
+        : 0,
       hours: Number(hours) || 0,
-      airportFlatFee: DEMO_RATES.airportFlatFee,
+      airportFlatFee: airportFee,
       serviceType,
     })
-  }, [serviceType, demoKm, hours])
+  }, [serviceType, freightRule, demoKm, hours, airportFee])
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault()
+    setFeedback(null)
+    setFeedbackError(false)
+
     if (!serviceType || !date || !time || !estimate) return
 
-    const { slotStart } = buildSlotRange(date, time)
-    const expires = holdExpiresAt()
-    const estimateLabel = formatCurrencyBRL(estimate.total, locale)
+    if (!tenant.organizationId) {
+      setFeedbackError(true)
+      setFeedback(
+        tenant.loading
+          ? 'Carregando organização…'
+          : 'Organização não disponível. Verifique o Supabase.',
+      )
+      return
+    }
 
-    // Persistence + capacity claim land with Supabase wiring next.
-    // Hold semantics are already encoded for the WhatsApp handoff.
-    setSubmitted(true)
+    const { slotStart, slotEnd } = buildSlotRange(date, time, slotMinutes)
+    const vehicleLabel = selectedVehicle
+      ? localizedName(selectedVehicle.name_i18n, locale)
+      : '—'
 
-    if (tenant.whatsapp) {
-      const url = buildWhatsAppUrl(tenant.whatsapp, {
-        name,
-        phone,
-        email,
-        origin,
-        destination,
-        serviceLabel: t(`reserve.services.${serviceType}`),
-        vehicleLabel: vehicleLabel || '—',
-        slotLabel: `${slotStart.toLocaleString(locale)} (hold até ${expires.toLocaleTimeString(locale)})`,
-        estimateLabel,
+    setSubmitting(true)
+    try {
+      const reservation = await createReservationWithHold({
+        organization_id: tenant.organizationId,
+        customer_name: name,
+        customer_phone: phone,
+        customer_email: email,
+        origin_address: origin,
+        destination_address: destination,
+        service_type: serviceType,
+        vehicle_category_id: vehicleId || null,
+        airport: serviceType === 'aeroporto' ? airport || null : null,
+        slot_start: slotStart.toISOString(),
+        slot_end: slotEnd.toISOString(),
+        hours_requested:
+          serviceType === 'horas_a_disposicao' ? Number(hours) || null : null,
+        estimated_km: Number(demoKm) || null,
+        estimated_price: estimate.total,
         locale,
+        source: 'web',
       })
-      window.open(url, '_blank', 'noopener,noreferrer')
+
+      void notifyReservationWebhook(reservation)
+
+      const estimateLabel = formatCurrencyBRL(estimate.total, locale)
+      const holdLabel = reservation.hold_expires_at
+        ? new Date(reservation.hold_expires_at).toLocaleString(locale)
+        : ''
+
+      if (tenant.whatsapp) {
+        const url = buildWhatsAppUrl(tenant.whatsapp, {
+          name,
+          phone,
+          email,
+          origin,
+          destination,
+          serviceLabel: t(`reserve.services.${serviceType}`),
+          vehicleLabel,
+          slotLabel: `${slotStart.toLocaleString(locale)} (hold até ${holdLabel})`,
+          estimateLabel,
+          locale,
+        })
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+
+      setFeedback(
+        locale === 'en'
+          ? `Reservation held until ${holdLabel}.`
+          : `Reserva em hold até ${holdLabel}.`,
+      )
+    } catch (err) {
+      setFeedbackError(true)
+      if (err instanceof SlotUnavailableError) {
+        setFeedback(
+          locale === 'en'
+            ? 'This time slot is unavailable. Please choose another.'
+            : 'Horário indisponível. Escolha outro período.',
+        )
+      } else {
+        setFeedback(err instanceof Error ? err.message : 'Falha ao reservar')
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -169,12 +255,21 @@ export function ReservationForm({ className = '' }: Props) {
           />
         )}
 
-        <input
-          className={fieldClass}
-          placeholder={t('reserve.vehicle')}
-          value={vehicleLabel}
-          onChange={(e) => setVehicleLabel(e.target.value)}
-        />
+        <select
+          className={`${fieldClass} text-primary`}
+          value={vehicleId}
+          onChange={(e) => setVehicleId(e.target.value)}
+        >
+          <option value="">
+            {vehicles.length ? t('reserve.vehicle') : t('reserve.vehicleEmpty')}
+          </option>
+          {vehicles.map((vehicle) => (
+            <option key={vehicle.id} value={vehicle.id}>
+              {localizedName(vehicle.name_i18n, locale)}
+              {vehicle.is_armored ? ' · blindado' : ''}
+            </option>
+          ))}
+        </select>
 
         <div className="flex space-x-4">
           <input
@@ -220,13 +315,12 @@ export function ReservationForm({ className = '' }: Props) {
           required
         />
 
-        {/* Temporary km until OpenRouteService is connected */}
         <input
           className={fieldClass}
           type="number"
           min={1}
           step={0.1}
-          placeholder="Km (demo até ORS)"
+          placeholder="Km (temporário até OpenRouteService)"
           value={demoKm}
           onChange={(e) => setDemoKm(e.target.value)}
         />
@@ -247,14 +341,17 @@ export function ReservationForm({ className = '' }: Props) {
 
         <button
           type="submit"
-          className="mt-2 w-full rounded-lg bg-gray-900 py-3 font-medium text-text-primary-dark transition hover:bg-gray-800"
+          disabled={submitting || tenant.loading}
+          className="mt-2 w-full rounded-lg bg-gray-900 py-3 font-medium text-text-primary-dark transition hover:bg-gray-800 disabled:opacity-60"
         >
-          {t('reserve.submit')}
+          {submitting ? '…' : t('reserve.submit')}
         </button>
 
-        {submitted && (
-          <p className="text-center text-xs text-primary">
-            Hold de 60 min preparado · WhatsApp aberto quando configurado.
+        {feedback && (
+          <p
+            className={`text-center text-xs ${feedbackError ? 'text-red-600' : 'text-primary'}`}
+          >
+            {feedback}
           </p>
         )}
       </form>

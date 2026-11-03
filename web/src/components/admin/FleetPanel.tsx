@@ -1,6 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  FLEET_BRANDS,
+  FLEET_COLORS,
+  fleetYearOptions,
+  modelsForBrand,
   STANDARD_VEHICLE_CATEGORIES,
   VEHICLE_BODY_TYPES,
   type VehicleBodyType,
@@ -21,7 +25,7 @@ type Props = {
   onError: (msg: string) => void
 }
 
-const currentYear = new Date().getFullYear()
+const YEAR_OPTIONS = fleetYearOptions()
 
 export function FleetPanel(props: Props) {
   const { t, i18n } = useTranslation()
@@ -48,7 +52,7 @@ export function FleetPanel(props: Props) {
   const [categoryId, setCategoryId] = useState('')
   const [brand, setBrand] = useState('')
   const [model, setModel] = useState('')
-  const [year, setYear] = useState(String(currentYear))
+  const [year, setYear] = useState('')
   const [color, setColor] = useState('')
   const [bodyType, setBodyType] = useState<VehicleBodyType>('sedan')
   const [plate, setPlate] = useState('')
@@ -56,6 +60,8 @@ export function FleetPanel(props: Props) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [busyVehicleId, setBusyVehicleId] = useState<string | null>(null)
+
+  const modelOptions = useMemo(() => modelsForBrand(brand), [brand])
 
   async function onToggleCategory(code: (typeof STANDARD_VEHICLE_CATEGORIES)[number]['code'], next: boolean) {
     setTogglingCode(code)
@@ -91,7 +97,11 @@ export function FleetPanel(props: Props) {
       props.onError(t('admin.fleet.categoryRequired'))
       return
     }
-    if (!Number.isFinite(yearNum) || yearNum < 1980 || yearNum > currentYear + 1) {
+    if (!brand || !model || !color || !year) {
+      props.onError(t('admin.fleet.fieldsRequired'))
+      return
+    }
+    if (!YEAR_OPTIONS.includes(yearNum)) {
       props.onError(t('admin.fleet.yearInvalid'))
       return
     }
@@ -123,7 +133,7 @@ export function FleetPanel(props: Props) {
 
       setBrand('')
       setModel('')
-      setYear(String(currentYear))
+      setYear('')
       setColor('')
       setBodyType('sedan')
       setPlate('')
@@ -238,47 +248,81 @@ export function FleetPanel(props: Props) {
 
           <label className="admin-fleet__field">
             <span>{t('admin.fleet.brand')}</span>
-            <input
+            <select
               value={brand}
-              onChange={(e) => setBrand(e.target.value)}
+              onChange={(e) => {
+                setBrand(e.target.value)
+                setModel('')
+              }}
               required
-              maxLength={80}
-              placeholder="BMW"
-            />
+              disabled={!activeCategories.length}
+            >
+              <option value="">{t('admin.fleet.brandPlaceholder')}</option>
+              {FLEET_BRANDS.map((b) => (
+                <option key={b} value={b}>
+                  {b === 'LandRover'
+                    ? 'Land Rover'
+                    : b === 'CaoaChery'
+                      ? 'Caoa Chery'
+                      : b}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="admin-fleet__field">
             <span>{t('admin.fleet.model')}</span>
-            <input
+            <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
               required
-              maxLength={80}
-              placeholder="X5"
-            />
+              disabled={!brand || !activeCategories.length}
+            >
+              <option value="">
+                {brand
+                  ? t('admin.fleet.modelPlaceholder')
+                  : t('admin.fleet.modelNeedBrand')}
+              </option>
+              {modelOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="admin-fleet__field">
             <span>{t('admin.fleet.year')}</span>
-            <input
-              type="number"
-              min={1980}
-              max={currentYear + 1}
+            <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
               required
-            />
+              disabled={!activeCategories.length}
+            >
+              <option value="">{t('admin.fleet.yearPlaceholder')}</option>
+              {YEAR_OPTIONS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="admin-fleet__field">
             <span>{t('admin.fleet.color')}</span>
-            <input
+            <select
               value={color}
               onChange={(e) => setColor(e.target.value)}
               required
-              maxLength={60}
-              placeholder={t('admin.fleet.colorPlaceholder')}
-            />
+              disabled={!activeCategories.length}
+            >
+              <option value="">{t('admin.fleet.colorPlaceholder')}</option>
+              {FLEET_COLORS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {t(c.labelKey)}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="admin-fleet__field">

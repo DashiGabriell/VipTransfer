@@ -19,6 +19,10 @@ import { AgendaSlotModal } from '../../components/admin/AgendaSlotModal'
 import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
 import { FleetPanel } from '../../components/admin/FleetPanel'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
+import {
+  RouteNavPicker,
+  ViewRouteButton,
+} from '../../components/admin/RouteNavPicker'
 import { LanguageToggle } from '../../components/LanguageToggle'
 import {
   cancelReservation,
@@ -95,6 +99,8 @@ export function AdminDashboard() {
   const [agendaFocus, setAgendaFocus] = useState<DaySlot | null>(null)
   const [agendaKey, setAgendaKey] = useState(0)
   const [agendaDetailId, setAgendaDetailId] = useState<string | null>(null)
+  const [routeNavReservation, setRouteNavReservation] =
+    useState<Reservation | null>(null)
 
   const orgId = tenant.organizationId
   const role: OrgRole | null = membership?.role ?? null
@@ -424,10 +430,13 @@ export function AdminDashboard() {
                         </p>
                         <ul className="space-y-2 text-sm">
                           {agendaDayReservations.map((r) => (
-                            <li key={r.id}>
+                            <li
+                              key={r.id}
+                              className="admin-agenda-booking rounded-lg border border-border-light px-3 py-2"
+                            >
                               <button
                                 type="button"
-                                className="admin-agenda-booking w-full rounded-lg border border-border-light px-3 py-2 text-left transition hover:border-primary/50 hover:bg-white/60"
+                                className="w-full text-left transition hover:opacity-90"
                                 onClick={() => setAgendaDetailId(r.id)}
                               >
                                 <div className="font-medium">
@@ -438,6 +447,16 @@ export function AdminDashboard() {
                                   {r.customer_phone} · {r.service_type}
                                 </div>
                               </button>
+                              <div className="mt-2">
+                                <ViewRouteButton
+                                  places={{
+                                    origin: r.origin_address,
+                                    destination: r.destination_address,
+                                    stops: r.stops,
+                                  }}
+                                  onOpen={() => setRouteNavReservation(r)}
+                                />
+                              </div>
                             </li>
                           ))}
                           {!agendaDayReservations.length && (
@@ -470,6 +489,16 @@ export function AdminDashboard() {
                       onClose={() => setAgendaDetailId(null)}
                       onConfirm={onConfirm}
                       onCancel={onCancel}
+                    />
+                  )}
+                  {routeNavReservation && (
+                    <RouteNavPicker
+                      places={{
+                        origin: routeNavReservation.origin_address,
+                        destination: routeNavReservation.destination_address,
+                        stops: routeNavReservation.stops,
+                      }}
+                      onClose={() => setRouteNavReservation(null)}
                     />
                   )}
                 </section>
@@ -631,6 +660,9 @@ function ReservationsPanel(props: {
 
             <div className="admin-res-card__route">
               <p>{r.origin_address}</p>
+              {(r.stops ?? []).filter(Boolean).map((stop, i) => (
+                <p key={`${r.id}-m-stop-${i}`}>→ {stop}</p>
+              ))}
               <p>→ {r.destination_address}</p>
             </div>
 
@@ -693,6 +725,14 @@ function ReservationsPanel(props: {
                 </td>
                 <td>
                   <div className="admin-res-table__route">{r.origin_address}</div>
+                  {(r.stops ?? []).filter(Boolean).map((stop, i) => (
+                    <div
+                      key={`${r.id}-t-stop-${i}`}
+                      className="admin-res-table__route is-dest"
+                    >
+                      → {stop}
+                    </div>
+                  ))}
                   <div className="admin-res-table__route is-dest">
                     → {r.destination_address}
                   </div>
@@ -773,7 +813,7 @@ function FreightPanel(props: {
       )
       props.onChanged()
     } catch (err) {
-      props.onError(err instanceof Error ? err.message : 'Falha ao salvar frete')
+      props.onError(err instanceof Error ? err.message : 'Falha ao salvar transfer')
     } finally {
       setSaving(false)
     }
@@ -785,13 +825,13 @@ function FreightPanel(props: {
       className="w-full max-w-4xl space-y-5 rounded-2xl border border-border-light bg-surface-light p-5"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-semibold text-primary">Regra base de frete</h2>
+        <h2 className="font-semibold text-primary">Regra base de transfer</h2>
         <button
           type="submit"
           disabled={saving}
           className="rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
         >
-          {saving ? '…' : 'Salvar frete'}
+          {saving ? '…' : 'Salvar transfer'}
         </button>
       </div>
 

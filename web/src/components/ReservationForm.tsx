@@ -1,11 +1,27 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTenant } from '../context/TenantContext'
 import type { DaySlot } from '../domain/agenda'
 import { formatSlotLabel } from '../domain/agenda'
+import {
+  formatBrazilPhoneInput,
+  isValidBrazilPhone,
+  isValidEmail,
+  isValidFullName,
+} from '../domain/customerFields'
 import { calculateFreightEstimate } from '../domain/freight'
 import { formatCurrencyBRL } from '../domain/slots'
 import { buildWhatsAppUrl } from '../domain/whatsapp'
+import {
+  buildRouteWaypoints,
+  DistanceError,
+  measureDrivingDistanceKm,
+} from '../services/distance'
 import {
   createReservationWithHold,
   notifyReservationWebhook,
@@ -23,6 +39,8 @@ const SERVICE_TYPES: ServiceType[] = [
 ]
 
 const AIRPORTS: AirportCode[] = ['GRU', 'CGH', 'VCP']
+const MAX_STOPS = 8
+const DISTANCE_DEBOUNCE_MS = 700
 
 function localizedName(
   name: { pt?: string; en?: string },
@@ -32,6 +50,13 @@ function localizedName(
   return name.pt || name.en || '—'
 }
 
+type DistanceState =
+  | { status: 'idle' }
+  | { status: 'need_addresses' }
+  | { status: 'loading' }
+  | { status: 'ready'; km: number }
+  | { status: 'error'; code: string }
+
 export function ReservationForm() {
   const { t, i18n } = useTranslation()
   const tenant = useTenant()
@@ -40,6 +65,7 @@ export function ReservationForm() {
 
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
+  const [stops, setStops] = useState<string[]>([])
   const [serviceType, setServiceType] = useState<ServiceType | ''>('')
   const [airport, setAirport] = useState<AirportCode | ''>('')
   const [hours, setHours] = useState('4')
@@ -48,11 +74,24 @@ export function ReservationForm() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
-  const [demoKm, setDemoKm] = useState('25')
+  const [distance, setDistance] = useState<DistanceState>({ status: 'idle' })
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackError, setFeedbackError] = useState(false)
   const [agendaKey, setAgendaKey] = useState(0)
+
+  function addStop() {
+    if (stops.length >= MAX_STOPS) return
+    setStops((prev) => [...prev, ''])
+  }
+
+  function updateStop(index: number, value: string) {
+    setStops((prev) => prev.map((s, i) => (i === index ? value : s)))
+  }
+
+  function removeStop(index: number) {
+    setStops((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const vehicles = tenant.catalog?.vehicles ?? []
   const freightRules = tenant.catalog?.freightRules ?? []
@@ -73,10 +112,12 @@ export function ReservationForm() {
     return airportFees.find((f) => f.airport === airport)?.flat_fee ?? 0
   }, [airport, airportFees])
 
+  const routeKm = distance.status === 'ready' ? distance.km : 0
+
   const estimate = useMemo(() => {
-    if (!serviceType || !freightRule) return null
+    if (!serviceType || !freightRule || distance.status !== 'ready') return null
     return calculateFreightEstimate({
-      km: Number(demoKm) || 0,
+      km: routeKm,
       pricePerKm: Number(freightRule.price_per_km),
       minimumFare: Number(freightRule.minimum_fare),
       pricePerHour: freightRule.price_per_hour
@@ -86,12 +127,73 @@ export function ReservationForm() {
       airportFlatFee: airportFee,
       serviceType,
     })
-  }, [serviceType, freightRule, demoKm, hours, airportFee])
+  }, [serviceType, freightRule, routeKm, hours, airportFee, distance.status])
+
+  const waypointsKey = useMemo(() => {
+    const points = buildRouteWaypoints({
+      origin,
+      stops,
+      destination,
+      airport: serviceType === 'aeroporto' ? airport : null,
+    })
+    return points.join('||')
+  }, [origin, stops, destination, serviceType, airport])
+
+  useEffect(() => {
+    const points = waypointsKey.split('||').filter(Boolean)
+    if (points.length < 2) {
+      setDistance({ status: 'need_addresses' })
+      return
+    }
+
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      setDistance({ status: 'loading' })
+      void measureDrivingDistanceKm(points, controller.signal)
+        .then((result) => {
+          if (controller.signal.aborted) return
+          setDistance({ status: 'ready', km: result.km })
+        })
+        .catch((err) => {
+          if (controller.signal.aborted) return
+          if (err instanceof DOMException && err.name === 'AbortError') return
+          const code =
+            err instanceof DistanceError ? err.message : 'DISTANCE_FAILED'
+          setDistance({ status: 'error', code })
+        })
+    }, DISTANCE_DEBOUNCE_MS)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
+    }
+  }, [waypointsKey])
+
+  function distanceMessage(): string {
+    switch (distance.status) {
+      case 'loading':
+        return t('reserve.distanceCalculating')
+      case 'ready':
+        return t('reserve.distanceReady', { km: distance.km })
+      case 'need_addresses':
+        return t('reserve.distanceNeedAddresses')
+      case 'error':
+        return t('reserve.distanceError')
+      default:
+        return ''
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setFeedback(null)
     setFeedbackError(false)
+
+    if (distance.status !== 'ready') {
+      setFeedbackError(true)
+      setFeedback(t('reserve.distanceRequired'))
+      return
+    }
 
     if (!serviceType || !selectedSlot || !estimate) {
       setFeedbackError(true)
@@ -109,19 +211,42 @@ export function ReservationForm() {
       return
     }
 
+    const trimmedName = name.trim()
+    const trimmedPhone = phone.trim()
+    const trimmedEmail = email.trim()
+
+    if (!isValidFullName(trimmedName)) {
+      setFeedbackError(true)
+      setFeedback(t('reserve.nameInvalid'))
+      return
+    }
+    if (!isValidBrazilPhone(trimmedPhone)) {
+      setFeedbackError(true)
+      setFeedback(t('reserve.phoneInvalid'))
+      return
+    }
+    if (!isValidEmail(trimmedEmail)) {
+      setFeedbackError(true)
+      setFeedback(t('reserve.emailInvalid'))
+      return
+    }
+
     const vehicleLabel = selectedVehicle
       ? localizedName(selectedVehicle.name_i18n, locale)
       : '—'
 
     setSubmitting(true)
     try {
+      const cleanedStops = stops.map((s) => s.trim()).filter(Boolean)
+
       const reservation = await createReservationWithHold({
         organization_id: tenant.organizationId,
-        customer_name: name,
-        customer_phone: phone,
-        customer_email: email,
+        customer_name: trimmedName,
+        customer_phone: trimmedPhone,
+        customer_email: trimmedEmail,
         origin_address: origin,
         destination_address: destination,
+        stops: cleanedStops,
         service_type: serviceType,
         vehicle_category_id: vehicleId || null,
         airport: serviceType === 'aeroporto' ? airport || null : null,
@@ -129,7 +254,7 @@ export function ReservationForm() {
         slot_end: selectedSlot.slot_end,
         hours_requested:
           serviceType === 'horas_a_disposicao' ? Number(hours) || null : null,
-        estimated_km: Number(demoKm) || null,
+        estimated_km: distance.km,
         estimated_price: estimate.total,
         locale,
         source: 'web',
@@ -144,15 +269,17 @@ export function ReservationForm() {
       const slotLabel = new Date(selectedSlot.slot_start).toLocaleString(locale)
 
       const url = buildWhatsAppUrl(waDigits, {
-        name,
-        phone,
-        email,
+        name: trimmedName,
+        phone: trimmedPhone,
+        email: trimmedEmail,
         origin,
         destination,
+        stops: cleanedStops,
         serviceLabel: t(`reserve.services.${serviceType}`),
         vehicleLabel,
         slotLabel: `${slotLabel} (hold até ${holdLabel})`,
         estimateLabel,
+        distanceKm: distance.km,
         locale,
       })
       window.open(url, '_blank', 'noopener,noreferrer')
@@ -163,6 +290,7 @@ export function ReservationForm() {
           : `Reserva em hold até ${holdLabel}.`,
       )
       setSelectedSlot(null)
+      setStops([])
       setAgendaKey((k) => k + 1)
     } catch (err) {
       setFeedbackError(true)
@@ -193,6 +321,45 @@ export function ReservationForm() {
           required
         />
       </div>
+
+      {stops.map((stop, index) => (
+        <div className="itinerary-row itinerary-row--stop" key={`stop-${index}`}>
+          <label htmlFor={`parada-${index}`}>
+            {t('reserve.stop', { n: index + 1 })}
+          </label>
+          <div className="itinerary-stop-field">
+            <input
+              id={`parada-${index}`}
+              name={`parada-${index}`}
+              type="text"
+              placeholder={t('reserve.stopPlaceholder')}
+              value={stop}
+              onChange={(e) => updateStop(index, e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className="itinerary-stop-remove"
+              onClick={() => removeStop(index)}
+              aria-label={t('reserve.removeStop')}
+            >
+              {t('reserve.removeStop')}
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {stops.length < MAX_STOPS && (
+        <div className="itinerary-stop-actions">
+          <button
+            type="button"
+            className="itinerary-add-stop"
+            onClick={addStop}
+          >
+            {t('reserve.addStop')}
+          </button>
+        </div>
+      )}
 
       <div className="itinerary-row">
         <label htmlFor="destino">{t('reserve.destination')}</label>
@@ -282,6 +449,16 @@ export function ReservationForm() {
         </select>
       </div>
 
+      <p
+        className={`form-note itinerary-distance${
+          distance.status === 'error' ? ' is-error' : ''
+        }${distance.status === 'ready' ? ' is-ok' : ''}`}
+        role="status"
+        aria-live="polite"
+      >
+        <strong>{t('reserve.distance')}:</strong> {distanceMessage()}
+      </p>
+
       <SlotAgenda
         key={agendaKey}
         organizationId={tenant.organizationId}
@@ -303,6 +480,10 @@ export function ReservationForm() {
           id="nome"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
+          minLength={3}
+          pattern="\S+(\s+\S+)+"
+          title={t('reserve.nameInvalid')}
           required
         />
       </div>
@@ -311,8 +492,13 @@ export function ReservationForm() {
         <input
           id="telefone"
           type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          placeholder={t('reserve.phonePlaceholder')}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(formatBrazilPhoneInput(e.target.value))}
+          pattern="\(\d{2}\)\s?\d{4,5}-?\d{4}"
+          title={t('reserve.phoneInvalid')}
           required
         />
       </div>
@@ -321,20 +507,13 @@ export function ReservationForm() {
         <input
           id="email"
           type="email"
+          autoComplete="email"
+          inputMode="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
+          title={t('reserve.emailInvalid')}
           required
-        />
-      </div>
-      <div className="itinerary-row">
-        <label htmlFor="km">Km (temp.)</label>
-        <input
-          id="km"
-          type="number"
-          min={1}
-          step={0.1}
-          value={demoKm}
-          onChange={(e) => setDemoKm(e.target.value)}
         />
       </div>
 
@@ -349,7 +528,12 @@ export function ReservationForm() {
         <button
           className="btn-primary"
           type="submit"
-          disabled={submitting || tenant.loading || !selectedSlot}
+          disabled={
+            submitting ||
+            tenant.loading ||
+            !selectedSlot ||
+            distance.status !== 'ready'
+          }
         >
           {submitting ? '…' : t('reserve.submit')}
         </button>

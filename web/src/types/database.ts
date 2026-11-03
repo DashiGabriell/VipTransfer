@@ -114,6 +114,8 @@ export type Reservation = {
   customer_email: string
   origin_address: string
   destination_address: string
+  /** Intermediate stops between origin and destination, in order. */
+  stops: string[]
   service_type: ServiceType
   vehicle_category_id: string | null
   airport: AirportCode | null
@@ -135,6 +137,7 @@ export type CreateReservationInput = {
   customer_email: string
   origin_address: string
   destination_address: string
+  stops?: string[]
   service_type: ServiceType
   slot_start: string
   slot_end: string
@@ -222,6 +225,7 @@ export type Database = {
           p_destination_lng?: number | null
           p_locale?: string
           p_source?: string
+          p_stops?: string[]
         }
         Returns: Reservation
       }

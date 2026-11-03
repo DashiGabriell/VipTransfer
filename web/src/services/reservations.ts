@@ -15,6 +15,11 @@ export async function createReservationWithHold(
     throw new Error('Supabase não configurado')
   }
 
+  const stops = (input.stops ?? [])
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+
   const { data, error } = await supabase.rpc('create_reservation_with_hold', {
     p_organization_id: input.organization_id,
     p_customer_name: input.customer_name,
@@ -32,6 +37,7 @@ export async function createReservationWithHold(
     p_estimated_price: input.estimated_price ?? null,
     p_locale: input.locale ?? 'pt-BR',
     p_source: input.source ?? 'web',
+    p_stops: stops,
   })
 
   if (error) {

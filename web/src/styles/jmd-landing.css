@@ -381,6 +381,53 @@
       min-height: 1.5rem;
       color-scheme: light;
     }
+    .itinerary-stop-field {
+      display: flex;
+      gap: 0.65rem;
+      align-items: center;
+      min-width: 0;
+    }
+    .itinerary-stop-field input {
+      flex: 1;
+      min-width: 0;
+    }
+    .itinerary-stop-remove {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 0.25rem 0;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+    .itinerary-stop-remove:hover {
+      color: #9b3b2e;
+    }
+    .itinerary-stop-actions {
+      padding: 0.55rem 0.85rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+      background: color-mix(in srgb, var(--paper) 88%, transparent);
+    }
+    .itinerary-add-stop {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--bronze-deep, var(--bronze));
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      padding: 0.2rem 0;
+      transition: color 0.2s;
+    }
+    .itinerary-add-stop:hover {
+      color: var(--ink);
+    }
     .itinerary-actions {
       display: flex;
       flex-wrap: wrap;
@@ -440,6 +487,13 @@
       color: var(--muted-soft);
       margin: 0.35rem 0 0;
       line-height: 1.45;
+    }
+    .form-note.is-error { color: #9b3b2e; }
+    .form-note.is-ok { color: #2f5d3a; }
+    .itinerary-distance strong {
+      color: var(--ink);
+      font-weight: 650;
+      margin-right: 0.25rem;
     }
     .form-status {
       margin: 0.5rem 0 0;

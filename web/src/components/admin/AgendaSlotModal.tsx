@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import type { DaySlot } from '../../domain/agenda'
 import type { Reservation } from '../../types/database'
+import { RouteNavPicker, ViewRouteButton } from './RouteNavPicker'
 
 type Props = {
   slot: DaySlot
@@ -37,6 +38,9 @@ export function AgendaSlotModal({
   const locale = localeFromLang(i18n.language)
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
+  const [routeReservation, setRouteReservation] = useState<Reservation | null>(
+    null,
+  )
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -44,14 +48,20 @@ export function AgendaSlotModal({
     closeRef.current?.focus()
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        if (routeReservation) {
+          setRouteReservation(null)
+          return
+        }
+        onClose()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
     }
-  }, [onClose])
+  }, [onClose, routeReservation])
 
   const slotLabel = new Date(slot.slot_start).toLocaleString(locale)
 
@@ -120,10 +130,27 @@ export function AgendaSlotModal({
                   <dt>{t('admin.detailRoute')}</dt>
                   <dd>
                     {r.origin_address}
+                    {(r.stops ?? []).filter(Boolean).map((stop, i) => (
+                      <span key={`${r.id}-stop-${i}`}>
+                        <span className="agenda-slot-modal__arrow"> → </span>
+                        {stop}
+                      </span>
+                    ))}
                     <span className="agenda-slot-modal__arrow"> → </span>
                     {r.destination_address}
                   </dd>
                 </div>
+                {(r.stops ?? []).filter(Boolean).length > 0 && (
+                  <div>
+                    <dt>{t('admin.detailStops')}</dt>
+                    <dd>
+                      {(r.stops ?? [])
+                        .filter(Boolean)
+                        .map((stop, i) => `${i + 1}. ${stop}`)
+                        .join(' · ')}
+                    </dd>
+                  </div>
+                )}
                 <div>
                   <dt>{t('reserve.serviceType')}</dt>
                   <dd>
@@ -150,12 +177,12 @@ export function AgendaSlotModal({
                     <dd>{r.hours_requested}h</dd>
                   </div>
                 )}
-                {r.estimated_km != null && (
-                  <div>
-                    <dt>{t('admin.detailKm')}</dt>
-                    <dd>{r.estimated_km} km</dd>
-                  </div>
-                )}
+                <div>
+                  <dt>{t('admin.detailKm')}</dt>
+                  <dd>
+                    {r.estimated_km != null ? `${r.estimated_km} km` : '—'}
+                  </dd>
+                </div>
                 <div>
                   <dt>{t('admin.detailPrice')}</dt>
                   <dd>{formatMoney(r.estimated_price)}</dd>
@@ -177,26 +204,37 @@ export function AgendaSlotModal({
                 </div>
               </dl>
 
-              {(r.status === 'hold' || r.status === 'hold_expirado') && (
-                <div className="agenda-slot-modal__actions">
-                  <button
-                    type="button"
-                    className="agenda-slot-modal__btn is-primary"
-                    disabled={busyId === r.id}
-                    onClick={() => void onConfirm(r.id)}
-                  >
-                    {t('admin.confirm')}
-                  </button>
-                  <button
-                    type="button"
-                    className="agenda-slot-modal__btn"
-                    disabled={busyId === r.id}
-                    onClick={() => void onCancel(r.id)}
-                  >
-                    {t('admin.cancel')}
-                  </button>
-                </div>
-              )}
+              <div className="agenda-slot-modal__actions">
+                <ViewRouteButton
+                  className="agenda-slot-modal__btn"
+                  places={{
+                    origin: r.origin_address,
+                    destination: r.destination_address,
+                    stops: r.stops,
+                  }}
+                  onOpen={() => setRouteReservation(r)}
+                />
+                {(r.status === 'hold' || r.status === 'hold_expirado') && (
+                  <>
+                    <button
+                      type="button"
+                      className="agenda-slot-modal__btn is-primary"
+                      disabled={busyId === r.id}
+                      onClick={() => void onConfirm(r.id)}
+                    >
+                      {t('admin.confirm')}
+                    </button>
+                    <button
+                      type="button"
+                      className="agenda-slot-modal__btn"
+                      disabled={busyId === r.id}
+                      onClick={() => void onCancel(r.id)}
+                    >
+                      {t('admin.cancel')}
+                    </button>
+                  </>
+                )}
+              </div>
             </li>
           ))}
           {!reservations.length && (
@@ -204,6 +242,17 @@ export function AgendaSlotModal({
           )}
         </ul>
       </div>
+
+      {routeReservation && (
+        <RouteNavPicker
+          places={{
+            origin: routeReservation.origin_address,
+            destination: routeReservation.destination_address,
+            stops: routeReservation.stops,
+          }}
+          onClose={() => setRouteReservation(null)}
+        />
+      )}
     </div>,
     document.body,
   )

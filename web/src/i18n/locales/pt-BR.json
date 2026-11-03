@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "JMD TRANSFER",
+    "tagline": "Mobilidade Executiva com Segurança e Discrição"
+  },
+  "nav": {
+    "home": "Início",
+    "services": "Serviços",
+    "fleet": "Frota",
+    "coverage": "Atuação",
+    "contact": "Contato",
+    "reserve": "Solicitar Transfer",
+    "admin": "Admin"
+  },
+  "hero": {
+    "title": "Transfer Executivo Premium em São Paulo, com",
+    "titleAccent": "Segurança e Pontualidade Absoluta",
+    "subtitle": "Atendemos executivos, empresas e clientes VIP com transfer aeroporto, viagens corporativas e deslocamentos estratégicos, utilizando frota premium com opção de veículos blindados e motoristas altamente qualificados.",
+    "cta": "Solicitar Reserva Agora",
+    "bullets": {
+      "executive": "Atendimento executivo personalizado",
+      "airports": "Aeroporto GRU, CGH e VCP",
+      "fleet": "Frota premium e veículos blindados",
+      "discretion": "Discrição, segurança e pontualidade"
+    }
+  },
+  "reserve": {
+    "title": "Reservar horário",
+    "subtitle": "Estimativa online · hold de 60 minutos · confirmação JMD",
+    "origin": "Endereço de origem",
+    "destination": "Destino",
+    "serviceType": "Tipo de serviço",
+    "vehicle": "Categoria do veículo",
+    "vehicleEmpty": "Nenhuma categoria cadastrada ainda",
+    "date": "Data",
+    "time": "Horário",
+    "name": "Nome completo",
+    "phone": "Telefone / WhatsApp",
+    "email": "E-mail",
+    "airport": "Aeroporto",
+    "hours": "Horas à disposição",
+    "estimate": "Valor estimado",
+    "estimateHint": "Valor estimado — confirmação no atendimento",
+    "holdHint": "Ao enviar, o horário fica reservado por 60 minutos até a confirmação da JMD.",
+    "submit": "Solicitar reserva",
+    "services": {
+      "aeroporto": "Aeroporto",
+      "corporativo": "Corporativo",
+      "horas_a_disposicao": "Horas à disposição",
+      "viagem": "Viagem"
+    }
+  },
+  "services": {
+    "title": "Soluções de Mobilidade Executiva sob Medida",
+    "subtitle": "Transporte executivo para rotinas corporativas exigentes, com foco em segurança, conforto e eficiência."
+  },
+  "admin": {
+    "title": "Painel administrativo",
+    "login": "Entrar",
+    "email": "E-mail",
+    "password": "Senha",
+    "placeholder": "Auth Supabase · leads, agenda, frete e frota entram nas próximas iterações."
+  },
+  "footer": {
+    "contact": "Fale Conosco",
+    "whatsapp": "Atendimento via WhatsApp",
+    "rights": "Todos os direitos reservados."
+  }
+}

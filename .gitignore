@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.local
+web/.env
+web/dist/
+.DS_Store
+*.log
+.supabase/
+.cursor/
+.impeccable/

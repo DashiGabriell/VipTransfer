@@ -1,512 +1,1191 @@
 <!DOCTYPE html>
-<html class="scroll-smooth" lang="en">
-
+<html lang="pt-BR">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Premier Limo - Luxury Chauffeur Service</title>
-    <meta
-        content="Premium limousine and chauffeur services for corporate travel, airport transfers, and special events."
-        name="description" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;family=Playfair+Display:wght@400;600&amp;display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ["Manrope", "sans-serif"],
-                        serif: ["Playfair Display", "serif"],
-                    },
-                    colors: {
-                        primary: "#20324D",
-                        "primary-dark": "#18263B",
-                        "background-light": "#F3EFE8",
-                        "background-dark": "#000000",
-                        "surface-light": "#FFFFFF",
-                        "surface-dark": "#111418",
-                        "text-primary-light": "#000000",
-                        "text-primary-dark": "#F3EFE8",
-                        "text-secondary-light": "#4A4F57",
-                        "text-secondary-dark": "#D6D7D9",
-                        "border-light": "#D6D7D9",
-                        "border-dark": "#2A2E35",
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                        'xl': '1rem',
-                        '2xl': '1.5rem',
-                        '3xl': '2rem',
-                    },
-                },
-            },
-        };
-    </script>
-    <style>
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JMD Transfer — Mobilidade executiva em São Paulo</title>
+  <meta name="description" content="Transfer executivo em São Paulo: aeroportos GRU, CGH e VCP, rotinas corporativas e atendimento VIP. Frota premium com blindagem opcional." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600&family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #152033;
+      --ink-deep: #0e1624;
+      --paper: #f2ebe0;
+      --paper-warm: #f7f2ea;
+      --paper-line: #d8cfc0;
+      --bronze: #b08d57;
+      --bronze-deep: #6e542c;
+      --muted: #4f483f;
+      --muted-soft: #5c5348;
+      --field-navy: #1a2740;
+      --field-bronze: #c4a46a;
+      --white: #fffdf8;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --font-display: "Bodoni Moda", "Times New Roman", serif;
+      --font-sans: "Public Sans", system-ui, sans-serif;
+    }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--ink-deep);
+      color: var(--paper);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    img { max-width: 100%; display: block; height: auto; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select {
+      font: inherit;
+      color: inherit;
+    }
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
+      opacity: 0.9;
+    }
+    #servicos, #frota, #atuacao, #contato, #cotacao, #inicio {
+      scroll-margin-top: 5.5rem;
+    }
+    ::selection {
+      background: var(--bronze);
+      color: var(--ink);
+    }
+    :focus-visible {
+      outline: 2px solid var(--bronze);
+      outline-offset: 3px;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--ink-deep); }
+    ::-webkit-scrollbar-thumb { background: #2c3a52; border-radius: 0; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bronze); }
+
+    .skip {
+      position: absolute;
+      left: -999px;
+      top: 0;
+      background: var(--paper);
+      color: var(--ink);
+      padding: 0.75rem 1rem;
+      z-index: 100;
+    }
+    .skip:focus { left: 1rem; top: 1rem; }
+
+    /* —— Nav —— */
+    .site-nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding: 1.1rem clamp(1.25rem, 4vw, 3rem);
+      padding-top: max(1.1rem, env(safe-area-inset-top));
+      transition: background 0.4s var(--ease-out), border-color 0.4s var(--ease-out), backdrop-filter 0.4s;
+      border-bottom: 1px solid transparent;
+    }
+    .site-nav.is-solid {
+      background: color-mix(in srgb, var(--ink) 94%, transparent);
+      border-bottom-color: color-mix(in srgb, var(--bronze) 28%, transparent);
+      backdrop-filter: blur(12px);
+    }
+    .nav-brand {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: none;
+      gap: 1.75rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-links a {
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--paper) 78%, transparent);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--paper); }
+    .nav-cta {
+      display: none;
+      background: var(--bronze);
+      color: var(--ink);
+      border: 0;
+      padding: 0.75rem 1.2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s var(--ease-out);
+    }
+    .nav-cta:hover { background: var(--field-bronze); }
+    .nav-cta:active { transform: translateY(1px); }
+    .nav-toggle {
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border: 1px solid color-mix(in srgb, var(--paper) 28%, transparent);
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .nav-toggle:hover {
+      border-color: color-mix(in srgb, var(--paper) 55%, transparent);
+      background: color-mix(in srgb, var(--paper) 6%, transparent);
+    }
+    .nav-toggle-bars {
+      display: block;
+      width: 1.1rem;
+      height: 1px;
+      background: var(--paper);
+      position: relative;
+      transition: background 0.2s;
+    }
+    .nav-toggle-bars::before,
+    .nav-toggle-bars::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: inherit;
+      transition: transform 0.25s var(--ease-out), top 0.25s var(--ease-out);
+    }
+    .nav-toggle-bars::before { top: -6px; }
+    .nav-toggle-bars::after { top: 6px; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bars { background: transparent; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bars::before {
+      top: 0;
+      transform: rotate(45deg);
+      background: var(--paper);
+    }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bars::after {
+      top: 0;
+      transform: rotate(-45deg);
+      background: var(--paper);
+    }
+    .nav-drawer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      background: var(--ink);
+      padding: 6.5rem max(1.5rem, env(safe-area-inset-right)) 2rem max(1.5rem, env(safe-area-inset-left));
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .nav-drawer.is-open { display: flex; }
+    .nav-drawer a {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 6vw, 2.4rem);
+      border-bottom: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
+      padding: 0.85rem 0.15rem;
+      transition: color 0.2s, padding-left 0.25s var(--ease-out);
+    }
+    .nav-drawer a:hover {
+      color: var(--bronze);
+      padding-left: 0.4rem;
+    }
+
+    @media (min-width: 900px) {
+      .nav-links, .nav-cta { display: flex; }
+      .nav-toggle { display: none; }
+    }
+
+    /* —— Hero folio —— */
+    .hero {
+      min-height: 100svh;
+      padding: 5.5rem clamp(1rem, 3vw, 2rem) 2.5rem;
+      display: grid;
+      align-items: center;
+      position: relative;
+      overflow: clip;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 55vw;
+      height: 55vw;
+      right: -10%;
+      top: 10%;
+      background: radial-gradient(circle, color-mix(in srgb, var(--bronze) 18%, transparent), transparent 70%);
+      pointer-events: none;
+      filter: blur(8px);
+    }
+    .folio {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 0;
+      box-shadow:
+        0 28px 70px rgba(0, 0, 0, 0.42),
+        0 2px 0 color-mix(in srgb, var(--bronze) 55%, transparent);
+    }
+    .folio-spine {
+      display: none;
+      background: var(--ink);
+      color: var(--paper);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.42em;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      border-right: 3px solid var(--bronze);
+      padding: 1rem 0.85rem;
+    }
+    .folio-page {
+      padding: clamp(1.5rem, 4vw, 3.5rem);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1rem, 2.5vw, 1.5rem);
+      position: relative;
+      background-color: var(--paper-warm);
+      background-image:
+        linear-gradient(90deg, color-mix(in srgb, var(--field-navy) 7%, transparent) 0, color-mix(in srgb, var(--field-navy) 7%, transparent) 3.25rem, transparent 3.25rem),
+        linear-gradient(90deg, transparent 3.2rem, color-mix(in srgb, var(--bronze) 30%, transparent) 3.2rem, color-mix(in srgb, var(--bronze) 30%, transparent) calc(3.2rem + 1px), transparent calc(3.2rem + 1px));
+    }
+    .folio-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem 1.25rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .folio-mark {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .folio-meta {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .folio-title {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: clamp(2.05rem, 6.2vw, 4.2rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      max-width: 14ch;
+      margin: 0.25rem 0 0;
+      text-wrap: balance;
+    }
+    .folio-lead {
+      position: relative;
+      z-index: 1;
+      max-width: 42ch;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+      margin: 0;
+      line-height: 1.6;
+    }
+    .route-trace {
+      position: relative;
+      z-index: 1;
+      height: 1px;
+      width: 100%;
+      max-width: 28rem;
+      background: var(--paper-line);
+      overflow: hidden;
+    }
+    .route-trace span {
+      display: block;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--bronze), var(--ink));
+      transform-origin: left center;
+    }
+
+    .itinerary {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 0;
+      margin-top: 0.5rem;
+      max-width: 40rem;
+    }
+    .itinerary-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+      align-items: start;
+      padding: 0.9rem 0.85rem;
+      border-bottom: 1px solid var(--ink);
+      background: color-mix(in srgb, var(--paper) 88%, transparent);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    @media (min-width: 520px) {
+      .itinerary-row {
+        grid-template-columns: 6.5rem 1fr;
+        gap: 1rem;
+        align-items: end;
+      }
+    }
+    .itinerary-row:focus-within {
+      background: var(--white);
+      box-shadow: inset 0 -2px 0 var(--bronze);
+    }
+    .itinerary-row.is-invalid {
+      box-shadow: inset 0 -2px 0 #9b3b2e;
+    }
+    .itinerary-row label {
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 0.1rem;
+    }
+    .itinerary-row input,
+    .itinerary-row select {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      padding: 0.25rem 0;
+      font-size: 1rem;
+      color: var(--ink);
+      border-radius: 0;
+      caret-color: var(--bronze);
+    }
+    .itinerary-row input:focus,
+    .itinerary-row select:focus {
+      outline: none;
+    }
+    .itinerary-row select { cursor: pointer; }
+    .itinerary-row input[type="datetime-local"] {
+      min-height: 1.5rem;
+      color-scheme: light;
+    }
+    .itinerary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 1.15rem;
+      position: relative;
+      z-index: 1;
+    }
+    .btn-primary {
+      appearance: none;
+      border: 0;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0.95rem 1.4rem;
+      min-height: 2.85rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.25s var(--ease-out);
+    }
+    .btn-primary:hover {
+      background: var(--field-navy);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-primary:disabled {
+      opacity: 0.55;
+      cursor: wait;
+      transform: none;
+    }
+    .btn-ghost {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+      background: transparent;
+      color: var(--ink);
+      padding: 0.9rem 1.2rem;
+      min-height: 2.85rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover {
+      border-color: var(--ink);
+      background: color-mix(in srgb, var(--ink) 4%, transparent);
+    }
+    .form-note {
+      font-size: 0.8rem;
+      color: var(--muted-soft);
+      margin: 0.35rem 0 0;
+      line-height: 1.45;
+    }
+    .form-status {
+      margin: 0.5rem 0 0;
+      font-size: 0.85rem;
+      color: var(--bronze-deep);
+      min-height: 1.25em;
+    }
+    .form-status.is-error { color: #9b3b2e; }
+    .form-status.is-ok { color: #2f5d3a; }
+
+    @media (min-width: 900px) {
+      .folio {
+        grid-template-columns: 4.25rem 1fr;
+        min-height: min(78svh, 780px);
+      }
+      .folio-spine { display: flex; }
+      .folio-page {
+        padding-left: clamp(2.5rem, 5vw, 4.5rem);
+      }
+      .folio-mark { letter-spacing: 0.28em; }
+      .folio-meta { letter-spacing: 0.12em; }
+    }
+
+    /* —— Sections —— */
+    .section {
+      padding: clamp(4.5rem, 10vw, 7.5rem) clamp(1.35rem, 5vw, 4rem);
+    }
+    .section-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    .section-paper {
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .section-ink {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .section-head {
+      max-width: 38rem;
+      margin-bottom: clamp(2.5rem, 6vw, 4rem);
+    }
+    .section-head h2 {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: clamp(2rem, 4.5vw, 3.25rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0 0 1rem;
+      text-wrap: balance;
+    }
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 52ch;
+    }
+    .section-ink .section-head p {
+      color: color-mix(in srgb, var(--paper) 68%, transparent);
+    }
+
+    /* Services as schedule */
+    .schedule {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--paper-line);
+    }
+    .schedule-item {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      padding: 1.75rem 0;
+      border-bottom: 1px solid var(--paper-line);
+      align-items: start;
+    }
+    .schedule-item h3 {
+      font-family: var(--font-display);
+      font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+      font-weight: 500;
+      margin: 0 0 0.35rem;
+    }
+    .schedule-item p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 48ch;
+    }
+    .schedule-code {
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--bronze-deep);
+      font-weight: 600;
+    }
+    .schedule-media {
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      background: var(--ink);
+    }
+    .schedule-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s var(--ease-out);
+    }
+    .schedule-item:hover .schedule-media img {
+      transform: scale(1.04);
+    }
+    @media (min-width: 800px) {
+      .schedule-item {
+        grid-template-columns: 9rem 1.1fr 0.9fr;
+        gap: 2rem;
+        align-items: center;
+      }
+      .schedule-item:nth-child(even) .schedule-media {
+        order: -1;
+      }
+      .schedule-item:nth-child(even) {
+        grid-template-columns: 0.9fr 9rem 1.1fr;
+      }
+      .schedule-item:nth-child(even) .schedule-code { order: 2; }
+      .schedule-item:nth-child(even) .schedule-copy { order: 3; }
+    }
+
+    /* Fleet dossier */
+    .fleet-grid {
+      display: grid;
+      gap: 1.25rem;
+    }
+    @media (min-width: 800px) {
+      .fleet-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    }
+    .fleet-sheet {
+      background: var(--paper-warm);
+      color: var(--ink);
+      border: 1px solid var(--paper-line);
+      padding: 1.5rem;
+      display: grid;
+      gap: 1.25rem;
+      transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+    }
+    .fleet-sheet:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+    }
+    .fleet-sheet h3 {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 500;
+      margin: 0 0 0.35rem;
+    }
+    .fleet-sheet .spec {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .fleet-sheet .visual {
+      height: 12rem;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 4%, transparent)),
+        var(--paper);
+      border-bottom: 1px solid var(--paper-line);
+      overflow: hidden;
+    }
+    .fleet-sheet .visual img {
+      max-height: 100%;
+      width: auto;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+    }
+    .fleet-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--paper-line);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .fleet-foot strong {
+      color: var(--ink);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+    .fleet-sheet:focus-within {
+      outline: 2px solid var(--bronze);
+      outline-offset: 2px;
+    }
+
+    /* Coverage strips */
+    .coverage {
+      display: grid;
+      gap: 0.75rem;
+    }
+    @media (min-width: 700px) {
+      .coverage { grid-template-columns: repeat(4, 1fr); }
+    }
+    .coverage-cell {
+      position: relative;
+      min-height: 16rem;
+      overflow: hidden;
+      background: var(--ink-deep);
+    }
+    .coverage-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.72;
+      transition: transform 0.7s var(--ease-out), opacity 0.3s;
+    }
+    .coverage-cell:hover img {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+    .coverage-cell span {
+      position: absolute;
+      left: 0.9rem;
+      right: 0.9rem;
+      bottom: 0.9rem;
+      padding: 0.75rem 0.85rem;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .cta-band {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 2.5rem;
+      margin-top: 2.5rem;
+      border-top: 1px solid color-mix(in srgb, var(--paper) 16%, transparent);
+    }
+    .cta-band p {
+      margin: 0;
+      max-width: 36ch;
+      color: color-mix(in srgb, var(--paper) 72%, transparent);
+    }
+    .section-ink .btn-primary {
+      background: var(--bronze);
+      color: var(--ink);
+    }
+    .section-ink .btn-primary:hover {
+      background: var(--field-bronze);
+    }
+
+    /* Footer */
+    .site-footer {
+      background: var(--ink-deep);
+      color: color-mix(in srgb, var(--paper) 72%, transparent);
+      padding: 3.5rem clamp(1.25rem, 5vw, 4rem) 2rem;
+      border-top: 1px solid color-mix(in srgb, var(--bronze) 25%, transparent);
+    }
+    .footer-grid {
+      display: grid;
+      gap: 2.5rem;
+    }
+    @media (min-width: 800px) {
+      .footer-grid {
+        grid-template-columns: 1.4fr 1fr 1fr;
+      }
+    }
+    .footer-brand {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--paper);
+      margin-bottom: 1rem;
+    }
+    .footer-grid h3 {
+      margin: 0 0 0.85rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--bronze);
+      font-weight: 600;
+    }
+    .footer-grid ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .footer-grid a:hover { color: var(--paper); }
+    .footer-bottom {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid color-mix(in srgb, var(--paper) 10%, transparent);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      font-size: 0.75rem;
+    }
+
+    /* WhatsApp */
+    .wa-fab {
+      position: fixed;
+      right: max(1.25rem, env(safe-area-inset-right));
+      bottom: max(1.25rem, env(safe-area-inset-bottom));
+      z-index: 45;
+      width: 3.4rem;
+      height: 3.4rem;
+      border-radius: 0;
+      background: var(--bronze);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      transition: background 0.2s, transform 0.2s var(--ease-out);
+    }
+    .wa-fab:hover {
+      background: var(--field-bronze);
+      transform: translateY(-2px);
+    }
+    .wa-fab:active { transform: translateY(0); }
+    .wa-fab svg { width: 1.35rem; height: 1.35rem; }
+
+    /* Reveal helpers — visible by default */
+    .reveal { opacity: 1; transform: none; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 519px) {
+      .hero {
+        padding-top: 5rem;
+        padding-bottom: 1.75rem;
+        align-items: start;
+      }
+      .folio-page {
+        background-image: none;
+        padding: 1.35rem 1.15rem 1.5rem;
+      }
+      .itinerary-actions .btn-primary,
+      .itinerary-actions .btn-ghost {
+        flex: 1 1 10rem;
+        text-align: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
 </head>
+<body>
+  <a class="skip" href="#cotacao">Ir para cotação</a>
 
-<body
-    class="bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark font-sans transition-colors duration-300">
-    <nav
-        class="absolute top-0 w-full z-50 text-text-primary-light dark:text-text-primary-dark p-6 md:px-12 flex justify-between items-center bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm">
-        <div class="flex flex-col">
-            <div class="text-xl md:text-2xl font-bold tracking-widest font-sans uppercase text-primary">JMD TRANSFER
-            </div>
-            <span
-                class="text-[0.6rem] md:text-xs tracking-wider font-light text-text-secondary-light dark:text-text-secondary-dark uppercase hidden md:block">Mobilidade
-                Executiva com Segurança e Discrição</span>
-        </div>
-        <div class="hidden md:flex items-center space-x-8 text-sm font-medium tracking-wide">
-            <a class="hover:text-primary transition-colors" href="#inicio">Início</a>
-            <a class="hover:text-primary transition-colors" href="#servicos">Serviços</a>
-            <a class="hover:text-primary transition-colors" href="#frota">Frota</a>
-            <a class="hover:text-primary transition-colors" href="#atuacao">Atuação</a>
-            <a class="hover:text-primary transition-colors" href="#contato">Contato</a>
-            <button class="bg-primary/10 text-primary p-2 rounded-full hover:bg-primary/20 transition hidden">
-                <span class="material-icons-outlined">menu</span>
-            </button>
-        </div>
-        <div class="hidden md:block">
-            <button
-                class="bg-primary text-text-primary-dark px-6 py-2 rounded-full font-semibold hover:bg-primary-dark transition text-sm">
-                Solicitar Transfer
-            </button>
-        </div>
-        <button class="md:hidden text-text-primary-light dark:text-text-primary-dark">
-            <span class="material-icons-outlined text-3xl">menu</span>
-        </button>
+  <header class="site-nav" id="siteNav">
+    <a class="nav-brand" href="#inicio">JMD Transfer</a>
+    <nav aria-label="Principal">
+      <ul class="nav-links">
+        <li><a href="#servicos">Serviços</a></li>
+        <li><a href="#frota">Frota</a></li>
+        <li><a href="#atuacao">Atuação</a></li>
+        <li><a href="#contato">Contato</a></li>
+      </ul>
     </nav>
-    <header id="inicio" class="relative w-full min-h-[90vh] flex items-center bg-background-light dark:bg-background-dark">
-        <div class="absolute inset-0 z-0">
-            <img alt="Nissan Kicks cinza chumbo ano 2024 viajando" class="w-full h-full object-cover opacity-70"
-                src="https://i.postimg.cc/4yBCJYM5/nissan-kicks-cinza-chumbo-ano-2024-viajando.jpg" />
-            <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent"></div>
-        </div>
-        <div class="relative z-10 container mx-auto px-6 md:px-12 grid lg:grid-cols-2 gap-12 items-center pt-20">
-            <div class="text-text-primary-light dark:text-text-primary-dark space-y-6">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight tracking-tight">
-                    Transfer Executivo Premium em São Paulo, com <span class="text-primary">Segurança e Pontualidade
-                        Absoluta</span>
-                </h1>
-                <p
-                    class="text-white text-sm md:text-base max-w-lg leading-relaxed">
-                    Atendemos executivos, empresas e clientes VIP com transfer aeroporto, viagens corporativas e
-                    deslocamentos estratégicos, utilizando frota premium com opção de veículos blindados e motoristas
-                    altamente qualificados.
-                </p>
-                <ul
-                    class="text-sm text-white space-y-2 mb-6 hidden md:block">
-                    <li class="flex items-center"><span class="text-primary text-sm mr-2" aria-hidden="true">🔹</span> Atendimento
-                        executivo personalizado</li>
-                    <li class="flex items-center"><span class="text-primary text-sm mr-2" aria-hidden="true">🔹</span> Aeroporto GRU,
-                        CGH e VCP</li>
-                    <li class="flex items-center"><span class="text-primary text-sm mr-2" aria-hidden="true">🔹</span> Frota premium
-                        e veículos blindados</li>
-                    <li class="flex items-center"><span class="text-primary text-sm mr-2" aria-hidden="true">🔹</span> Discrição,
-                        segurança e pontualidade</li>
-                </ul>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button
-                        class="bg-primary text-text-primary-dark px-8 py-3 rounded-full font-semibold hover:bg-primary-dark transition transform hover:scale-105 duration-200">
-                        Solicitar Cotação Agora
-                    </button>
-                </div>
-            </div>
-            <div
-                class="lg:justify-self-end w-full max-w-md bg-surface-light dark:bg-surface-dark rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-sm">
-                <div class="mb-6 border-b border-border-light dark:border-border-dark pb-4">
-                    <h3 class="text-xl font-bold text-primary">Cotação Rápida</h3>
-                    <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-1">Transfer Executivo
-                    </p>
-                </div>
-                <form class="space-y-4">
-                    <div class="relative">
-                        <input
-                            class="w-full border-0 border-b border-border-light dark:border-border-dark bg-transparent py-2.5 px-0 text-gray-900 dark:text-text-primary-dark focus:ring-0 focus:border-primary placeholder-text-secondary-light dark:placeholder-text-secondary-dark text-sm"
-                            placeholder="Endereço de origem" type="text" />
-                        <span
-                            class="material-icons-outlined absolute right-0 top-2 text-gray-400 text-sm">location_on</span>
-                    </div>
-                    <div class="relative">
-                        <input
-                            class="w-full border-0 border-b border-border-light dark:border-border-dark bg-transparent py-2.5 px-0 text-gray-900 dark:text-text-primary-dark focus:ring-0 focus:border-primary placeholder-text-secondary-light dark:placeholder-text-secondary-dark text-sm"
-                            placeholder="Destino" type="text" />
-                        <span
-                            class="material-icons-outlined absolute right-0 top-2 text-gray-400 text-sm">location_on</span>
-                    </div>
-                    <div class="relative">
-                        <select
-                            class="w-full border-0 border-b border-border-light dark:border-border-dark bg-transparent py-2.5 px-0 text-primary focus:ring-0 focus:border-primary text-sm">
-                            <option value="" disabled selected>Tipo de serviço</option>
-                            <option>Aeroporto</option>
-                            <option>Corporativo</option>
-                            <option>Horas à disposição</option>
-                            <option>Viagem</option>
-                        </select>
-                        <span
-                            class="material-icons-outlined absolute right-0 top-2 text-gray-400 text-sm">swap_vert</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <div class="relative w-1/2">
-                            <input
-                                class="w-full border-0 border-b border-border-light dark:border-border-dark bg-transparent py-2.5 px-0 text-primary focus:ring-0 focus:border-primary text-sm"
-                                type="date" placeholder="Data" />
-                        </div>
-                        <div class="relative w-1/2">
-                            <input
-                                class="w-full border-0 border-b border-border-light dark:border-border-dark bg-transparent py-2.5 px-0 text-primary focus:ring-0 focus:border-primary text-sm"
-                                type="time" placeholder="Horário" />
-                        </div>
-                    </div>
-                    <div class="pt-2">
-                        <button
-                            class="w-full bg-gray-900 dark:bg-black text-text-primary-dark py-3 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-900 transition mb-2"
-                            type="submit">
-                            Solicitar Cotação
-                        </button>
-                        <p class="text-center text-xs text-text-secondary-light dark:text-text-secondary-dark">Retorno
-                            rápido com atendimento personalizado.</p>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <button class="nav-cta" type="button" data-scroll="#cotacao">Solicitar transfer</button>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="navDrawer" id="navToggle" aria-label="Abrir menu">
+      <span class="nav-toggle-bars" aria-hidden="true"></span>
+    </button>
+  </header>
 
-    </header>
-    <section id="servicos" class="py-20 md:py-32 container mx-auto px-6 md:px-12 relative">
-        <span
-            class="absolute top-10 left-6 md:left-12 text-6xl md:text-8xl font-serif text-border-light/50 dark:text-border-dark/50 select-none z-0"></span>
-        <div class="relative z-10">
-            <h2 class="text-3xl md:text-4xl font-semibold text-center mb-4 text-primary">Soluções de Mobilidade
-                Executiva sob Medida</h2>
-            <p class="text-center text-text-secondary-light dark:text-text-secondary-dark max-w-2xl mx-auto mb-16">
-                Oferecemos serviços de transporte executivo pensados para atender rotinas corporativas exigentes, com
-                foco em segurança, conforto e eficiência logística.
-            </p>
-            <div class="grid md:grid-cols-3 gap-8 mb-16">
-                <div class="group relative overflow-hidden rounded-3xl h-80 cursor-pointer">
-                    <img alt="Corporate Travel"
-                        class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                        src="https://i.postimg.cc/9MtTQ92F/image1.jpg" />
-                    <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
-                    <div
-                        class="absolute top-6 left-6 bg-surface-light dark:bg-surface-dark text-primary px-4 py-1.5 rounded-full text-sm font-medium">
-                        Corporativo
-                    </div>
-                    <div class="absolute bottom-6 left-6 right-16">
-                        <h3 class="text-white text-lg font-bold mb-1">Transfer Executivo Corporativo</h3>
-                        <p class="text-gray-200 text-xs line-clamp-2">Ideal para executivos e reuniões estratégicas com
-                            total discrição.</p>
-                    </div>
-                    <div class="absolute bottom-6 right-6">
-                        <button
-                            class="bg-white/20 backdrop-blur-md p-3 rounded-full text-text-primary-dark hover:bg-white hover:text-black transition"
-                            title="Solicitar esse serviço">
-                            <span class="material-icons-outlined text-sm">arrow_outward</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="group relative overflow-hidden rounded-3xl h-80 cursor-pointer md:-mt-8">
-                    <img alt="Avião comercial taxiando no pátio"
-                        class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                        src="https://i.postimg.cc/Dfxn3zGW/avi-o-comercial-estacionado-no-p-tio-ou-taxiando-(1).jpg" />
-                    <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
-                    <div
-                        class="absolute top-6 left-6 bg-surface-light dark:bg-surface-dark text-primary px-4 py-1.5 rounded-full text-sm font-medium">
-                        Aeroporto
-                    </div>
-                    <div class="absolute bottom-6 left-6 right-16">
-                        <h3 class="text-white text-lg font-bold mb-1">Transfer Aeroporto (GRU/CGH/VCP)</h3>
-                        <p class="text-gray-200 text-xs line-clamp-2">Monitoramento de voos e pontualidade no embarque e
-                            desembarque.</p>
-                    </div>
-                    <div class="absolute bottom-6 right-6">
-                        <button
-                            class="bg-white/20 backdrop-blur-md p-3 rounded-full text-text-primary-dark hover:bg-white hover:text-black transition"
-                            title="Solicitar esse serviço">
-                            <span class="material-icons-outlined text-sm">arrow_outward</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="group relative overflow-hidden rounded-3xl h-80 cursor-pointer">
-                    <img alt="Special Events"
-                        class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                        src="https://i.postimg.cc/C1z1WfKX/altere-o-modelo-do-carro-para-que.jpg" />
-                    <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
-                    <div
-                        class="absolute top-6 left-6 bg-surface-light dark:bg-surface-dark text-primary px-4 py-1.5 rounded-full text-sm font-medium">
-                        Eventos VIP
-                    </div>
-                    <div class="absolute bottom-6 left-6 right-16">
-                        <h3 class="text-white text-lg font-bold mb-1">Viagens VIP e Eventos</h3>
-                        <p class="text-gray-200 text-xs line-clamp-2">Transporte VIP para roadshows, eventos e ocasiões
-                            especiais.</p>
-                    </div>
-                    <div class="absolute bottom-6 right-6">
-                        <button
-                            class="bg-white/20 backdrop-blur-md p-3 rounded-full text-text-primary-dark hover:bg-white hover:text-black transition"
-                            title="Solicitar esse serviço">
-                            <span class="material-icons-outlined text-sm">arrow_outward</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="text-center max-w-2xl mx-auto space-y-8">
-                <button
-                    class="bg-primary text-text-primary-dark px-8 py-3 rounded-full font-semibold hover:bg-primary-dark transition transform hover:scale-105 duration-200">
-                    Falar com um Especialista
-                </button>
-            </div>
-        </div>
-    </section>
-    <section id="frota"
-        class="py-20 md:py-32 container mx-auto px-6 md:px-12 relative border-t border-gray-200 dark:border-gray-800">
-        <span
-            class="absolute top-10 left-6 md:left-12 text-6xl md:text-8xl font-serif text-border-light/50 dark:text-border-dark/50 select-none z-0"></span>
-        <div class="relative z-10">
-            <div class="flex flex-col items-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-semibold text-primary mb-4">Frota Executiva Premium</h2>
-                <p class="text-center text-text-secondary-light dark:text-text-secondary-dark max-w-2xl">
-                    Nossa frota é composta por veículos de alto padrão, cuidadosamente selecionados para oferecer
-                    conforto, segurança e discrição, atendendo desde executivos individuais até demandas corporativas
-                    completas.
-                </p>
-                <div
-                    class="flex flex-wrap justify-center gap-4 md:gap-8 text-sm font-medium uppercase tracking-wider hidden">
-                    <!-- Hidden filter buttons as we only show main categories -->
-                    <button
-                        class="bg-gray-900 dark:bg-white text-text-primary-dark dark:text-black px-6 py-2 rounded-full">All</button>
-                    <button
-                        class="text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-900 dark:hover:text-text-primary-dark transition">Sedan</button>
-                    <button
-                        class="text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-900 dark:hover:text-text-primary-dark transition">Luxury</button>
-                    <button
-                        class="text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-900 dark:hover:text-text-primary-dark transition">Limousine</button>
-                    <button
-                        class="text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-900 dark:hover:text-text-primary-dark transition">SUV</button>
-                </div>
-            </div>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div
-                    class="bg-surface-light dark:bg-surface-dark rounded-3xl p-8 hover:shadow-xl transition duration-300">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="text-xl font-bold text-primary">SUV Executivo Premium</h3>
-                            <p class="text-text-secondary-light dark:text-text-secondary-dark text-sm mt-1">Conforto
-                                superior &bull; Blindagem opcional</p>
-                        </div>
-                    </div>
-                    <div class="h-48 flex items-center justify-center mb-6">
-                        <img alt="Cadillac Escalade"
-                            class="max-h-full object-contain mix-blend-multiply dark:mix-blend-normal rounded-lg"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrKGgjZHah1JBC78jwkS7p2FbsNNb962egrS7p5EOpJmfSOI-CERaeSDnAI9Pk7WQ137r9CVqfANyogx3sFmwmUWILJxYoMcV1G0gg0P_bAAAYKfEjydPorDCG6XllFTxuMlp6q3DBqsyWbUrnCifV99T1A8132qKv-dq1vUElw1GqQk8DkFGLbpSI3ZqyacK3Uay0c8WkodpQ9sf3mleXyxk6UkWMu2A5Q_Lx1FdvUbyRKO8z0j09RPlbkCssD-qudPkopceJx7YK" />
-                    </div>
-                    <div class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-6">
-                        <div class="flex space-x-3 text-gray-400 dark:text-gray-500">
-                            <span class="material-icons-outlined text-lg">person</span>
-                            <span class="text-xs">7</span>
-                            <span class="material-icons-outlined text-lg ml-2">luggage</span>
-                            <span class="text-xs">5</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-medium text-primary">Consultar disponibilidade</span>
-                            <button
-                                class="bg-primary text-text-primary-dark p-2 rounded-full hover:bg-primary-dark transition">
-                                <span class="material-icons-outlined text-sm">arrow_outward</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-surface-light dark:bg-surface-dark rounded-3xl p-8 hover:shadow-xl transition duration-300">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="text-xl font-bold text-primary">Sedan Executivo de Luxo</h3>
-                            <p class="text-text-secondary-light dark:text-text-secondary-dark text-sm mt-1">Elegância e
-                                discrição &bull; Atendimento VIP</p>
-                        </div>
-                    </div>
-                    <div class="h-48 flex items-center justify-center mb-6">
-                        <img alt="Mercedes Benz S Class"
-                            class="max-h-full object-contain mix-blend-multiply dark:mix-blend-normal rounded-lg"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsWDS3QL7XeJOe7fxRn2tQRWPOjiBrOfaGoNKZKCkHTBk8_U-9hv7PIsK55WzuDXGtVaIF5laoWGQ392NB7fOUsAdQ8lrhhHHTLAQs54XylAhnkBAS9RUdIU4sLj3XduboMvNdQidGC0vLY9Ko76Gglkj2hp8SwPOhQGGwqy_lB40yhW58y7Bm_ykLZBLviNZvRj3JOMwsXW9pVnUfk0VzvwfDQuJ45A3rWKP2jHbp7dqtP2LarUArByS0N--tbL5cMnLOE9SNzAL-" />
-                    </div>
-                    <div class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-6">
-                        <div class="flex space-x-3 text-gray-400 dark:text-gray-500">
-                            <span class="material-icons-outlined text-lg">person</span>
-                            <span class="text-xs">3</span>
-                            <span class="material-icons-outlined text-lg ml-2">luggage</span>
-                            <span class="text-xs">2</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-medium text-primary">Consultar disponibilidade</span>
-                            <button
-                                class="bg-primary text-text-primary-dark p-2 rounded-full hover:bg-primary-dark transition">
-                                <span class="material-icons-outlined text-sm">arrow_outward</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="flex justify-between items-center mt-12">
-                <div class="flex space-x-2">
-                    <button
-                        class="w-10 h-10 rounded-full border border-border-light dark:border-border-dark flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        <span
-                            class="material-icons-outlined text-text-secondary-light dark:text-text-secondary-dark">arrow_back</span>
-                    </button>
-                    <button
-                        class="w-10 h-10 rounded-full border border-border-light dark:border-border-dark flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        <span
-                            class="material-icons-outlined text-text-secondary-light dark:text-text-secondary-dark">arrow_forward</span>
-                    </button>
-                </div>
-                <button
-                    class="bg-primary text-text-primary-dark px-8 py-3 rounded-full font-semibold hover:bg-primary-dark transition transform hover:scale-105 duration-200">
-                    Solicitar Cotação da Frota
-                </button>
-            </div>
-        </div>
-    </section>
-    <section id="atuacao" class="py-20 md:py-32 container mx-auto px-6 md:px-12 relative">
-        <span
-            class="absolute top-10 left-6 md:left-12 text-6xl md:text-8xl font-serif text-border-light/50 dark:text-border-dark/50 select-none z-0"></span>
-        <div class="relative z-10 flex flex-col md:flex-row gap-12">
-            <div class="md:w-1/3 pt-12 space-y-8">
-                <h2 class="text-3xl md:text-4xl font-semibold text-primary">Atuação Estratégica em São Paulo e
-                    Principais Regiões</h2>
-                <p class="text-text-secondary-light dark:text-text-secondary-dark leading-relaxed">
-                    Operamos com excelência em São Paulo (capital) e nas principais regiões estratégicas para negócios,
-                    garantindo deslocamentos eficientes e seguros nos principais eixos corporativos e aeroportuários.
-                </p>
-                <button
-                    class="bg-primary text-text-primary-dark px-8 py-3 rounded-full font-semibold hover:bg-primary-dark transition transform hover:scale-105 duration-200">
-                    Ver Disponibilidade na Sua Região
-                </button>
-            </div>
-            <div class="md:w-2/3 overflow-x-auto pb-4 no-scrollbar">
-                <div class="flex space-x-4 min-w-max">
-                    <div class="relative w-48 h-96 rounded-3xl overflow-hidden group cursor-pointer">
-                        <img alt="New York"
-                            class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                            src="https://i.postimg.cc/VkZBMn2S/SPEGRANDESP.jpg" />
-                        <div class="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition"></div>
-                        <div
-                            class="absolute top-4 left-4 right-4 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur text-center py-2 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
-                            SP e GRANDE SP
-                        </div>
-                    </div>
-                    <div class="relative w-48 h-96 rounded-3xl overflow-hidden group cursor-pointer">
-                        <img alt="Atlanta"
-                            class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                            src="https://i.postimg.cc/HnLkQcqk/GRU.jpg" />
-                        <div class="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition"></div>
-                        <div
-                            class="absolute top-4 left-4 right-4 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur text-center py-2 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
-                            Aeroporto GRU
-                        </div>
-                    </div>
-                    <div class="relative w-48 h-96 rounded-3xl overflow-hidden group cursor-pointer">
-                        <img alt="Boston"
-                            class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                            src="https://i.postimg.cc/VsHYx6yC/CGH.jpg" />
-                        <div class="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition"></div>
-                        <div
-                            class="absolute top-4 left-4 right-4 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur text-center py-2 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
-                            Aeroporto CGH
-                        </div>
-                    </div>
-                    <div class="relative w-48 h-96 rounded-3xl overflow-hidden group cursor-pointer">
-                        <img alt="Chicago"
-                            class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                            src="https://i.postimg.cc/vZyHzKwF/VCP.jpg" />
-                        <div class="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition"></div>
-                        <div
-                            class="absolute top-4 left-4 right-4 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur text-center py-2 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
-                            Aeroporto VCP
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <footer id="contato" class="bg-background-dark text-text-secondary-dark py-16 text-sm">
-        <div class="container mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            <div class="space-y-6">
-                <h3 class="text-text-primary-dark text-xl font-bold tracking-widest uppercase">JMD Transfer</h3>
-                <div class="space-y-1">
-                    <p>Somos uma empresa especializada em transfer executivo premium.</p>
-                </div>
-                <div class="space-y-1">
-                    <p>São Paulo – SP</p>
-                    <p class="text-text-primary-dark">contato@jmdtransfer.com.br</p>
-                    <p>Atendimento via WhatsApp</p>
-                </div>
-            </div>
-            <div class="space-y-4">
-                <h4 class="text-text-primary-dark font-semibold">Links Rápidos</h4>
-                <ul class="space-y-2">
-                    <li><a class="hover:text-text-primary-dark transition" href="#">Transfer Aeroporto</a></li>
-                    <li><a class="hover:text-text-primary-dark transition" href="#">Transfer Executivo</a></li>
-                    <li><a class="hover:text-text-primary-dark transition" href="#">Viagens Corporativas</a></li>
-                    <li><a class="hover:text-text-primary-dark transition" href="#">Frota Premium</a></li>
-                    <li><a class="hover:text-text-primary-dark transition" href="#">Contato</a></li>
-                </ul>
-            </div>
-            <div class="space-y-4 lg:col-span-2 text-right">
-                <h4 class="text-text-primary-dark font-semibold mb-4">Fale Conosco</h4>
-                <button
-                    class="bg-primary text-text-primary-dark px-6 py-2 rounded-full font-semibold hover:bg-primary-dark transition">
-                    Falar com Atendimento Executivo
-                </button>
-            </div>
-        </div>
-        <div
-            class="container mx-auto px-6 md:px-12 mt-16 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-xs">
-                © 2026 – JMD TRANSFER. Mobilidade Executiva com Segurança e Excelência.
-            </div>
-            <div class="flex space-x-6 text-xs">
-                <a class="hover:text-text-primary-dark transition" href="#">Terms</a>
-                <a class="hover:text-text-primary-dark transition" href="#">Privacy policy</a>
-                <a class="hover:text-text-primary-dark transition" href="#">Legal notice</a>
-                <a class="hover:text-text-primary-dark transition" href="#">Accessibility</a>
-            </div>
-            <div class="flex space-x-4">
-                <a class="hover:text-text-primary-dark transition" href="#"><span
-                        class="material-icons-outlined text-sm">smart_display</span></a>
-                <a class="hover:text-text-primary-dark transition" href="#"><span
-                        class="material-icons-outlined text-sm">facebook</span></a>
-                <a class="hover:text-text-primary-dark transition" href="#"><span
-                        class="material-icons-outlined text-sm">alternate_email</span></a>
-                <a class="hover:text-text-primary-dark transition" href="#"><span
-                        class="material-icons-outlined text-sm">business</span></a>
-            </div>
-        </div>
-    </footer>
+  <nav class="nav-drawer" id="navDrawer" hidden aria-label="Menu mobile">
+    <a href="#servicos">Serviços</a>
+    <a href="#frota">Frota</a>
+    <a href="#atuacao">Atuação</a>
+    <a href="#contato">Contato</a>
+    <a href="#cotacao">Solicitar cotação</a>
+  </nav>
 
-    <!-- Botão flutuante WhatsApp (azul com detalhes em branco) -->
-    <a href="https://wa.me/5511999999999" target="_blank" rel="noopener" aria-label="WhatsApp" class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg w-14 h-14 flex items-center justify-center transition">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M20.52 3.48A11.79 11.79 0 0 0 12 0C5.373 0 .001 5.373.001 12c0 2.116.553 4.167 1.603 5.99L0 24l6.265-1.638A11.937 11.937 0 0 0 12 24c6.627 0 12-5.373 12-12 0-1.985-.473-3.85-1.48-5.52z" fill="#fff" opacity="0.0"></path>
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.472-.149-.67.15-.198.297-.767.967-.94 1.166-.173.198-.347.223-.644.075-.297-.149-1.255-.462-2.39-1.476-.883-.788-1.48-1.761-1.653-2.06-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.151-.174.2-.298.3-.497.1-.198.05-.372-.025-.52-.075-.149-.67-1.611-.92-2.21-.242-.579-.487-.5-.67-.51l-.572-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487 0.71.306 1.26.489 1.69.626.71.227 1.36.195 1.872.118.57-.085 1.758-.718 2.006-1.413.248-.694.248-1.29.173-1.413-.074-.123-.27-.198-.567-.347z" fill="#fff"/>
-        </svg>
-    </a>
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="folio" id="folio">
+        <aside class="folio-spine" aria-hidden="true">JMD Transfer</aside>
+        <div class="folio-page">
+          <div class="folio-top">
+            <div class="folio-mark">JMD Transfer</div>
+            <div class="folio-meta">São Paulo · Executivo</div>
+          </div>
+          <h1 class="folio-title">O dia do executivo, linha a linha.</h1>
+          <p class="folio-lead">
+            Transfer aeroporto, rotinas corporativas e deslocamentos VIP com pontualidade, segurança e discrição — frota premium, blindagem opcional.
+          </p>
+          <div class="route-trace" aria-hidden="true"><span></span></div>
 
+          <form class="itinerary" id="cotacao" action="#" method="get" novalidate>
+            <div class="itinerary-row">
+              <label for="origem">Origem</label>
+              <input id="origem" name="origem" type="text" placeholder="Endereço ou hotel" autocomplete="street-address" required />
+            </div>
+            <div class="itinerary-row">
+              <label for="destino">Destino</label>
+              <input id="destino" name="destino" type="text" placeholder="GRU, CGH, VCP ou endereço" required />
+            </div>
+            <div class="itinerary-row">
+              <label for="servico">Serviço</label>
+              <select id="servico" name="servico" required>
+                <option value="" disabled selected>Escolha o tipo</option>
+                <option>Aeroporto</option>
+                <option>Corporativo</option>
+                <option>Horas à disposição</option>
+                <option>Viagem / evento VIP</option>
+              </select>
+            </div>
+            <div class="itinerary-row">
+              <label for="quando">Quando</label>
+              <input id="quando" name="quando" type="datetime-local" required />
+            </div>
+            <div class="itinerary-actions">
+              <button class="btn-primary" type="submit" id="quoteSubmit">Solicitar cotação</button>
+              <a class="btn-ghost" href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            </div>
+            <p class="form-note">Retorno rápido com atendimento personalizado.</p>
+            <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-paper" id="servicos">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Três maneiras de se deslocar sem improvisar</h2>
+          <p>Cada serviço entra no itinerário com a mesma disciplina: motorista preparado, veículo certo e horário cumprido.</p>
+        </div>
+        <div class="schedule">
+          <article class="schedule-item reveal">
+            <div class="schedule-code">Aeroporto</div>
+            <div class="schedule-copy">
+              <h3>Transfer GRU, CGH e VCP</h3>
+              <p>Embarque e desembarque com acompanhamento de voo. Ideal para quem não pode perder conexão nem reunião.</p>
+            </div>
+            <div class="schedule-media">
+              <img src="https://i.postimg.cc/Dfxn3zGW/avi-o-comercial-estacionado-no-p-tio-ou-taxiando-(1).jpg" alt="Avião comercial no pátio do aeroporto" width="800" height="500" loading="lazy" decoding="async" />
+            </div>
+          </article>
+          <article class="schedule-item reveal">
+            <div class="schedule-code">Corporativo</div>
+            <div class="schedule-copy">
+              <h3>Agenda de negócios em São Paulo</h3>
+              <p>Deslocamentos entre escritórios, hotéis e reuniões com total discrição — o padrão que a rotina executiva exige.</p>
+            </div>
+            <div class="schedule-media">
+              <img src="https://i.postimg.cc/9MtTQ92F/image1.jpg" alt="Deslocamento corporativo em São Paulo" width="800" height="500" loading="lazy" decoding="async" />
+            </div>
+          </article>
+          <article class="schedule-item reveal">
+            <div class="schedule-code">VIP · Eventos</div>
+            <div class="schedule-copy">
+              <h3>Horas à disposição e ocasiões especiais</h3>
+              <p>Roadshows, eventos e viagens sob medida, com frota premium e opção de veículos blindados.</p>
+            </div>
+            <div class="schedule-media">
+              <img src="https://i.postimg.cc/C1z1WfKX/altere-o-modelo-do-carro-para-que.jpg" alt="Veículo executivo para eventos VIP" width="800" height="500" loading="lazy" decoding="async" />
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-ink" id="frota">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Frota que cabe no dossiê</h2>
+          <p>Veículos de alto padrão para quem prioriza conforto, apresentação e, quando necessário, blindagem.</p>
+        </div>
+        <div class="fleet-grid">
+          <article class="fleet-sheet reveal">
+            <div>
+              <h3>SUV executivo</h3>
+              <p class="spec">Espaço e presença · Blindagem opcional</p>
+            </div>
+            <div class="visual">
+              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrKGgjZHah1JBC78jwkS7p2FbsNNb962egrS7p5EOpJmfSOI-CERaeSDnAI9Pk7WQ137r9CVqfANyogx3sFmwmUWILJxYoMcV1G0gg0P_bAAAYKfEjydPorDCG6XllFTxuMlp6q3DBqsyWbUrnCifV99T1A8132qKv-dq1vUElw1GqQk8DkFGLbpSI3ZqyacK3Uay0c8WkodpQ9sf3mleXyxk6UkWMu2A5Q_Lx1FdvUbyRKO8z0j09RPlbkCssD-qudPkopceJx7YK" alt="SUV executivo premium" width="640" height="360" loading="lazy" decoding="async" />
+            </div>
+            <div class="fleet-foot">
+              <span>Até 7 passageiros · bagagem ampla</span>
+              <strong>Consultar</strong>
+            </div>
+          </article>
+          <article class="fleet-sheet reveal">
+            <div>
+              <h3>Sedan de luxo</h3>
+              <p class="spec">Elegância discreta · Atendimento VIP</p>
+            </div>
+            <div class="visual">
+              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsWDS3QL7XeJOe7fxRn2tQRWPOjiBrOfaGoNKZKCkHTBk8_U-9hv7PIsK55WzuDXGtVaIF5laoWGQ392NB7fOUsAdQ8lrhhHHTLAQs54XylAhnkBAS9RUdIU4sLj3XduboMvNdQidGC0vLY9Ko76Gglkj2hp8SwPOhQGGwqy_lB40yhW58y7Bm_ykLZBLviNZvRj3JOMwsXW9pVnUfk0VzvwfDQuJ45A3rWKP2jHbp7dqtP2LarUArByS0N--tbL5cMnLOE9SNzAL-" alt="Sedan executivo de luxo" width="640" height="360" loading="lazy" decoding="async" />
+            </div>
+            <div class="fleet-foot">
+              <span>Até 3 passageiros · bagagem leve</span>
+              <strong>Consultar</strong>
+            </div>
+          </article>
+        </div>
+        <div class="cta-band">
+          <p>Indique o perfil da viagem — montamos a combinação de veículo e motorista.</p>
+          <button class="btn-primary" type="button" data-scroll="#cotacao">Solicitar cotação da frota</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-paper" id="atuacao">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Onde a operação faz sentido</h2>
+          <p>São Paulo capital, Grande SP e os três aeroportos que movem a agenda corporativa da região.</p>
+        </div>
+        <div class="coverage">
+          <div class="coverage-cell reveal">
+            <img src="https://i.postimg.cc/VkZBMn2S/SPEGRANDESP.jpg" alt="São Paulo e Grande São Paulo" width="480" height="640" loading="lazy" decoding="async" />
+            <span>SP e Grande SP</span>
+          </div>
+          <div class="coverage-cell reveal">
+            <img src="https://i.postimg.cc/HnLkQcqk/GRU.jpg" alt="Aeroporto de Guarulhos" width="480" height="640" loading="lazy" decoding="async" />
+            <span>Aeroporto GRU</span>
+          </div>
+          <div class="coverage-cell reveal">
+            <img src="https://i.postimg.cc/VsHYx6yC/CGH.jpg" alt="Aeroporto de Congonhas" width="480" height="640" loading="lazy" decoding="async" />
+            <span>Aeroporto CGH</span>
+          </div>
+          <div class="coverage-cell reveal">
+            <img src="https://i.postimg.cc/vZyHzKwF/VCP.jpg" alt="Aeroporto de Viracopos" width="480" height="640" loading="lazy" decoding="async" />
+            <span>Aeroporto VCP</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contato">
+    <div class="section-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">JMD Transfer</div>
+          <p>Mobilidade executiva com segurança e discrição. São Paulo — SP.</p>
+          <p style="margin-top:1rem">
+            <a href="mailto:contato@jmdtransfer.com.br">contato@jmdtransfer.com.br</a><br />
+            Atendimento via WhatsApp
+          </p>
+        </div>
+        <div>
+          <h3>Serviços</h3>
+          <ul>
+            <li><a href="#servicos">Transfer aeroporto</a></li>
+            <li><a href="#servicos">Transfer corporativo</a></li>
+            <li><a href="#servicos">Viagens e eventos VIP</a></li>
+            <li><a href="#frota">Frota premium</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Fale conosco</h3>
+          <p style="margin:0 0 1rem">Conte origem, destino e horário — retornamos com a cotação.</p>
+          <a class="btn-primary" href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" style="display:inline-block">Falar com atendimento</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 JMD Transfer. Mobilidade executiva com segurança e excelência.</span>
+        <span>Privacidade · Termos</span>
+      </div>
+    </div>
+  </footer>
+
+  <a class="wa-fab" href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.52 3.48A11.79 11.79 0 0 0 12 0C5.373 0 0 5.373 0 12c0 2.116.553 4.167 1.603 5.99L0 24l6.265-1.638A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12 0-3.21-1.25-6.22-3.48-8.52zM12 21.5a9.46 9.46 0 0 1-4.82-1.31l-.35-.21-3.72.97.99-3.63-.23-.37A9.45 9.45 0 1 1 12 21.5zm5.5-7.08c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z"/>
+    </svg>
+  </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script>
+    (function () {
+      const nav = document.getElementById("siteNav");
+      const toggle = document.getElementById("navToggle");
+      const drawer = document.getElementById("navDrawer");
+      const form = document.getElementById("cotacao");
+      const statusEl = document.getElementById("formStatus");
+      const submitBtn = document.getElementById("quoteSubmit");
+
+      const onScroll = () => {
+        nav.classList.toggle("is-solid", window.scrollY > 16);
+      };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      const setDrawer = (open) => {
+        drawer.hidden = !open;
+        drawer.classList.toggle("is-open", open);
+        toggle.setAttribute("aria-expanded", String(open));
+        toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        document.body.style.overflow = open ? "hidden" : "";
+        if (open) {
+          const first = drawer.querySelector("a");
+          if (first) first.focus();
+        } else {
+          toggle.focus();
+        }
+      };
+      toggle.addEventListener("click", () => setDrawer(drawer.hidden));
+      drawer.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setDrawer(false)));
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !drawer.hidden) setDrawer(false);
+      });
+
+      document.querySelectorAll("[data-scroll]").forEach((el) => {
+        el.addEventListener("click", () => {
+          const target = document.querySelector(el.getAttribute("data-scroll"));
+          if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      });
+
+      const formatWhen = (value) => {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        return new Intl.DateTimeFormat("pt-BR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }).format(d);
+      };
+
+      const clearInvalid = () => {
+        form.querySelectorAll(".itinerary-row.is-invalid").forEach((row) => row.classList.remove("is-invalid"));
+        statusEl.textContent = "";
+        statusEl.className = "form-status";
+      };
+
+      form.querySelectorAll("input, select").forEach((field) => {
+        field.addEventListener("input", () => {
+          field.closest(".itinerary-row")?.classList.remove("is-invalid");
+          if (statusEl.classList.contains("is-error")) {
+            statusEl.textContent = "";
+            statusEl.className = "form-status";
+          }
+        });
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        clearInvalid();
+
+        let valid = true;
+        form.querySelectorAll("[required]").forEach((field) => {
+          if (!field.value.trim()) {
+            field.closest(".itinerary-row")?.classList.add("is-invalid");
+            valid = false;
+          }
+        });
+
+        if (!valid) {
+          statusEl.textContent = "Preencha origem, destino, serviço e horário para continuar.";
+          statusEl.className = "form-status is-error";
+          const firstBad = form.querySelector(".itinerary-row.is-invalid input, .itinerary-row.is-invalid select");
+          if (firstBad) firstBad.focus();
+          return;
+        }
+
+        const origem = form.origem.value.trim();
+        const destino = form.destino.value.trim();
+        const servico = form.servico.value;
+        const quando = formatWhen(form.quando.value);
+        const lines = [
+          "Olá, gostaria de uma cotação JMD Transfer.",
+          `Origem: ${origem}`,
+          `Destino: ${destino}`,
+          `Serviço: ${servico}`,
+          `Quando: ${quando}`,
+        ];
+        const url = `https://wa.me/5511999999999?text=${encodeURIComponent(lines.join("\n"))}`;
+
+        submitBtn.disabled = true;
+        statusEl.textContent = "Abrindo o WhatsApp com o seu pedido…";
+        statusEl.className = "form-status is-ok";
+        window.open(url, "_blank", "noopener,noreferrer");
+        window.setTimeout(() => {
+          submitBtn.disabled = false;
+        }, 900);
+      });
+
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce || !window.gsap) return;
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      const hero = gsap.timeline({
+        defaults: { ease: "power3.out" },
+        onComplete: () => {
+          gsap.set(".folio, .folio-spine, .folio-mark, .folio-meta, .folio-title, .folio-lead, .route-trace span, .itinerary-row, .itinerary-actions, .form-note", {
+            clearProps: "transform,opacity,filter",
+          });
+        },
+      });
+      hero
+        .from(".folio", { y: 28, opacity: 0, duration: 0.9 })
+        .from(".folio-spine", { opacity: 0, duration: 0.55 }, "-=0.45")
+        .from(".folio-mark, .folio-meta", { y: 10, opacity: 0, duration: 0.45, stagger: 0.06 }, "-=0.35")
+        .from(".folio-title", { y: 22, opacity: 0, duration: 0.75 }, "-=0.28")
+        .from(".folio-lead", { y: 12, opacity: 0, duration: 0.5 }, "-=0.45")
+        .from(".route-trace span", { scaleX: 0, duration: 0.75, ease: "power2.inOut" }, "-=0.28")
+        .from(".itinerary-row", { y: 14, opacity: 0, duration: 0.42, stagger: 0.06 }, "-=0.35")
+        .from(".itinerary-actions, .form-note", { y: 10, opacity: 0, duration: 0.4 }, "-=0.15");
+
+      gsap.utils.toArray(".reveal").forEach((el) => {
+        gsap.from(el, {
+          y: 22,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: el,
+            start: "top 90%",
+            toggleActions: "play none none none",
+          },
+          clearProps: "transform,opacity",
+        });
+      });
+    })();
+  </script>
 </body>
-
 </html>

@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "JMD TRANSFER",
+    "tagline": "Executive Mobility with Security and Discretion"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "fleet": "Fleet",
+    "coverage": "Coverage",
+    "contact": "Contact",
+    "reserve": "Book a Transfer",
+    "admin": "Admin"
+  },
+  "hero": {
+    "title": "Premium Executive Transfer in São Paulo, with",
+    "titleAccent": "Absolute Safety and Punctuality",
+    "subtitle": "We serve executives, companies and VIP clients with airport transfers, corporate travel and strategic trips — premium fleet, optional armored vehicles and highly trained chauffeurs.",
+    "cta": "Request a Reservation",
+    "bullets": {
+      "executive": "Personalized executive service",
+      "airports": "Airports GRU, CGH and VCP",
+      "fleet": "Premium fleet and armored options",
+      "discretion": "Discretion, safety and punctuality"
+    }
+  },
+  "reserve": {
+    "title": "Reserve a time slot",
+    "subtitle": "Online estimate · 60-minute hold · JMD confirmation",
+    "origin": "Pick-up address",
+    "destination": "Drop-off",
+    "serviceType": "Service type",
+    "vehicle": "Vehicle category",
+    "vehicleEmpty": "No categories registered yet",
+    "date": "Date",
+    "time": "Time",
+    "name": "Full name",
+    "phone": "Phone / WhatsApp",
+    "email": "Email",
+    "airport": "Airport",
+    "hours": "Hours on demand",
+    "estimate": "Estimated fare",
+    "estimateHint": "Estimated amount — final confirmation with our team",
+    "holdHint": "On submit, the slot is held for 60 minutes until JMD confirms.",
+    "submit": "Request reservation",
+    "services": {
+      "aeroporto": "Airport",
+      "corporativo": "Corporate",
+      "horas_a_disposicao": "Hourly",
+      "viagem": "Trip"
+    }
+  },
+  "services": {
+    "title": "Tailored Executive Mobility",
+    "subtitle": "Executive transport for demanding corporate routines — safety, comfort and logistics."
+  },
+  "admin": {
+    "title": "Admin panel",
+    "login": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "placeholder": "Supabase Auth · leads, calendar, freight and fleet come in the next iterations."
+  },
+  "footer": {
+    "contact": "Contact us",
+    "whatsapp": "WhatsApp support",
+    "rights": "All rights reserved."
+  }
+}

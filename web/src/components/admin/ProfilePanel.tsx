@@ -14,6 +14,7 @@ import {
   type NotificationPreferences,
   type StaffNotification,
 } from '../../services/admin'
+import { DevicePermissionsCard } from './DevicePermissionsCard'
 
 type Props = {
   onError: (msg: string) => void
@@ -277,6 +278,8 @@ export function ProfilePanel({ onError }: Props) {
 
         {prefsOk && <p className="text-sm text-emerald-700">{prefsOk}</p>}
       </section>
+
+      <DevicePermissionsCard onError={onError} />
 
       <section className="admin-panel-enter space-y-4 rounded-2xl border border-border-light bg-surface-light p-5 lg:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-3">

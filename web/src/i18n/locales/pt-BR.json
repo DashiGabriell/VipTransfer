@@ -333,5 +333,31 @@
     "contact": "Fale Conosco",
     "whatsapp": "Atendimento via WhatsApp",
     "rights": "Todos os direitos reservados."
+  },
+  "pwa": {
+    "install": "Baixar app",
+    "installing": "Instalando…",
+    "installDismissed": "Instalação cancelada. Você pode tentar de novo quando quiser.",
+    "installError": "Não foi possível iniciar a instalação.",
+    "installIosHint": "No iPhone/iPad: toque em Compartilhar e depois em “Adicionar à Tela de Início”.",
+    "installManualHint": "Use o menu do navegador (⋮) e escolha “Instalar app” ou “Adicionar à tela inicial”.",
+    "deviceTitle": "App e permissões do dispositivo",
+    "deviceLead": "Instale o app e ative localização e notificações do navegador para o painel no celular.",
+    "runningInstalled": "Rodando como app instalado",
+    "locationTitle": "Localização",
+    "notifTitle": "Notificações do navegador",
+    "enableLocation": "Ativar",
+    "enableNotif": "Ativar",
+    "permGranted": "Permitido",
+    "permDenied": "Bloqueado nas configurações do navegador",
+    "permPrompt": "Ainda não solicitado",
+    "permUnsupported": "Não suportado neste dispositivo",
+    "locationOk": "Localização obtida: {{lat}}, {{lng}}",
+    "locationError": "Não foi possível obter a localização.",
+    "notifOk": "Notificações ativadas. Enviamos um teste.",
+    "notifDenied": "Permissão de notificação negada.",
+    "notifError": "Falha ao ativar notificações.",
+    "notifTestTitle": "VipTransfer",
+    "notifTestBody": "Notificações do painel ativas neste dispositivo."
   }
 }

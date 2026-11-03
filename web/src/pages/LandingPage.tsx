@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { InstallAppButton } from '../components/InstallAppButton'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { ReservationForm } from '../components/ReservationForm'
 import { useTenant } from '../context/TenantContext'
@@ -77,7 +78,13 @@ export function LandingPage() {
         id="siteNav"
       >
         <a className="nav-brand" href="#inicio">
-          {t('landing.brand')}
+          <img
+            className="nav-brand__logo"
+            src="/logo-1.png"
+            alt={t('landing.brand')}
+            width={160}
+            height={48}
+          />
         </a>
         <nav aria-label="Principal">
           <ul className="nav-links">
@@ -100,6 +107,7 @@ export function LandingPage() {
         </nav>
         <div className="nav-actions">
           <LanguageToggle />
+          <InstallAppButton className="nav-install" variant="landing" />
           <button className="nav-cta" type="button" onClick={scrollToQuote}>
             {t('landing.ctaTransfer')}
           </button>
@@ -146,6 +154,10 @@ export function LandingPage() {
         <Link to="/login" onClick={() => setDrawerOpen(false)}>
           {t('nav.admin')}
         </Link>
+        <InstallAppButton
+          className="nav-drawer__install"
+          variant="landing"
+        />
         <div className="nav-drawer__lang">
           <LanguageToggle />
         </div>
@@ -160,11 +172,23 @@ export function LandingPage() {
             </aside>
             <div className="folio-page">
               <div className="folio-top">
-                <div className="folio-mark">{t('landing.brand')}</div>
+                <div className="folio-mark">
+                  <img
+                    className="folio-mark__logo"
+                    src="/logo-1.png"
+                    alt={t('landing.brand')}
+                    width={180}
+                    height={54}
+                  />
+                </div>
                 <div className="folio-meta">{t('landing.meta')}</div>
               </div>
               <h1 className="folio-title">{t('landing.title')}</h1>
               <p className="folio-lead">{t('landing.lead')}</p>
+              <InstallAppButton
+                className="folio-install"
+                variant="landing"
+              />
               <div className="route-trace" aria-hidden="true">
                 <span />
               </div>

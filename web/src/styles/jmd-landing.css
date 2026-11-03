@@ -85,10 +85,19 @@
       backdrop-filter: blur(12px);
     }
     .nav-brand {
+      display: inline-flex;
+      align-items: center;
       font-size: 0.78rem;
       font-weight: 600;
       letter-spacing: 0.38em;
       text-transform: uppercase;
+    }
+    .nav-brand__logo {
+      display: block;
+      height: 2.35rem;
+      width: auto;
+      max-width: min(11rem, 42vw);
+      object-fit: contain;
     }
     .nav-links {
       display: none;
@@ -275,6 +284,13 @@
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--ink);
+    }
+    .folio-mark__logo {
+      display: block;
+      height: 2.75rem;
+      width: auto;
+      max-width: min(12rem, 55vw);
+      object-fit: contain;
     }
     .folio-meta {
       font-size: 0.75rem;
@@ -514,6 +530,7 @@
         padding-left: clamp(2.5rem, 5vw, 4.5rem);
       }
       .folio-mark { letter-spacing: 0.28em; }
+      .folio-mark__logo { height: 3rem; }
       .folio-meta { letter-spacing: 0.12em; }
     }
 
@@ -956,4 +973,110 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
+    }
+
+    /* —— PWA install —— */
+    .install-app-wrap {
+      display: grid;
+      gap: 0.45rem;
+      width: fit-content;
+      max-width: 100%;
+    }
+    .install-app-btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s var(--ease-out);
+    }
+    .install-app-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      transform: none;
+    }
+    .install-app-btn__icon {
+      width: 1.05rem;
+      height: 1.05rem;
+      flex-shrink: 0;
+    }
+    .install-app-btn--landing {
+      border: 1px solid color-mix(in srgb, var(--ink) 32%, transparent);
+      background: transparent;
+      color: var(--ink);
+      padding: 0.7rem 1.05rem;
+      min-height: 2.5rem;
+      font-size: 0.7rem;
+    }
+    .install-app-btn--landing:hover {
+      border-color: var(--ink);
+      background: color-mix(in srgb, var(--ink) 5%, transparent);
+      transform: translateY(-1px);
+    }
+    .install-app-hint {
+      margin: 0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: color-mix(in srgb, var(--ink) 68%, transparent);
+      max-width: 28rem;
+    }
+    .folio-install {
+      margin: 0.35rem 0 0.85rem;
+    }
+    .nav-install {
+      display: none;
+    }
+    .nav-install .install-app-btn--landing {
+      border-color: color-mix(in srgb, var(--paper) 35%, transparent);
+      color: var(--paper);
+      padding: 0.65rem 0.95rem;
+      min-height: 2.4rem;
+    }
+    .nav-install .install-app-btn--landing:hover {
+      border-color: var(--bronze);
+      color: var(--bronze);
+      background: color-mix(in srgb, var(--paper) 6%, transparent);
+    }
+    .nav-install .install-app-hint {
+      display: none;
+    }
+    .nav-drawer__install {
+      margin-top: 0.85rem;
+      width: 100%;
+    }
+    .nav-drawer__install .install-app-btn--landing {
+      width: 100%;
+      border-color: color-mix(in srgb, var(--paper) 28%, transparent);
+      color: var(--paper);
+      padding: 0.95rem 1.1rem;
+    }
+    .nav-drawer__install .install-app-btn--landing:hover {
+      border-color: var(--bronze);
+      color: var(--bronze);
+      background: transparent;
+      transform: none;
+    }
+    .nav-drawer__install .install-app-hint {
+      color: color-mix(in srgb, var(--paper) 70%, transparent);
+    }
+    .install-app-btn--admin {
+      border: 1px solid var(--border-light, #e5e0d8);
+      background: transparent;
+      color: var(--primary, #1a1a1a);
+      border-radius: 0.55rem;
+      padding: 0.65rem 1rem;
+      font-size: 0.72rem;
+    }
+    .install-app-btn--admin:hover {
+      border-color: color-mix(in srgb, var(--bronze, #b08d57) 55%, #e5e0d8);
+      background: #fffcf7;
+      transform: translateY(-1px);
+    }
+
+    @media (min-width: 900px) {
+      .nav-install { display: grid; }
     }

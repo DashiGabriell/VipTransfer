@@ -1,0 +1,294 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jmd-reservation-created",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "68cbd3f4-1f68-446f-a978-7a17733c9033",
+      "name": "Webhook reservation.created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        96
+      ],
+      "webhookId": "jmd-reservation-created"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-event",
+              "leftValue": "={{ $json.body?.event ?? $json.event }}",
+              "rightValue": "reservation.created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "784b831a-5ba8-4c76-98b6-4629d1daea47",
+      "name": "Só reservation.created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "event",
+              "value": "={{ $json.body?.event ?? $json.event }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "id",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).id }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "customer_name",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).customer_name }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "customer_phone",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).customer_phone }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "customer_email",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).customer_email }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "origin_address",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).origin_address }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "destination_address",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).destination_address }}",
+              "type": "string"
+            },
+            {
+              "id": "a8",
+              "name": "service_type",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).service_type }}",
+              "type": "string"
+            },
+            {
+              "id": "a9",
+              "name": "airport",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).airport || '—' }}",
+              "type": "string"
+            },
+            {
+              "id": "a10",
+              "name": "slot_start",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).slot_start }}",
+              "type": "string"
+            },
+            {
+              "id": "a11",
+              "name": "slot_end",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).slot_end }}",
+              "type": "string"
+            },
+            {
+              "id": "a12",
+              "name": "hold_expires_at",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).hold_expires_at || '—' }}",
+              "type": "string"
+            },
+            {
+              "id": "a13",
+              "name": "estimated_price",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).estimated_price }}",
+              "type": "string"
+            },
+            {
+              "id": "a14",
+              "name": "estimated_km",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).estimated_km }}",
+              "type": "string"
+            },
+            {
+              "id": "a15",
+              "name": "status",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).status }}",
+              "type": "string"
+            },
+            {
+              "id": "a16",
+              "name": "locale",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).locale || 'pt-BR' }}",
+              "type": "string"
+            },
+            {
+              "id": "a17",
+              "name": "source",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).source || 'web' }}",
+              "type": "string"
+            },
+            {
+              "id": "a18",
+              "name": "organization_id",
+              "value": "={{ ($json.body?.reservation ?? $json.reservation).organization_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02dd4d60-db06-4f38-b502-add1e3105353",
+      "name": "Normalizar payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "dashicorporate@gmail.com",
+        "subject": "=JMD · Nova reserva em hold — {{ $json.customer_name }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<body style=\"margin:0;padding:24px;background:#f4f1ea;font-family:Segoe UI,Arial,sans-serif;color:#152033;\">\n  <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:560px;margin:0 auto;background:#fffdf8;border:1px solid #d8cfc0;\">\n    <tr>\n      <td style=\"padding:20px 24px;border-bottom:1px solid #d8cfc0;\">\n        <div style=\"font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#6e542c;\">JMD Transfer</div>\n        <h1 style=\"margin:8px 0 0;font-size:22px;font-weight:600;\">Nova reserva em hold</h1>\n      </td>\n    </tr>\n    <tr>\n      <td style=\"padding:20px 24px;\">\n        <p style=\"margin:0 0 16px;line-height:1.5;\">Uma nova solicitação foi criada no site e está aguardando confirmação (hold ~60 min).</p>\n        <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"font-size:14px;line-height:1.55;\">\n          <tr><td style=\"padding:6px 0;color:#4f483f;width:140px;\">Cliente</td><td style=\"padding:6px 0;\"><strong>{{ $json.customer_name }}</strong></td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Telefone</td><td style=\"padding:6px 0;\">{{ $json.customer_phone }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">E-mail</td><td style=\"padding:6px 0;\">{{ $json.customer_email }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Serviço</td><td style=\"padding:6px 0;\">{{ $json.service_type }} · {{ $json.airport }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Origem</td><td style=\"padding:6px 0;\">{{ $json.origin_address }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Destino</td><td style=\"padding:6px 0;\">{{ $json.destination_address }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Slot</td><td style=\"padding:6px 0;\">{{ $json.slot_start }} → {{ $json.slot_end }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Hold até</td><td style=\"padding:6px 0;\">{{ $json.hold_expires_at }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Estimativa</td><td style=\"padding:6px 0;\">R$ {{ $json.estimated_price || '—' }} · {{ $json.estimated_km || '—' }} km</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">Status</td><td style=\"padding:6px 0;\">{{ $json.status }}</td></tr>\n          <tr><td style=\"padding:6px 0;color:#4f483f;\">ID</td><td style=\"padding:6px 0;font-family:ui-monospace,Consolas,monospace;font-size:12px;\">{{ $json.id }}</td></tr>\n        </table>\n        <p style=\"margin:20px 0 0;font-size:13px;color:#4f483f;\">Confirme ou cancele no painel admin · evento <code>reservation.created</code></p>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "fa58d80f-d1f5-46b6-bdf2-74c42adfcd3b",
+      "name": "Gmail alert admin",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        192,
+        16
+      ],
+      "webhookId": "b10097d6-f784-49c2-bdb7-834e81279817",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OLa6lIWl4HCeJMEE",
+          "name": "DESPERT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, event: $json.event, reservation_id: $json.id }) }}",
+        "options": {}
+      },
+      "id": "54835083-7ebc-4013-a1e2-13dab9c342dd",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, reason: 'ignored_event' }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "71d07e80-8136-49bc-9e70-2fdee41e1a35",
+      "name": "Respond ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        224
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook reservation.created": {
+      "main": [
+        [
+          {
+            "node": "Só reservation.created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Só reservation.created": {
+      "main": [
+        [
+          {
+            "node": "Normalizar payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond ignored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar payload": {
+      "main": [
+        [
+          {
+            "node": "Gmail alert admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail alert admin": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9d9d8733d436bd5a437456f3381798fc41ff51deeaef3e67f2e40c34b241446a"
+  }
+}

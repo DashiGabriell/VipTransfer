@@ -1,0 +1,12 @@
+# Keep upload lean — app source is under web/
+Estilo-1.html
+Estilo-2.html
+Estilo-3.html
+index2.html
+teste.html
+supabase/
+.cursor/
+.impeccable/
+docs/
+web/node_modules/
+web/dist/

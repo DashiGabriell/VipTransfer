@@ -38,7 +38,13 @@ export function AdminSidebar({
     >
       <div className="admin-sidebar__brand">
         <div className="admin-sidebar__mark" aria-hidden="true">
-          JMD
+          <img
+            className="admin-sidebar__logo"
+            src="/logo-1.png"
+            alt=""
+            width={40}
+            height={40}
+          />
         </div>
         <div className="admin-sidebar__titles">
           <strong>{brand}</strong>

@@ -78,7 +78,13 @@ export function LoginPage() {
         <div className="login-page">
           <div className="login-top">
             <Link to="/" className="login-mark">
-              JMD Transfer
+              <img
+                className="login-mark__logo"
+                src="/logo-1.png"
+                alt="JMD Transfer"
+                width={160}
+                height={48}
+              />
             </Link>
             <div className="login-top__aside">
               <LanguageToggle variant="admin" />

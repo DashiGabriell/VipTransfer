@@ -112,6 +112,8 @@
 }
 
 .login-mark {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.22em;
@@ -120,8 +122,16 @@
   text-decoration: none;
 }
 
+.login-mark__logo {
+  display: block;
+  height: 2.5rem;
+  width: auto;
+  max-width: 10.5rem;
+  object-fit: contain;
+}
+
 .login-mark:hover {
-  color: var(--bronze);
+  opacity: 0.9;
 }
 
 .login-meta {

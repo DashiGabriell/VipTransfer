@@ -333,5 +333,31 @@
     "contact": "Contact us",
     "whatsapp": "WhatsApp support",
     "rights": "All rights reserved."
+  },
+  "pwa": {
+    "install": "Install app",
+    "installing": "Installing…",
+    "installDismissed": "Install dismissed. You can try again anytime.",
+    "installError": "Could not start installation.",
+    "installIosHint": "On iPhone/iPad: tap Share, then “Add to Home Screen”.",
+    "installManualHint": "Open the browser menu (⋮) and choose “Install app” or “Add to Home Screen”.",
+    "deviceTitle": "App & device permissions",
+    "deviceLead": "Install the app and enable browser location and notifications for the mobile panel.",
+    "runningInstalled": "Running as installed app",
+    "locationTitle": "Location",
+    "notifTitle": "Browser notifications",
+    "enableLocation": "Enable",
+    "enableNotif": "Enable",
+    "permGranted": "Allowed",
+    "permDenied": "Blocked in browser settings",
+    "permPrompt": "Not requested yet",
+    "permUnsupported": "Not supported on this device",
+    "locationOk": "Location received: {{lat}}, {{lng}}",
+    "locationError": "Could not get your location.",
+    "notifOk": "Notifications enabled. We sent a test.",
+    "notifDenied": "Notification permission denied.",
+    "notifError": "Could not enable notifications.",
+    "notifTestTitle": "VipTransfer",
+    "notifTestBody": "Panel notifications are active on this device."
   }
 }

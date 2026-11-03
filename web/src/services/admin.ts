@@ -1,6 +1,12 @@
+import {
+  STANDARD_VEHICLE_CATEGORIES,
+  type StandardCategoryCode,
+  type VehicleBodyType,
+} from '../domain/fleet'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type {
   AirportCode,
+  FleetVehicle,
   FreightRule,
   OrgRole,
   Reservation,
@@ -72,33 +78,7 @@ export async function cancelReservation(id: string): Promise<Reservation> {
   return data as Reservation
 }
 
-export async function createVehicleCategory(input: {
-  organization_id: string
-  name_pt: string
-  name_en: string
-  is_armored?: boolean
-  passenger_capacity?: number | null
-  luggage_capacity?: number | null
-}): Promise<VehicleCategory> {
-  if (!supabase) throw new Error('Supabase não configurado')
-  const { data, error } = await supabase
-    .from('vehicle_categories')
-    .insert({
-      organization_id: input.organization_id,
-      name_i18n: { pt: input.name_pt, en: input.name_en },
-      description_i18n: { pt: '', en: '' },
-      is_armored: input.is_armored ?? false,
-      passenger_capacity: input.passenger_capacity ?? null,
-      luggage_capacity: input.luggage_capacity ?? null,
-      active: true,
-    })
-    .select('*')
-    .single()
-  if (error) throw error
-  return data as VehicleCategory
-}
-
-export async function listVehiclesAdmin(
+export async function listVehicleCategoriesAdmin(
   organizationId: string,
 ): Promise<VehicleCategory[]> {
   if (!supabase) throw new Error('Supabase não configurado')
@@ -109,6 +89,167 @@ export async function listVehiclesAdmin(
     .order('sort_order', { ascending: true })
   if (error) throw error
   return (data ?? []) as VehicleCategory[]
+}
+
+/** @deprecated use listVehicleCategoriesAdmin */
+export async function listVehiclesAdmin(
+  organizationId: string,
+): Promise<VehicleCategory[]> {
+  return listVehicleCategoriesAdmin(organizationId)
+}
+
+export async function setStandardCategoryActive(input: {
+  organization_id: string
+  code: StandardCategoryCode
+  active: boolean
+}): Promise<VehicleCategory> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const def = STANDARD_VEHICLE_CATEGORIES.find((c) => c.code === input.code)
+  if (!def) throw new Error('Categoria padrão inválida')
+
+  const { data: existing, error: findError } = await supabase
+    .from('vehicle_categories')
+    .select('*')
+    .eq('organization_id', input.organization_id)
+    .eq('code', input.code)
+    .maybeSingle()
+  if (findError) throw findError
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('vehicle_categories')
+      .update({
+        active: input.active,
+        name_i18n: { pt: def.name_pt, en: def.name_en },
+        is_armored: def.is_armored,
+        sort_order: def.sort_order,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as VehicleCategory
+  }
+
+  const { data, error } = await supabase
+    .from('vehicle_categories')
+    .insert({
+      organization_id: input.organization_id,
+      code: input.code,
+      name_i18n: { pt: def.name_pt, en: def.name_en },
+      description_i18n: { pt: '', en: '' },
+      is_armored: def.is_armored,
+      passenger_capacity: null,
+      luggage_capacity: null,
+      active: input.active,
+      sort_order: def.sort_order,
+    })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as VehicleCategory
+}
+
+export async function listFleetVehiclesAdmin(
+  organizationId: string,
+): Promise<FleetVehicle[]> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('fleet_vehicles')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as FleetVehicle[]
+}
+
+export async function createFleetVehicle(input: {
+  organization_id: string
+  vehicle_category_id: string
+  brand: string
+  model: string
+  year: number
+  color: string
+  body_type: VehicleBodyType
+  plate?: string | null
+  notes?: string | null
+}): Promise<FleetVehicle> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('fleet_vehicles')
+    .insert({
+      organization_id: input.organization_id,
+      vehicle_category_id: input.vehicle_category_id,
+      brand: input.brand.trim(),
+      model: input.model.trim(),
+      year: input.year,
+      color: input.color.trim(),
+      body_type: input.body_type,
+      plate: input.plate?.trim() || null,
+      notes: input.notes?.trim() || null,
+      active: true,
+    })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as FleetVehicle
+}
+
+export async function uploadFleetVehiclePhoto(input: {
+  organization_id: string
+  vehicle_id: string
+  file: File
+}): Promise<{ path: string; url: string }> {
+  if (!supabase) throw new Error('Supabase não configurado')
+
+  const ext = (input.file.name.split('.').pop() || 'jpg')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+  const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg'
+  const path = `${input.organization_id}/${input.vehicle_id}.${safeExt}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('fleet-photos')
+    .upload(path, input.file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: input.file.type || `image/${safeExt}`,
+    })
+  if (uploadError) throw uploadError
+
+  const { data: pub } = supabase.storage.from('fleet-photos').getPublicUrl(path)
+  const url = pub.publicUrl
+
+  const { error: updateError } = await supabase
+    .from('fleet_vehicles')
+    .update({
+      photo_path: path,
+      photo_url: url,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.vehicle_id)
+  if (updateError) throw updateError
+
+  return { path, url }
+}
+
+export async function setFleetVehicleActive(input: {
+  id: string
+  active: boolean
+}): Promise<FleetVehicle> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('fleet_vehicles')
+    .update({
+      active: input.active,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.id)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as FleetVehicle
 }
 
 export async function upsertFreightRule(input: {

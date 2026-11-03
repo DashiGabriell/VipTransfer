@@ -14,9 +14,11 @@
 
   position: relative;
   min-height: 100svh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 2rem 1rem;
+  padding: max(2rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(2rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
   background: var(--ink-deep);
   color: var(--paper);
   font-family: var(--font-sans);

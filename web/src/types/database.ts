@@ -39,6 +39,7 @@ export type Organization = {
 export type VehicleCategory = {
   id: string
   organization_id: string
+  code: string
   name_i18n: I18nText
   description_i18n: I18nText
   is_armored: boolean
@@ -46,6 +47,35 @@ export type VehicleCategory = {
   luggage_capacity: number | null
   active: boolean
   sort_order: number
+}
+
+export type VehicleBodyType =
+  | 'sedan'
+  | 'suv'
+  | 'hatch'
+  | 'wagon'
+  | 'van'
+  | 'minivan'
+  | 'pickup'
+  | 'coupe'
+  | 'outro'
+
+export type FleetVehicle = {
+  id: string
+  organization_id: string
+  vehicle_category_id: string
+  brand: string
+  model: string
+  year: number
+  color: string
+  body_type: VehicleBodyType
+  photo_path: string | null
+  photo_url: string | null
+  plate: string | null
+  active: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type FreightRule = {
@@ -128,8 +158,23 @@ export type Database = {
       vehicle_categories: {
         Row: VehicleCategory
         Insert: Partial<VehicleCategory> &
-          Pick<VehicleCategory, 'organization_id'>
+          Pick<VehicleCategory, 'organization_id' | 'code'>
         Update: Partial<VehicleCategory>
+      }
+      fleet_vehicles: {
+        Row: FleetVehicle
+        Insert: Partial<FleetVehicle> &
+          Pick<
+            FleetVehicle,
+            | 'organization_id'
+            | 'vehicle_category_id'
+            | 'brand'
+            | 'model'
+            | 'year'
+            | 'color'
+            | 'body_type'
+          >
+        Update: Partial<FleetVehicle>
       }
       freight_rules: {
         Row: FreightRule

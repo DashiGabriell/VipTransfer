@@ -5,16 +5,19 @@ import {
   useState,
   type FormEvent,
 } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useTenant } from '../../context/TenantContext'
+import { AdminMobileNav } from '../../components/admin/AdminMobileNav'
 import {
   AdminSidebar,
   isAdminNavId,
   type AdminNavId,
 } from '../../components/admin/AdminSidebar'
+import { AgendaSlotModal } from '../../components/admin/AgendaSlotModal'
 import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
+import { FleetPanel } from '../../components/admin/FleetPanel'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
 import { LanguageToggle } from '../../components/LanguageToggle'
 import {
@@ -23,17 +26,18 @@ import {
   canOperate,
   claimOrgOwner,
   confirmReservation,
-  createVehicleCategory,
+  listFleetVehiclesAdmin,
   listFreightRulesAdmin,
   listMyMemberships,
   listReservations,
-  listVehiclesAdmin,
+  listVehicleCategoriesAdmin,
   updateAirportFee,
   upsertFreightRule,
   type Membership,
 } from '../../services/admin'
 import type {
   AirportCode,
+  FleetVehicle,
   FreightRule,
   OrgRole,
   Reservation,
@@ -76,7 +80,7 @@ export function AdminDashboard() {
   const tenant = useTenant()
   const tab: Tab = isAdminNavId(section) ? section : 'reservas'
   const [collapsed, setCollapsed] = useState(readCollapsed)
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [membership, setMembership] = useState<Membership | null>(null)
   const [bootstrapping, setBootstrapping] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -84,11 +88,13 @@ export function AdminDashboard() {
     'hold',
   )
   const [reservations, setReservations] = useState<Reservation[]>([])
-  const [vehicles, setVehicles] = useState<VehicleCategory[]>([])
+  const [categories, setCategories] = useState<VehicleCategory[]>([])
+  const [fleetVehicles, setFleetVehicles] = useState<FleetVehicle[]>([])
   const [freightRules, setFreightRules] = useState<FreightRule[]>([])
   const [busyId, setBusyId] = useState<string | null>(null)
   const [agendaFocus, setAgendaFocus] = useState<DaySlot | null>(null)
   const [agendaKey, setAgendaKey] = useState(0)
+  const [agendaDetailId, setAgendaDetailId] = useState<string | null>(null)
 
   const orgId = tenant.organizationId
   const role: OrgRole | null = membership?.role ?? null
@@ -103,6 +109,11 @@ export function AdminDashboard() {
       return rs < end && re > start
     })
   }, [agendaFocus, reservations])
+
+  const agendaDetailReservations = useMemo(() => {
+    if (!agendaDetailId) return []
+    return agendaDayReservations.filter((r) => r.id === agendaDetailId)
+  }, [agendaDayReservations, agendaDetailId])
 
   const refreshMembership = useCallback(async () => {
     if (!orgId) return
@@ -119,11 +130,13 @@ export function AdminDashboard() {
 
   const refreshCatalogAdmin = useCallback(async () => {
     if (!orgId || !canAdmin(role)) return
-    const [v, f] = await Promise.all([
-      listVehiclesAdmin(orgId),
+    const [cats, fleet, f] = await Promise.all([
+      listVehicleCategoriesAdmin(orgId),
+      listFleetVehiclesAdmin(orgId),
       listFreightRulesAdmin(orgId),
     ])
-    setVehicles(v)
+    setCategories(cats)
+    setFleetVehicles(fleet)
     setFreightRules(f)
   }, [orgId, role])
 
@@ -137,6 +150,20 @@ export function AdminDashboard() {
       }
     })()
   }, [refreshMembership])
+
+  useEffect(() => {
+    if (!moreOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [moreOpen])
 
   useEffect(() => {
     void (async () => {
@@ -168,21 +195,6 @@ export function AdminDashboard() {
       /* ignore */
     }
   }, [collapsed])
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileOpen])
 
   async function onClaimOwner() {
     setBootstrapping(true)
@@ -224,10 +236,15 @@ export function AdminDashboard() {
   const layoutClass = [
     'admin-layout',
     collapsed ? 'is-collapsed' : '',
-    mobileOpen ? 'is-mobile-open' : '',
+    moreOpen ? 'is-more-open' : '',
   ]
     .filter(Boolean)
     .join(' ')
+
+  function handleSignOut() {
+    setMoreOpen(false)
+    void signOut().then(() => navigate('/login', { replace: true }))
+  }
 
   if (!isAdminNavId(section)) {
     return <Navigate to="/admin/reservas" replace />
@@ -235,49 +252,21 @@ export function AdminDashboard() {
 
   return (
     <div className={layoutClass}>
-      <button
-        type="button"
-        className="admin-backdrop"
-        aria-label="Fechar menu"
-        onClick={() => setMobileOpen(false)}
-      />
-
       <AdminSidebar
         collapsed={collapsed}
-        mobileOpen={mobileOpen}
         brand={tenant.name}
         email={user?.email}
         role={role}
-        onToggleCollapsed={() => {
-          // Mobile: toggle acts as close; desktop: collapse/expand
-          if (window.matchMedia('(max-width: 900px)').matches) {
-            setMobileOpen(false)
-            return
-          }
-          setCollapsed((v) => !v)
-        }}
-        onCloseMobile={() => setMobileOpen(false)}
-        onSignOut={() => {
-          void signOut().then(() =>
-            navigate('/admin/reservas', { replace: true }),
-          )
-        }}
+        onToggleCollapsed={() => setCollapsed((v) => !v)}
+        onSignOut={handleSignOut}
       />
 
       <div className="admin-main">
         <header className="admin-topbar">
+          <div className="admin-topbar__brand" aria-hidden="true">
+            <span className="admin-topbar__mark">JMD</span>
+          </div>
           <div className="admin-topbar__left">
-            <button
-              type="button"
-              className="admin-mobile-toggle"
-              aria-label={t('admin.openMenu')}
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen(true)}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            </button>
             <div>
               <h1>{title}</h1>
               <p>
@@ -286,26 +275,71 @@ export function AdminDashboard() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="admin-topbar__actions">
             <LanguageToggle variant="admin" />
             <button
               type="button"
-              className="rounded-none border border-[var(--admin-line)] bg-[var(--admin-paper-warm)] px-3 py-2 text-xs tracking-wide uppercase"
-              onClick={() => {
-                if (window.matchMedia('(max-width: 900px)').matches) {
-                  setMobileOpen((v) => !v)
-                  return
-                }
-                setCollapsed((v) => !v)
-              }}
+              className="admin-topbar__desktop-menu"
+              onClick={() => setCollapsed((v) => !v)}
               aria-label={
                 collapsed ? t('admin.expand') : t('admin.collapse')
               }
             >
               {t('admin.menu')}
             </button>
+            <button
+              type="button"
+              className="admin-topbar__more"
+              aria-expanded={moreOpen}
+              aria-controls="adminMoreSheet"
+              aria-label={t('admin.more')}
+              onClick={() => setMoreOpen((v) => !v)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
           </div>
         </header>
+
+        {moreOpen && (
+          <>
+            <button
+              type="button"
+              className="admin-more-backdrop"
+              aria-label={t('admin.closeMenu')}
+              onClick={() => setMoreOpen(false)}
+            />
+            <div
+              className="admin-more-sheet"
+              id="adminMoreSheet"
+              role="dialog"
+              aria-label={t('admin.more')}
+            >
+              <div className="admin-more-sheet__handle" aria-hidden="true" />
+              <p className="admin-more-sheet__meta">
+                {user?.email ?? '—'}
+                {role ? ` · ${role}` : ''}
+              </p>
+              <Link
+                className="admin-more-sheet__action"
+                to="/"
+                onClick={() => setMoreOpen(false)}
+              >
+                {t('admin.site')}
+              </Link>
+              <button
+                type="button"
+                className="admin-more-sheet__action is-danger"
+                onClick={handleSignOut}
+              >
+                {t('admin.signOut')}
+              </button>
+            </div>
+          </>
+        )}
 
         <main className="admin-content">
           {error && (
@@ -350,8 +384,8 @@ export function AdminDashboard() {
               )}
 
               {tab === 'agenda' && canOperate(role) && (
-                <section className="grid gap-6 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-border-light bg-surface-light p-5">
+                <section className="grid min-w-0 max-w-full gap-6 lg:grid-cols-2">
+                  <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5">
                     <h2 className="mb-3 font-semibold text-primary">
                       {t('admin.agendaVisual')}
                     </h2>
@@ -359,11 +393,14 @@ export function AdminDashboard() {
                       key={agendaKey}
                       organizationId={orgId}
                       selectedStart={agendaFocus?.slot_start ?? null}
-                      onSelect={setAgendaFocus}
+                      onSelect={(slot) => {
+                        setAgendaFocus(slot)
+                        setAgendaDetailId(null)
+                      }}
                       mode="admin"
                     />
                   </div>
-                  <div className="rounded-2xl border border-border-light bg-surface-light p-5">
+                  <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5">
                     <h2 className="mb-3 font-semibold text-primary">
                       {t('admin.slotReservations')}
                     </h2>
@@ -387,36 +424,20 @@ export function AdminDashboard() {
                         </p>
                         <ul className="space-y-2 text-sm">
                           {agendaDayReservations.map((r) => (
-                            <li
-                              key={r.id}
-                              className="rounded-lg border border-border-light px-3 py-2"
-                            >
-                              <div className="font-medium">
-                                {r.customer_name} ·{' '}
-                                {t(`admin.status.${r.status}`)}
-                              </div>
-                              <div className="text-xs text-text-secondary-light">
-                                {r.customer_phone} · {r.service_type}
-                              </div>
-                              {(r.status === 'hold' ||
-                                r.status === 'hold_expirado') && (
-                                <div className="mt-2 flex gap-2">
-                                  <button
-                                    type="button"
-                                    className="rounded bg-primary px-2 py-1 text-xs text-text-primary-dark"
-                                    onClick={() => void onConfirm(r.id)}
-                                  >
-                                    {t('admin.confirm')}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="rounded border border-border-light px-2 py-1 text-xs"
-                                    onClick={() => void onCancel(r.id)}
-                                  >
-                                    {t('admin.cancel')}
-                                  </button>
+                            <li key={r.id}>
+                              <button
+                                type="button"
+                                className="admin-agenda-booking w-full rounded-lg border border-border-light px-3 py-2 text-left transition hover:border-primary/50 hover:bg-white/60"
+                                onClick={() => setAgendaDetailId(r.id)}
+                              >
+                                <div className="font-medium">
+                                  {r.customer_name} ·{' '}
+                                  {t(`admin.status.${r.status}`)}
                                 </div>
-                              )}
+                                <div className="text-xs text-text-secondary-light">
+                                  {r.customer_phone} · {r.service_type}
+                                </div>
+                              </button>
                             </li>
                           ))}
                           {!agendaDayReservations.length && (
@@ -436,9 +457,20 @@ export function AdminDashboard() {
                         onChanged={() => {
                           setAgendaKey((k) => k + 1)
                           setAgendaFocus(null)
+                          setAgendaDetailId(null)
                         }}
                       />
                     </div>
+                  )}
+                  {agendaFocus && agendaDetailId && agendaDetailReservations.length > 0 && (
+                    <AgendaSlotModal
+                      slot={agendaFocus}
+                      reservations={agendaDetailReservations}
+                      busyId={busyId}
+                      onClose={() => setAgendaDetailId(null)}
+                      onConfirm={onConfirm}
+                      onCancel={onCancel}
+                    />
                   )}
                 </section>
               )}
@@ -446,7 +478,8 @@ export function AdminDashboard() {
               {tab === 'frota' && canAdmin(role) && (
                 <FleetPanel
                   organizationId={orgId!}
-                  vehicles={vehicles}
+                  categories={categories}
+                  fleetVehicles={fleetVehicles}
                   onChanged={() => void refreshCatalogAdmin()}
                   onError={setError}
                 />
@@ -475,6 +508,48 @@ export function AdminDashboard() {
           )}
         </main>
       </div>
+
+      <AdminMobileNav />
+    </div>
+  )
+}
+
+function reservationEstimate(price: number | null | undefined) {
+  return price != null ? `R$ ${Number(price).toFixed(2)}` : '—'
+}
+
+function ReservationActions(props: {
+  reservation: Reservation
+  busyId: string | null
+  onConfirm: (id: string) => void
+  onCancel: (id: string) => void
+}) {
+  const { t } = useTranslation()
+  const r = props.reservation
+  const busy = props.busyId === r.id
+
+  return (
+    <div className="admin-res-actions">
+      {(r.status === 'hold' || r.status === 'hold_expirado') && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => props.onConfirm(r.id)}
+          className="admin-res-actions__confirm"
+        >
+          {t('admin.confirm')}
+        </button>
+      )}
+      {r.status !== 'cancelado' && r.status !== 'concluido' && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => props.onCancel(r.id)}
+          className="admin-res-actions__cancel"
+        >
+          {t('admin.cancel')}
+        </button>
+      )}
     </div>
   )
 }
@@ -490,11 +565,12 @@ function ReservationsPanel(props: {
 }) {
   const { t, i18n } = useTranslation()
   const locale = localeFromLang(i18n.language)
+  const emptyLabel = t('admin.reservationsEmpty')
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-            {STATUS_FILTERS.map((status) => (
+    <section className="admin-res space-y-4">
+      <div className="admin-res-filters flex flex-wrap items-center gap-2">
+        {STATUS_FILTERS.map((status) => (
           <button
             key={status}
             type="button"
@@ -517,32 +593,87 @@ function ReservationsPanel(props: {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-border-light bg-surface-light">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-border-light text-xs text-text-secondary-light">
+      {/* Mobile: stacked cards — no horizontal table scroll */}
+      <ul className="admin-res-cards md:hidden">
+        {props.reservations.map((r, index) => (
+          <li
+            key={r.id}
+            className="admin-res-card admin-row-enter"
+            style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+          >
+            <div className="admin-res-card__top">
+              <time dateTime={r.slot_start} className="admin-res-card__slot">
+                {new Date(r.slot_start).toLocaleString(locale, {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </time>
+              <span className="admin-res-card__status">
+                {t(`admin.status.${r.status}`)}
+              </span>
+            </div>
+
+            {r.hold_expires_at && r.status === 'hold' && (
+              <p className="admin-res-card__hold">
+                {t('admin.holdExpires', {
+                  time: new Date(r.hold_expires_at).toLocaleTimeString(locale),
+                })}
+              </p>
+            )}
+
+            <div className="admin-res-card__customer">
+              <strong>{r.customer_name}</strong>
+              <span>{r.customer_phone}</span>
+            </div>
+
+            <div className="admin-res-card__route">
+              <p>{r.origin_address}</p>
+              <p>→ {r.destination_address}</p>
+            </div>
+
+            <div className="admin-res-card__meta">
+              <span>{reservationEstimate(r.estimated_price)}</span>
+            </div>
+
+            <ReservationActions
+              reservation={r}
+              busyId={props.busyId}
+              onConfirm={props.onConfirm}
+              onCancel={props.onCancel}
+            />
+          </li>
+        ))}
+        {!props.reservations.length && (
+          <li className="admin-res-card admin-res-card--empty">{emptyLabel}</li>
+        )}
+      </ul>
+
+      {/* Desktop table */}
+      <div className="admin-res-table-wrap hidden md:block">
+        <table className="admin-res-table min-w-full text-left text-sm">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Slot</th>
-              <th className="px-4 py-3">
+              <th>Slot</th>
+              <th>
                 {i18n.language.startsWith('en') ? 'Customer' : 'Cliente'}
               </th>
-              <th className="px-4 py-3">
-                {i18n.language.startsWith('en') ? 'Route' : 'Trecho'}
-              </th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Est.</th>
-              <th className="px-4 py-3">
-                {i18n.language.startsWith('en') ? 'Actions' : 'Ações'}
-              </th>
+              <th>{i18n.language.startsWith('en') ? 'Route' : 'Trecho'}</th>
+              <th>Status</th>
+              <th>Est.</th>
+              <th>{i18n.language.startsWith('en') ? 'Actions' : 'Ações'}</th>
             </tr>
           </thead>
           <tbody>
             {props.reservations.map((r, index) => (
               <tr
                 key={r.id}
-                className="admin-row-enter border-b border-border-light/70"
+                className="admin-row-enter"
                 style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
               >
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="whitespace-nowrap">
                   {new Date(r.slot_start).toLocaleString(locale)}
                   {r.hold_expires_at && r.status === 'hold' && (
                     <div className="text-[11px] text-amber-700">
@@ -554,157 +685,41 @@ function ReservationsPanel(props: {
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td>
                   <div className="font-medium">{r.customer_name}</div>
                   <div className="text-xs text-text-secondary-light">
                     {r.customer_phone}
                   </div>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="max-w-[220px] truncate">{r.origin_address}</div>
-                  <div className="max-w-[220px] truncate text-xs text-text-secondary-light">
+                <td>
+                  <div className="admin-res-table__route">{r.origin_address}</div>
+                  <div className="admin-res-table__route is-dest">
                     → {r.destination_address}
                   </div>
                 </td>
-                <td className="px-4 py-3">{t(`admin.status.${r.status}`)}</td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {r.estimated_price != null
-                    ? `R$ ${Number(r.estimated_price).toFixed(2)}`
-                    : '—'}
+                <td>{t(`admin.status.${r.status}`)}</td>
+                <td className="whitespace-nowrap">
+                  {reservationEstimate(r.estimated_price)}
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    {(r.status === 'hold' || r.status === 'hold_expirado') && (
-                      <button
-                        type="button"
-                        disabled={props.busyId === r.id}
-                        onClick={() => props.onConfirm(r.id)}
-                        className="rounded bg-primary px-2 py-1 text-xs text-text-primary-dark disabled:opacity-50"
-                      >
-                        {t('admin.confirm')}
-                      </button>
-                    )}
-                    {r.status !== 'cancelado' && r.status !== 'concluido' && (
-                      <button
-                        type="button"
-                        disabled={props.busyId === r.id}
-                        onClick={() => props.onCancel(r.id)}
-                        className="rounded border border-border-light px-2 py-1 text-xs disabled:opacity-50"
-                      >
-                        {t('admin.cancel')}
-                      </button>
-                    )}
-                  </div>
+                <td>
+                  <ReservationActions
+                    reservation={r}
+                    busyId={props.busyId}
+                    onConfirm={props.onConfirm}
+                    onCancel={props.onCancel}
+                  />
                 </td>
               </tr>
             ))}
             {!props.reservations.length && (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-text-secondary-light"
-                >
-                  Nenhuma reserva neste filtro.
+                <td colSpan={6} className="admin-res-table__empty">
+                  {emptyLabel}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-      </div>
-    </section>
-  )
-}
-
-function FleetPanel(props: {
-  organizationId: string
-  vehicles: VehicleCategory[]
-  onChanged: () => void
-  onError: (msg: string) => void
-}) {
-  const [namePt, setNamePt] = useState('')
-  const [nameEn, setNameEn] = useState('')
-  const [armored, setArmored] = useState(false)
-  const [saving, setSaving] = useState(false)
-
-  async function onCreate(e: FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await createVehicleCategory({
-        organization_id: props.organizationId,
-        name_pt: namePt,
-        name_en: nameEn || namePt,
-        is_armored: armored,
-      })
-      setNamePt('')
-      setNameEn('')
-      setArmored(false)
-      props.onChanged()
-    } catch (err) {
-      props.onError(err instanceof Error ? err.message : 'Falha ao criar veículo')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <section className="grid gap-6 md:grid-cols-2">
-      <form
-        onSubmit={onCreate}
-        className="space-y-3 rounded-2xl border border-border-light bg-surface-light p-5"
-      >
-        <h2 className="font-semibold text-primary">Nova categoria</h2>
-        <input
-          className="w-full rounded-lg border border-border-light px-3 py-2 text-sm"
-          placeholder="Nome (pt)"
-          value={namePt}
-          onChange={(e) => setNamePt(e.target.value)}
-          required
-        />
-        <input
-          className="w-full rounded-lg border border-border-light px-3 py-2 text-sm"
-          placeholder="Name (en)"
-          value={nameEn}
-          onChange={(e) => setNameEn(e.target.value)}
-        />
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={armored}
-            onChange={(e) => setArmored(e.target.checked)}
-          />
-          Blindado
-        </label>
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
-        >
-          Cadastrar
-        </button>
-      </form>
-
-      <div className="rounded-2xl border border-border-light bg-surface-light p-5">
-        <h2 className="mb-3 font-semibold text-primary">Categorias</h2>
-        <ul className="space-y-2 text-sm">
-          {props.vehicles.map((v) => (
-            <li
-              key={v.id}
-              className="flex justify-between border-b border-border-light/60 py-2"
-            >
-              <span>
-                {(v.name_i18n as { pt?: string }).pt || '—'}
-                {v.is_armored ? ' · blindado' : ''}
-              </span>
-              <span className="text-xs text-text-secondary-light">
-                {v.active ? 'ativo' : 'inativo'}
-              </span>
-            </li>
-          ))}
-          {!props.vehicles.length && (
-            <li className="text-text-secondary-light">Nenhuma categoria ainda.</li>
-          )}
-        </ul>
       </div>
     </section>
   )
@@ -767,63 +782,71 @@ function FreightPanel(props: {
   return (
     <form
       onSubmit={onSave}
-      className="max-w-lg space-y-3 rounded-2xl border border-border-light bg-surface-light p-5"
+      className="w-full max-w-4xl space-y-5 rounded-2xl border border-border-light bg-surface-light p-5"
     >
-      <h2 className="font-semibold text-primary">Regra base de frete</h2>
-      <label className="block text-sm">
-        R$/km
-        <input
-          className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-          type="number"
-          step="0.01"
-          value={pricePerKm}
-          onChange={(e) => setPricePerKm(e.target.value)}
-          required
-        />
-      </label>
-      <label className="block text-sm">
-        Mínimo
-        <input
-          className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-          type="number"
-          step="0.01"
-          value={minimum}
-          onChange={(e) => setMinimum(e.target.value)}
-          required
-        />
-      </label>
-      <label className="block text-sm">
-        R$/hora
-        <input
-          className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-          type="number"
-          step="0.01"
-          value={hourly}
-          onChange={(e) => setHourly(e.target.value)}
-          required
-        />
-      </label>
-      {(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) => (
-        <label key={airport} className="block text-sm">
-          Taxa {airport}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 className="font-semibold text-primary">Regra base de frete</h2>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
+        >
+          {saving ? '…' : 'Salvar frete'}
+        </button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="block text-sm">
+          R$/km
           <input
             className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
             type="number"
             step="0.01"
-            value={fees[airport]}
-            onChange={(e) =>
-              setFees((prev) => ({ ...prev, [airport]: e.target.value }))
-            }
+            value={pricePerKm}
+            onChange={(e) => setPricePerKm(e.target.value)}
+            required
           />
         </label>
-      ))}
-      <button
-        type="submit"
-        disabled={saving}
-        className="rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
-      >
-        Salvar frete
-      </button>
+        <label className="block text-sm">
+          Mínimo
+          <input
+            className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
+            type="number"
+            step="0.01"
+            value={minimum}
+            onChange={(e) => setMinimum(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block text-sm">
+          R$/hora
+          <input
+            className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
+            type="number"
+            step="0.01"
+            value={hourly}
+            onChange={(e) => setHourly(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) => (
+          <label key={airport} className="block text-sm">
+            Taxa {airport}
+            <input
+              className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
+              type="number"
+              step="0.01"
+              value={fees[airport]}
+              onChange={(e) =>
+                setFees((prev) => ({ ...prev, [airport]: e.target.value }))
+              }
+            />
+          </label>
+        ))}
+      </div>
     </form>
   )
 }

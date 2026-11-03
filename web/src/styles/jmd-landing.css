@@ -795,6 +795,84 @@
       border: 0;
     }
 
+    /* Mobile app-like dock */
+    .mobile-dock {
+      display: none;
+    }
+
+    @media (max-width: 899px) {
+      .site-nav {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+
+      .nav-drawer {
+        padding-top: calc(5.5rem + env(safe-area-inset-top));
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+      }
+
+      .mobile-dock {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.65rem;
+        align-items: center;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 44;
+        padding: 0.75rem 0.9rem;
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        padding-left: max(0.9rem, env(safe-area-inset-left));
+        padding-right: max(0.9rem, env(safe-area-inset-right));
+        background: color-mix(in srgb, var(--ink) 94%, transparent);
+        border-top: 1px solid color-mix(in srgb, var(--bronze) 30%, transparent);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.28);
+      }
+
+      .mobile-dock__cta {
+        appearance: none;
+        border: 0;
+        background: var(--bronze);
+        color: var(--ink);
+        min-height: 2.85rem;
+        padding: 0 1rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .mobile-dock__wa {
+        appearance: none;
+        display: grid;
+        place-items: center;
+        width: 2.85rem;
+        height: 2.85rem;
+        border: 1px solid color-mix(in srgb, var(--paper) 28%, transparent);
+        background: transparent;
+        color: var(--paper);
+        text-decoration: none;
+      }
+
+      .mobile-dock__wa svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        fill: currentColor;
+      }
+
+      .wa-fab {
+        display: none;
+      }
+
+      body {
+        padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+      }
+    }
+
     @media (max-width: 519px) {
       .hero {
         padding-top: 5rem;

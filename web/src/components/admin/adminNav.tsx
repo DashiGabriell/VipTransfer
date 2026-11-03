@@ -1,0 +1,80 @@
+import type { ReactNode } from 'react'
+
+export type AdminNavId =
+  | 'reservas'
+  | 'agenda'
+  | 'frota'
+  | 'frete'
+  | 'perfil'
+
+export const ADMIN_NAV_IDS: AdminNavId[] = [
+  'reservas',
+  'agenda',
+  'frota',
+  'frete',
+  'perfil',
+]
+
+export function isAdminNavId(value: string | undefined): value is AdminNavId {
+  return ADMIN_NAV_IDS.includes(value as AdminNavId)
+}
+
+export type AdminNavIconName = 'list' | 'calendar' | 'car' | 'tag' | 'user'
+
+export type AdminNavItem = {
+  id: AdminNavId
+  labelKey: string
+  icon: AdminNavIconName
+}
+
+export const ADMIN_NAV: AdminNavItem[] = [
+  { id: 'reservas', labelKey: 'admin.navReservas', icon: 'list' },
+  { id: 'agenda', labelKey: 'admin.navAgenda', icon: 'calendar' },
+  { id: 'frota', labelKey: 'admin.navFrota', icon: 'car' },
+  { id: 'frete', labelKey: 'admin.navFrete', icon: 'tag' },
+  { id: 'perfil', labelKey: 'admin.navPerfil', icon: 'user' },
+]
+
+export function AdminNavIcon({
+  name,
+}: {
+  name: AdminNavIconName
+}): ReactNode {
+  if (name === 'list') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+      </svg>
+    )
+  }
+  if (name === 'calendar') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4" />
+      </svg>
+    )
+  }
+  if (name === 'car') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 13h18l-1.5-4.5A2 2 0 0 0 17.6 7H6.4a2 2 0 0 0-1.9 1.5L3 13Z" />
+        <path d="M5 17h2M17 17h2M5 13v4M19 13v4" />
+      </svg>
+    )
+  }
+  if (name === 'user') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 19c1.8-3.2 4-4.5 7-4.5s5.2 1.3 7 4.5" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" />
+    </svg>
+  )
+}

@@ -357,7 +357,7 @@
     "notifOk": "Notificações ativadas. Enviamos um teste.",
     "notifDenied": "Permissão de notificação negada.",
     "notifError": "Falha ao ativar notificações.",
-    "notifTestTitle": "VipTransfer",
+    "notifTestTitle": "JMD Transfer",
     "notifTestBody": "Notificações do painel ativas neste dispositivo."
   }
 }

@@ -65,7 +65,7 @@ export function DevicePermissionsCard({ onError }: Props) {
       await showLocalNotification({
         title: t('pwa.notifTestTitle'),
         body: t('pwa.notifTestBody'),
-        tag: 'viptransfer-test',
+        tag: 'jmdtransfer-test',
       })
       setOk(t('pwa.notifOk'))
     } catch (err) {

@@ -19,8 +19,8 @@ export default defineConfig({
       ],
       manifest: {
         id: '/',
-        name: 'VipTransfer',
-        short_name: 'VipTransfer',
+        name: 'JMD Transfer',
+        short_name: 'JMD Transfer',
         description:
           'Transfer executivo em São Paulo — reservas, frota e operação em tempo real.',
         theme_color: '#0e1624',

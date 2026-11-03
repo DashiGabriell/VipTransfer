@@ -357,7 +357,7 @@
     "notifOk": "Notifications enabled. We sent a test.",
     "notifDenied": "Notification permission denied.",
     "notifError": "Could not enable notifications.",
-    "notifTestTitle": "VipTransfer",
+    "notifTestTitle": "JMD Transfer",
     "notifTestBody": "Panel notifications are active on this device."
   }
 }

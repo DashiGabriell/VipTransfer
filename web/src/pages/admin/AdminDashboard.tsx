@@ -5,9 +5,17 @@ import {
   useState,
   type FormEvent,
 } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useTenant } from '../../context/TenantContext'
+import {
+  AdminSidebar,
+  type AdminNavId,
+} from '../../components/admin/AdminSidebar'
+import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
+import { ProfilePanel } from '../../components/admin/ProfilePanel'
+import { LanguageToggle } from '../../components/LanguageToggle'
 import {
   cancelReservation,
   canAdmin,
@@ -34,7 +42,9 @@ import type {
 import { SlotAgenda } from '../../components/SlotAgenda'
 import type { DaySlot } from '../../domain/agenda'
 
-type Tab = 'reservas' | 'agenda' | 'frota' | 'frete'
+type Tab = AdminNavId
+
+const SIDEBAR_KEY = 'jmd.admin.sidebarCollapsed'
 
 const STATUS_FILTERS: Array<ReservationStatus | 'all'> = [
   'all',
@@ -45,10 +55,26 @@ const STATUS_FILTERS: Array<ReservationStatus | 'all'> = [
   'concluido',
 ]
 
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function localeFromLang(lang: string): string {
+  return lang.startsWith('en') ? 'en-US' : 'pt-BR'
+}
+
 export function AdminDashboard() {
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const tenant = useTenant()
   const [tab, setTab] = useState<Tab>('reservas')
+  const [collapsed, setCollapsed] = useState(readCollapsed)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [membership, setMembership] = useState<Membership | null>(null)
   const [bootstrapping, setBootstrapping] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +86,7 @@ export function AdminDashboard() {
   const [freightRules, setFreightRules] = useState<FreightRule[]>([])
   const [busyId, setBusyId] = useState<string | null>(null)
   const [agendaFocus, setAgendaFocus] = useState<DaySlot | null>(null)
+  const [agendaKey, setAgendaKey] = useState(0)
 
   const orgId = tenant.organizationId
   const role: OrgRole | null = membership?.role ?? null
@@ -121,10 +148,39 @@ export function AdminDashboard() {
     })()
   }, [refreshReservations, refreshCatalogAdmin])
 
-  const title = useMemo(
-    () => `${tenant.name} · Admin`,
-    [tenant.name],
-  )
+  const title = useMemo(() => {
+    const labels: Record<Tab, string> = {
+      reservas: t('admin.navReservas'),
+      agenda: t('admin.navAgenda'),
+      frota: t('admin.navFrota'),
+      frete: t('admin.navFrete'),
+      perfil: t('admin.navPerfil'),
+    }
+    return labels[tab]
+  }, [t, tab, i18n.language])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
 
   async function onClaimOwner() {
     setBootstrapping(true)
@@ -163,195 +219,255 @@ export function AdminDashboard() {
     }
   }
 
+  const layoutClass = [
+    'admin-layout',
+    collapsed ? 'is-collapsed' : '',
+    mobileOpen ? 'is-mobile-open' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className="min-h-svh bg-background-light text-text-primary-light">
-      <header className="border-b border-border-light bg-surface-light">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <div>
-            <Link to="/" className="text-xs text-primary hover:underline">
-              ← Site
-            </Link>
-            <h1 className="text-xl font-semibold text-primary">{title}</h1>
-            <p className="text-xs text-text-secondary-light">
-              {user?.email} · role: {role ?? 'sem acesso'}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="rounded-full border border-border-light px-4 py-2 text-sm hover:bg-background-light"
-          >
-            Sair
-          </button>
-        </div>
-      </header>
+    <div className={layoutClass}>
+      <button
+        type="button"
+        className="admin-backdrop"
+        aria-label="Fechar menu"
+        onClick={() => setMobileOpen(false)}
+      />
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        {error && (
-          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
+      <AdminSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        active={tab}
+        brand={tenant.name}
+        email={user?.email}
+        role={role}
+        onNavigate={setTab}
+        onToggleCollapsed={() => {
+          // Mobile: toggle acts as close; desktop: collapse/expand
+          if (window.matchMedia('(max-width: 900px)').matches) {
+            setMobileOpen(false)
+            return
+          }
+          setCollapsed((v) => !v)
+        }}
+        onCloseMobile={() => setMobileOpen(false)}
+        onSignOut={() => {
+          void signOut().then(() => navigate('/admin', { replace: true }))
+        }}
+      />
 
-        {!membership && (
-          <div className="mb-8 rounded-2xl border border-border-light bg-surface-light p-6">
-            <h2 className="text-lg font-semibold text-primary">
-              Bootstrap do owner
-            </h2>
-            <p className="mt-2 text-sm text-text-secondary-light">
-              Nenhum membro na org <strong>{tenant.slug}</strong>. O primeiro
-              usuário autenticado pode reivindicar o papel de owner.
-            </p>
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <div className="admin-topbar__left">
             <button
               type="button"
-              disabled={bootstrapping || !orgId}
-              onClick={() => void onClaimOwner()}
-              className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-text-primary-dark hover:bg-primary-dark disabled:opacity-60"
+              className="admin-mobile-toggle"
+              aria-label={t('admin.openMenu')}
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
             >
-              {bootstrapping ? '…' : `Tornar-me owner de ${tenant.slug}`}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+            <div>
+              <h1>{title}</h1>
+              <p>
+                {tenant.name}
+                {role ? ` · ${role}` : ` · ${t('admin.noAccess')}`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageToggle variant="admin" />
+            <button
+              type="button"
+              className="rounded-none border border-[var(--admin-line)] bg-[var(--admin-paper-warm)] px-3 py-2 text-xs tracking-wide uppercase"
+              onClick={() => {
+                if (window.matchMedia('(max-width: 900px)').matches) {
+                  setMobileOpen((v) => !v)
+                  return
+                }
+                setCollapsed((v) => !v)
+              }}
+              aria-label={
+                collapsed ? t('admin.expand') : t('admin.collapse')
+              }
+            >
+              {t('admin.menu')}
             </button>
           </div>
-        )}
+        </header>
 
-        {membership && (
-          <>
-            <div className="mb-6 flex flex-wrap gap-2">
-              {(
-                [
-                  ['reservas', 'Reservas'],
-                  ['agenda', 'Agenda'],
-                  ['frota', 'Frota'],
-                  ['frete', 'Frete'],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setTab(id)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium ${
-                    tab === id
-                      ? 'bg-primary text-text-primary-dark'
-                      : 'bg-surface-light text-text-secondary-light hover:text-primary'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+        <main className="admin-content">
+          {error && (
+            <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
 
-            {tab === 'reservas' && canOperate(role) && (
-              <ReservationsPanel
-                reservations={reservations}
-                statusFilter={statusFilter}
-                onFilter={setStatusFilter}
-                busyId={busyId}
-                onConfirm={onConfirm}
-                onCancel={onCancel}
-                onRefresh={() => void refreshReservations()}
-              />
-            )}
-
-            {tab === 'agenda' && canOperate(role) && (
-              <section className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-border-light bg-surface-light p-5">
-                  <h2 className="mb-3 font-semibold text-primary">
-                    Agenda visual
-                  </h2>
-                  <SlotAgenda
-                    organizationId={orgId}
-                    selectedStart={agendaFocus?.slot_start ?? null}
-                    onSelect={setAgendaFocus}
-                    mode="admin"
-                  />
-                </div>
-                <div className="rounded-2xl border border-border-light bg-surface-light p-5">
-                  <h2 className="mb-3 font-semibold text-primary">
-                    Reservas no slot
-                  </h2>
-                  {!agendaFocus && (
-                    <p className="text-sm text-text-secondary-light">
-                      Clique em um horário para ver ocupação e reservas.
-                    </p>
-                  )}
-                  {agendaFocus && (
-                    <>
-                      <p className="mb-3 text-sm">
-                        {new Date(agendaFocus.slot_start).toLocaleString('pt-BR')}{' '}
-                        · {agendaFocus.occupied}/{agendaFocus.capacity} ocupados
-                        · {agendaFocus.available} livres
-                      </p>
-                      <ul className="space-y-2 text-sm">
-                        {agendaDayReservations.map((r) => (
-                          <li
-                            key={r.id}
-                            className="rounded-lg border border-border-light px-3 py-2"
-                          >
-                            <div className="font-medium">
-                              {r.customer_name} · {r.status}
-                            </div>
-                            <div className="text-xs text-text-secondary-light">
-                              {r.customer_phone} · {r.service_type}
-                            </div>
-                            {(r.status === 'hold' ||
-                              r.status === 'hold_expirado') && (
-                              <div className="mt-2 flex gap-2">
-                                <button
-                                  type="button"
-                                  className="rounded bg-primary px-2 py-1 text-xs text-text-primary-dark"
-                                  onClick={() => void onConfirm(r.id)}
-                                >
-                                  Confirmar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="rounded border border-border-light px-2 py-1 text-xs"
-                                  onClick={() => void onCancel(r.id)}
-                                >
-                                  Cancelar
-                                </button>
-                              </div>
-                            )}
-                          </li>
-                        ))}
-                        {!agendaDayReservations.length && (
-                          <li className="text-text-secondary-light">
-                            Sem reservas neste intervalo.
-                          </li>
-                        )}
-                      </ul>
-                    </>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {tab === 'frota' && canAdmin(role) && (
-              <FleetPanel
-                organizationId={orgId!}
-                vehicles={vehicles}
-                onChanged={() => void refreshCatalogAdmin()}
-                onError={setError}
-              />
-            )}
-
-            {tab === 'frete' && canAdmin(role) && (
-              <FreightPanel
-                organizationId={orgId!}
-                rules={freightRules}
-                airportFees={tenant.catalog?.airportFees ?? []}
-                onChanged={() => void refreshCatalogAdmin()}
-                onError={setError}
-              />
-            )}
-
-            {(tab === 'frota' || tab === 'frete') && !canAdmin(role) && (
-              <p className="text-sm text-text-secondary-light">
-                Seu papel ({role}) não edita frota/frete.
+          {!membership && (
+            <div className="admin-panel-enter mb-8 rounded-2xl border border-border-light bg-surface-light p-6">
+              <h2 className="text-lg font-semibold text-primary">
+                {t('admin.bootstrapTitle')}
+              </h2>
+              <p className="mt-2 text-sm text-text-secondary-light">
+                {t('admin.bootstrapLead', { slug: tenant.slug })}
               </p>
-            )}
-          </>
-        )}
-      </main>
+              <button
+                type="button"
+                disabled={bootstrapping || !orgId}
+                onClick={() => void onClaimOwner()}
+                className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-text-primary-dark hover:bg-primary-dark disabled:opacity-60"
+              >
+                {bootstrapping
+                  ? '…'
+                  : t('admin.bootstrapCta', { slug: tenant.slug })}
+              </button>
+            </div>
+          )}
+
+          {membership && (
+            <div key={tab} className="admin-panel-enter">
+              {tab === 'reservas' && canOperate(role) && (
+                <ReservationsPanel
+                  reservations={reservations}
+                  statusFilter={statusFilter}
+                  onFilter={setStatusFilter}
+                  busyId={busyId}
+                  onConfirm={onConfirm}
+                  onCancel={onCancel}
+                  onRefresh={() => void refreshReservations()}
+                />
+              )}
+
+              {tab === 'agenda' && canOperate(role) && (
+                <section className="grid gap-6 lg:grid-cols-2">
+                  <div className="rounded-2xl border border-border-light bg-surface-light p-5">
+                    <h2 className="mb-3 font-semibold text-primary">
+                      {t('admin.agendaVisual')}
+                    </h2>
+                    <SlotAgenda
+                      key={agendaKey}
+                      organizationId={orgId}
+                      selectedStart={agendaFocus?.slot_start ?? null}
+                      onSelect={setAgendaFocus}
+                      mode="admin"
+                    />
+                  </div>
+                  <div className="rounded-2xl border border-border-light bg-surface-light p-5">
+                    <h2 className="mb-3 font-semibold text-primary">
+                      {t('admin.slotReservations')}
+                    </h2>
+                    {!agendaFocus && (
+                      <p className="text-sm text-text-secondary-light">
+                        {t('admin.slotHint')}
+                      </p>
+                    )}
+                    {agendaFocus && (
+                      <>
+                        <p className="mb-3 text-sm">
+                          {new Date(agendaFocus.slot_start).toLocaleString(
+                            localeFromLang(i18n.language),
+                          )}{' '}
+                          ·{' '}
+                          {t('admin.slotMeta', {
+                            occupied: agendaFocus.occupied,
+                            capacity: agendaFocus.capacity,
+                            available: agendaFocus.available,
+                          })}
+                        </p>
+                        <ul className="space-y-2 text-sm">
+                          {agendaDayReservations.map((r) => (
+                            <li
+                              key={r.id}
+                              className="rounded-lg border border-border-light px-3 py-2"
+                            >
+                              <div className="font-medium">
+                                {r.customer_name} · {r.status}
+                              </div>
+                              <div className="text-xs text-text-secondary-light">
+                                {r.customer_phone} · {r.service_type}
+                              </div>
+                              {(r.status === 'hold' ||
+                                r.status === 'hold_expirado') && (
+                                <div className="mt-2 flex gap-2">
+                                  <button
+                                    type="button"
+                                    className="rounded bg-primary px-2 py-1 text-xs text-text-primary-dark"
+                                    onClick={() => void onConfirm(r.id)}
+                                  >
+                                    {t('admin.confirm')}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="rounded border border-border-light px-2 py-1 text-xs"
+                                    onClick={() => void onCancel(r.id)}
+                                  >
+                                    {t('admin.cancel')}
+                                  </button>
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                          {!agendaDayReservations.length && (
+                            <li className="text-text-secondary-light">
+                              {t('admin.slotEmpty')}
+                            </li>
+                          )}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                  {canAdmin(role) && orgId && (
+                    <div className="lg:col-span-2">
+                      <AvailabilityPanel
+                        organizationId={orgId}
+                        onError={setError}
+                        onChanged={() => {
+                          setAgendaKey((k) => k + 1)
+                          setAgendaFocus(null)
+                        }}
+                      />
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {tab === 'frota' && canAdmin(role) && (
+                <FleetPanel
+                  organizationId={orgId!}
+                  vehicles={vehicles}
+                  onChanged={() => void refreshCatalogAdmin()}
+                  onError={setError}
+                />
+              )}
+
+              {tab === 'frete' && canAdmin(role) && (
+                <FreightPanel
+                  organizationId={orgId!}
+                  rules={freightRules}
+                  airportFees={tenant.catalog?.airportFees ?? []}
+                  onChanged={() => void refreshCatalogAdmin()}
+                  onError={setError}
+                />
+              )}
+
+              {tab === 'perfil' && (
+                <ProfilePanel onError={setError} />
+              )}
+
+              {(tab === 'frota' || tab === 'frete') && !canAdmin(role) && (
+                <p className="text-sm text-text-secondary-light">
+                  {t('admin.roleDenied', { role })}
+                </p>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   )
 }
@@ -365,6 +481,9 @@ function ReservationsPanel(props: {
   onCancel: (id: string) => void
   onRefresh: () => void
 }) {
+  const { t, i18n } = useTranslation()
+  const locale = localeFromLang(i18n.language)
+
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -387,7 +506,7 @@ function ReservationsPanel(props: {
           onClick={props.onRefresh}
           className="ml-auto text-xs text-primary hover:underline"
         >
-          Atualizar
+          {t('admin.refresh')}
         </button>
       </div>
 
@@ -396,22 +515,32 @@ function ReservationsPanel(props: {
           <thead className="border-b border-border-light text-xs text-text-secondary-light">
             <tr>
               <th className="px-4 py-3">Slot</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Trecho</th>
+              <th className="px-4 py-3">
+                {i18n.language.startsWith('en') ? 'Customer' : 'Cliente'}
+              </th>
+              <th className="px-4 py-3">
+                {i18n.language.startsWith('en') ? 'Route' : 'Trecho'}
+              </th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Est.</th>
-              <th className="px-4 py-3">Ações</th>
+              <th className="px-4 py-3">
+                {i18n.language.startsWith('en') ? 'Actions' : 'Ações'}
+              </th>
             </tr>
           </thead>
           <tbody>
-            {props.reservations.map((r) => (
-              <tr key={r.id} className="border-b border-border-light/70">
+            {props.reservations.map((r, index) => (
+              <tr
+                key={r.id}
+                className="admin-row-enter border-b border-border-light/70"
+                style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+              >
                 <td className="px-4 py-3 whitespace-nowrap">
-                  {new Date(r.slot_start).toLocaleString('pt-BR')}
+                  {new Date(r.slot_start).toLocaleString(locale)}
                   {r.hold_expires_at && r.status === 'hold' && (
                     <div className="text-[11px] text-amber-700">
-                      hold até{' '}
-                      {new Date(r.hold_expires_at).toLocaleTimeString('pt-BR')}
+                      hold ·{' '}
+                      {new Date(r.hold_expires_at).toLocaleTimeString(locale)}
                     </div>
                   )}
                 </td>
@@ -442,7 +571,7 @@ function ReservationsPanel(props: {
                         onClick={() => props.onConfirm(r.id)}
                         className="rounded bg-primary px-2 py-1 text-xs text-text-primary-dark disabled:opacity-50"
                       >
-                        Confirmar
+                        {t('admin.confirm')}
                       </button>
                     )}
                     {r.status !== 'cancelado' && r.status !== 'concluido' && (
@@ -452,7 +581,7 @@ function ReservationsPanel(props: {
                         onClick={() => props.onCancel(r.id)}
                         className="rounded border border-border-light px-2 py-1 text-xs disabled:opacity-50"
                       >
-                        Cancelar
+                        {t('admin.cancel')}
                       </button>
                     )}
                   </div>

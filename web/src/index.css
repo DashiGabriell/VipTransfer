@@ -1,35 +1,255 @@
 @import 'tailwindcss';
+@import './styles/jmd-landing.css';
+@import './styles/admin-layout.css';
+@import './styles/login.css';
 
 @theme {
-  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
-
-  --color-primary: #20324d;
-  --color-primary-dark: #18263b;
-  --color-background-light: #f3efe8;
-  --color-background-dark: #000000;
-  --color-surface-light: #ffffff;
-  --color-surface-dark: #111418;
-  --color-text-primary-light: #000000;
-  --color-text-primary-dark: #f3efe8;
-  --color-text-secondary-light: #4a4f57;
-  --color-text-secondary-dark: #d6d7d9;
-  --color-border-light: #d6d7d9;
-  --color-border-dark: #2a2e35;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  font-family: var(--font-sans);
-  background: var(--color-background-light);
-  color: var(--color-text-primary-light);
+  --font-sans: 'Public Sans', system-ui, sans-serif;
+  --font-serif: 'Bodoni Moda', 'Times New Roman', serif;
+  --color-primary: #b08d57;
+  --color-primary-dark: #6e542c;
+  --color-background-light: #f2ebe0;
+  --color-background-dark: #0e1624;
+  --color-surface-light: #fffdf8;
+  --color-surface-dark: #152033;
+  --color-text-primary-light: #152033;
+  --color-text-primary-dark: #f2ebe0;
+  --color-text-secondary-light: #4f483f;
+  --color-text-secondary-dark: #d8cfc0;
+  --color-border-light: #d8cfc0;
+  --color-border-dark: #2c3a52;
 }
 
 #root {
   min-height: 100svh;
+}
+
+/* Slot agenda inside folio paper */
+.agenda-panel {
+  margin-top: 0.35rem;
+  padding: 0.85rem;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border: 1px solid var(--paper-line);
+}
+
+.agenda-panel__title {
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.agenda-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.agenda-nav input[type='date'] {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--paper-line);
+  background: var(--white);
+  color: var(--ink);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.agenda-nav button {
+  border: 1px solid var(--paper-line);
+  background: var(--white);
+  color: var(--ink);
+  width: 2.1rem;
+  height: 2.1rem;
+  cursor: pointer;
+}
+
+.agenda-nav .agenda-refresh {
+  width: auto;
+  padding: 0 0.65rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agenda-day {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.agenda-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+@media (min-width: 520px) {
+  .agenda-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.agenda-slot {
+  border: 1px solid var(--paper-line);
+  background: var(--white);
+  color: var(--ink);
+  padding: 0.55rem 0.45rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.agenda-slot strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.agenda-slot span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.agenda-slot.is-available:hover {
+  border-color: var(--bronze);
+  transform: translateY(-1px);
+}
+
+.agenda-slot.is-limited {
+  background: color-mix(in srgb, var(--bronze) 12%, var(--white));
+  border-color: color-mix(in srgb, var(--bronze) 45%, var(--paper-line));
+}
+
+.agenda-slot.is-full,
+.agenda-slot.is-blocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.agenda-slot.is-selected {
+  outline: 2px solid var(--bronze);
+  outline-offset: 1px;
+}
+
+.agenda-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.agenda-legend i {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+
+.agenda-legend .dot-available {
+  background: var(--bronze);
+}
+.agenda-legend .dot-limited {
+  background: color-mix(in srgb, var(--bronze) 55%, #fff);
+}
+.agenda-legend .dot-blocked {
+  background: #b0a89c;
+}
+
+.agenda-selected {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  color: var(--bronze-deep);
+}
+
+.agenda-error {
+  margin: 0.35rem 0;
+  font-size: 0.8rem;
+  color: #9b3b2e;
+}
+
+/* Admin shell on ink world */
+.admin-shell {
+  min-height: 100svh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Language toggle with flags */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.18rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
+
+.lang-toggle--admin {
+  border-color: var(--admin-line, #d8cfc0);
+  background: var(--admin-paper-warm, #f7f2ea);
+}
+
+.lang-toggle__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  color: var(--muted, #4f483f);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.2s, color 0.2s;
+}
+
+.lang-toggle__btn.is-active {
+  background: var(--ink, #152033);
+  color: var(--paper, #f2ebe0);
+}
+
+.lang-toggle--admin .lang-toggle__btn.is-active {
+  background: var(--admin-ink, #152033);
+  color: var(--admin-paper, #f2ebe0);
+}
+
+.lang-toggle__flag {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.lang-toggle__code {
+  line-height: 1;
+}
+
+.site-nav .lang-toggle {
+  border-color: color-mix(in srgb, var(--paper) 28%, transparent);
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+.site-nav .lang-toggle__btn {
+  color: color-mix(in srgb, var(--paper) 78%, transparent);
+}
+
+.site-nav .lang-toggle__btn.is-active {
+  background: var(--bronze);
+  color: var(--ink);
 }

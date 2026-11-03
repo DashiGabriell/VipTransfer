@@ -24,10 +24,6 @@ const SERVICE_TYPES: ServiceType[] = [
 
 const AIRPORTS: AirportCode[] = ['GRU', 'CGH', 'VCP']
 
-type Props = {
-  className?: string
-}
-
 function localizedName(
   name: { pt?: string; en?: string },
   locale: string,
@@ -36,10 +32,11 @@ function localizedName(
   return name.pt || name.en || '—'
 }
 
-export function ReservationForm({ className = '' }: Props) {
+export function ReservationForm() {
   const { t, i18n } = useTranslation()
   const tenant = useTenant()
   const locale = i18n.language.startsWith('en') ? 'en' : 'pt-BR'
+  const waDigits = tenant.whatsapp.replace(/\D/g, '') || '5511999999999'
 
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
@@ -60,7 +57,6 @@ export function ReservationForm({ className = '' }: Props) {
   const vehicles = tenant.catalog?.vehicles ?? []
   const freightRules = tenant.catalog?.freightRules ?? []
   const airportFees = tenant.catalog?.airportFees ?? []
-
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
 
   const freightRule = useMemo(
@@ -108,7 +104,7 @@ export function ReservationForm({ className = '' }: Props) {
       setFeedback(
         tenant.loading
           ? 'Carregando organização…'
-          : 'Organização não disponível. Verifique o Supabase.',
+          : 'Organização não disponível.',
       )
       return
     }
@@ -147,21 +143,19 @@ export function ReservationForm({ className = '' }: Props) {
         : ''
       const slotLabel = new Date(selectedSlot.slot_start).toLocaleString(locale)
 
-      if (tenant.whatsapp) {
-        const url = buildWhatsAppUrl(tenant.whatsapp, {
-          name,
-          phone,
-          email,
-          origin,
-          destination,
-          serviceLabel: t(`reserve.services.${serviceType}`),
-          vehicleLabel,
-          slotLabel: `${slotLabel} (hold até ${holdLabel})`,
-          estimateLabel,
-          locale,
-        })
-        window.open(url, '_blank', 'noopener,noreferrer')
-      }
+      const url = buildWhatsAppUrl(waDigits, {
+        name,
+        phone,
+        email,
+        origin,
+        destination,
+        serviceLabel: t(`reserve.services.${serviceType}`),
+        vehicleLabel,
+        slotLabel: `${slotLabel} (hold até ${holdLabel})`,
+        estimateLabel,
+        locale,
+      })
+      window.open(url, '_blank', 'noopener,noreferrer')
 
       setFeedback(
         locale === 'en'
@@ -184,44 +178,46 @@ export function ReservationForm({ className = '' }: Props) {
     }
   }
 
-  const fieldClass =
-    'w-full border-0 border-b border-border-light bg-transparent py-2.5 px-0 text-sm text-gray-900 focus:border-primary focus:ring-0 placeholder:text-text-secondary-light'
-
   return (
-    <div
-      className={`w-full max-w-md rounded-3xl bg-surface-light p-6 shadow-2xl md:p-8 ${className}`}
-    >
-      <div className="mb-6 border-b border-border-light pb-4">
-        <h3 className="text-xl font-bold text-primary">{t('reserve.title')}</h3>
-        <p className="mt-1 text-xs text-text-secondary-light">
-          {t('reserve.subtitle')}
-        </p>
-      </div>
-
-      <form className="space-y-4" onSubmit={onSubmit}>
+    <form className="itinerary" id="cotacao" onSubmit={onSubmit} noValidate>
+      <div className="itinerary-row">
+        <label htmlFor="origem">{t('reserve.origin')}</label>
         <input
-          className={fieldClass}
-          placeholder={t('reserve.origin')}
+          id="origem"
+          name="origem"
+          type="text"
+          placeholder="Endereço ou hotel"
+          autoComplete="street-address"
           value={origin}
           onChange={(e) => setOrigin(e.target.value)}
           required
         />
+      </div>
+
+      <div className="itinerary-row">
+        <label htmlFor="destino">{t('reserve.destination')}</label>
         <input
-          className={fieldClass}
-          placeholder={t('reserve.destination')}
+          id="destino"
+          name="destino"
+          type="text"
+          placeholder="GRU, CGH, VCP ou endereço"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
           required
         />
+      </div>
 
+      <div className="itinerary-row">
+        <label htmlFor="servico">{t('reserve.serviceType')}</label>
         <select
-          className={`${fieldClass} text-primary`}
+          id="servico"
+          name="servico"
           value={serviceType}
           onChange={(e) => setServiceType(e.target.value as ServiceType | '')}
           required
         >
           <option value="" disabled>
-            {t('reserve.serviceType')}
+            Escolha o tipo
           </option>
           {SERVICE_TYPES.map((type) => (
             <option key={type} value={type}>
@@ -229,10 +225,13 @@ export function ReservationForm({ className = '' }: Props) {
             </option>
           ))}
         </select>
+      </div>
 
-        {serviceType === 'aeroporto' && (
+      {serviceType === 'aeroporto' && (
+        <div className="itinerary-row">
+          <label htmlFor="aeroporto">{t('reserve.airport')}</label>
           <select
-            className={`${fieldClass} text-primary`}
+            id="aeroporto"
             value={airport}
             onChange={(e) => setAirport(e.target.value as AirportCode | '')}
             required
@@ -246,23 +245,28 @@ export function ReservationForm({ className = '' }: Props) {
               </option>
             ))}
           </select>
-        )}
+        </div>
+      )}
 
-        {serviceType === 'horas_a_disposicao' && (
+      {serviceType === 'horas_a_disposicao' && (
+        <div className="itinerary-row">
+          <label htmlFor="horas">{t('reserve.hours')}</label>
           <input
-            className={fieldClass}
+            id="horas"
             type="number"
             min={1}
             step={0.5}
-            placeholder={t('reserve.hours')}
             value={hours}
             onChange={(e) => setHours(e.target.value)}
             required
           />
-        )}
+        </div>
+      )}
 
+      <div className="itinerary-row">
+        <label htmlFor="veiculo">{t('reserve.vehicle')}</label>
         <select
-          className={`${fieldClass} text-primary`}
+          id="veiculo"
           value={vehicleId}
           onChange={(e) => setVehicleId(e.target.value)}
         >
@@ -276,91 +280,96 @@ export function ReservationForm({ className = '' }: Props) {
             </option>
           ))}
         </select>
+      </div>
 
-        <div className="rounded-2xl border border-border-light p-3">
-          <p className="mb-2 text-xs font-semibold tracking-wide text-primary uppercase">
-            {t('agenda.title')}
-          </p>
-          <SlotAgenda
-            key={agendaKey}
-            organizationId={tenant.organizationId}
-            selectedStart={selectedSlot?.slot_start ?? null}
-            onSelect={setSelectedSlot}
-            mode="book"
-          />
-          {selectedSlot && (
-            <p className="mt-2 text-xs text-primary">
-              {t('agenda.selected')}:{' '}
-              {new Date(selectedSlot.slot_start).toLocaleString(locale)} (
-              {formatSlotLabel(selectedSlot.slot_start, locale)})
-            </p>
-          )}
-        </div>
+      <SlotAgenda
+        key={agendaKey}
+        organizationId={tenant.organizationId}
+        selectedStart={selectedSlot?.slot_start ?? null}
+        onSelect={setSelectedSlot}
+        mode="book"
+      />
+      {selectedSlot && (
+        <p className="agenda-selected">
+          {t('agenda.selected')}:{' '}
+          {new Date(selectedSlot.slot_start).toLocaleString(locale)} (
+          {formatSlotLabel(selectedSlot.slot_start, locale)})
+        </p>
+      )}
 
+      <div className="itinerary-row">
+        <label htmlFor="nome">{t('reserve.name')}</label>
         <input
-          className={fieldClass}
-          placeholder={t('reserve.name')}
+          id="nome"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
+      </div>
+      <div className="itinerary-row">
+        <label htmlFor="telefone">{t('reserve.phone')}</label>
         <input
-          className={fieldClass}
+          id="telefone"
           type="tel"
-          placeholder={t('reserve.phone')}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           required
         />
+      </div>
+      <div className="itinerary-row">
+        <label htmlFor="email">{t('reserve.email')}</label>
         <input
-          className={fieldClass}
+          id="email"
           type="email"
-          placeholder={t('reserve.email')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-
+      </div>
+      <div className="itinerary-row">
+        <label htmlFor="km">Km (temp.)</label>
         <input
-          className={fieldClass}
+          id="km"
           type="number"
           min={1}
           step={0.1}
-          placeholder="Km (temporário até OpenRouteService)"
           value={demoKm}
           onChange={(e) => setDemoKm(e.target.value)}
         />
+      </div>
 
-        {estimate && (
-          <div className="rounded-lg bg-background-light px-3 py-2 text-sm">
-            <div className="font-semibold text-primary">
-              {t('reserve.estimate')}:{' '}
-              {formatCurrencyBRL(estimate.total, locale)}
-            </div>
-            <p className="text-xs text-text-secondary-light">
-              {t('reserve.estimateHint')}
-            </p>
-          </div>
-        )}
+      {estimate && (
+        <p className="form-note">
+          {t('reserve.estimate')}: {formatCurrencyBRL(estimate.total, locale)} —{' '}
+          {t('reserve.estimateHint')}
+        </p>
+      )}
 
-        <p className="text-xs text-text-secondary-light">{t('reserve.holdHint')}</p>
-
+      <div className="itinerary-actions">
         <button
+          className="btn-primary"
           type="submit"
           disabled={submitting || tenant.loading || !selectedSlot}
-          className="mt-2 w-full rounded-lg bg-gray-900 py-3 font-medium text-text-primary-dark transition hover:bg-gray-800 disabled:opacity-60"
         >
           {submitting ? '…' : t('reserve.submit')}
         </button>
-
-        {feedback && (
-          <p
-            className={`text-center text-xs ${feedbackError ? 'text-red-600' : 'text-primary'}`}
-          >
-            {feedback}
-          </p>
-        )}
-      </form>
-    </div>
+        <a
+          className="btn-ghost"
+          href={`https://wa.me/${waDigits}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          WhatsApp
+        </a>
+      </div>
+      <p className="form-note">{t('reserve.holdHint')}</p>
+      <p
+        className={`form-status${feedback ? (feedbackError ? ' is-error' : ' is-ok') : ''}`}
+        role="status"
+        aria-live="polite"
+      >
+        {feedback}
+      </p>
+    </form>
   )
 }

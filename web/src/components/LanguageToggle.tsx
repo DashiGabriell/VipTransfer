@@ -1,17 +1,56 @@
 import { useTranslation } from 'react-i18next'
+import { writeStoredLang, type AppLang } from '../lib/lang'
 
-export function LanguageToggle() {
-  const { i18n } = useTranslation()
+type Props = {
+  className?: string
+  variant?: 'default' | 'admin'
+  onChanged?: (lang: AppLang) => void
+}
+
+export function LanguageToggle({
+  className = '',
+  variant = 'default',
+  onChanged,
+}: Props) {
+  const { i18n, t } = useTranslation()
   const isEn = i18n.language.startsWith('en')
 
+  async function setLang(next: AppLang) {
+    await i18n.changeLanguage(next)
+    writeStoredLang(next)
+    onChanged?.(next)
+  }
+
   return (
-    <button
-      type="button"
-      className="text-sm font-medium tracking-wide text-text-secondary-light hover:text-primary transition"
-      onClick={() => void i18n.changeLanguage(isEn ? 'pt-BR' : 'en')}
-      aria-label="Change language"
+    <div
+      className={`lang-toggle lang-toggle--${variant} ${className}`.trim()}
+      role="group"
+      aria-label={t('lang.label')}
     >
-      {isEn ? 'PT' : 'EN'}
-    </button>
+      <button
+        type="button"
+        className={`lang-toggle__btn${!isEn ? ' is-active' : ''}`}
+        onClick={() => void setLang('pt-BR')}
+        aria-pressed={!isEn}
+        title="Português (Brasil)"
+      >
+        <span className="lang-toggle__flag" aria-hidden="true">
+          🇧🇷
+        </span>
+        <span className="lang-toggle__code">PT</span>
+      </button>
+      <button
+        type="button"
+        className={`lang-toggle__btn${isEn ? ' is-active' : ''}`}
+        onClick={() => void setLang('en')}
+        aria-pressed={isEn}
+        title="English"
+      >
+        <span className="lang-toggle__flag" aria-hidden="true">
+          🇺🇸
+        </span>
+        <span className="lang-toggle__code">EN</span>
+      </button>
+    </div>
   )
 }

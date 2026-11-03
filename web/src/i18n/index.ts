@@ -1,5 +1,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import { readStoredLang } from '../lib/lang'
 import en from './locales/en.json'
 import ptBR from './locales/pt-BR.json'
 
@@ -8,7 +9,7 @@ void i18n.use(initReactI18next).init({
     'pt-BR': { translation: ptBR },
     en: { translation: en },
   },
-  lng: 'pt-BR',
+  lng: readStoredLang(),
   fallbackLng: 'pt-BR',
   interpolation: { escapeValue: false },
 })

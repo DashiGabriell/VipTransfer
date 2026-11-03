@@ -183,6 +183,112 @@ export async function updateAirportFee(input: {
   if (error) throw error
 }
 
+export type Profile = {
+  id: string
+  full_name: string | null
+  preferred_locale: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type AvailabilityWindow = {
+  id: string
+  organization_id: string
+  day_of_week: number | null
+  specific_date: string | null
+  start_time: string
+  end_time: string
+  is_blackout: boolean
+  capacity_override: number | null
+  created_at?: string
+}
+
+export async function getMyProfile(): Promise<Profile | null> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) return null
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, preferred_locale, created_at, updated_at')
+    .eq('id', userId)
+    .maybeSingle()
+  if (error) throw error
+  return data as Profile | null
+}
+
+export async function updateMyProfile(input: {
+  full_name: string
+  preferred_locale: string
+}): Promise<Profile> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('NOT_AUTHENTICATED')
+  const payload = {
+    id: userId,
+    full_name: input.full_name.trim(),
+    preferred_locale: input.preferred_locale,
+    updated_at: new Date().toISOString(),
+  }
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id, full_name, preferred_locale, created_at, updated_at')
+    .single()
+  if (error) throw error
+  return data as Profile
+}
+
+export async function listAvailabilityWindows(
+  organizationId: string,
+): Promise<AvailabilityWindow[]> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('availability_windows')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('day_of_week', { ascending: true, nullsFirst: false })
+  if (error) throw error
+  return (data ?? []) as AvailabilityWindow[]
+}
+
+export async function createAvailabilityWindow(input: {
+  organization_id: string
+  day_of_week?: number | null
+  specific_date?: string | null
+  start_time: string
+  end_time: string
+  is_blackout: boolean
+  capacity_override?: number | null
+}): Promise<AvailabilityWindow> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('availability_windows')
+    .insert({
+      organization_id: input.organization_id,
+      day_of_week: input.specific_date ? null : (input.day_of_week ?? null),
+      specific_date: input.specific_date ?? null,
+      start_time: input.start_time,
+      end_time: input.end_time,
+      is_blackout: input.is_blackout,
+      capacity_override: input.capacity_override ?? null,
+    })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as AvailabilityWindow
+}
+
+export async function deleteAvailabilityWindow(id: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { error } = await supabase
+    .from('availability_windows')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 export function canOperate(role: OrgRole | null): boolean {
   return role === 'owner' || role === 'admin' || role === 'operador'
 }

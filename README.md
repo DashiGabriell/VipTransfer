@@ -33,10 +33,11 @@ Migration inicial: multi-tenant, roles/RLS, frete, capacidade, reservas/hold, au
 
 ## Admin
 
-1. `npm run dev` → `/admin`  
-2. Criar conta / login  
-3. Se a org ainda não tem membros: **Tornar-me owner de jmd**  
-4. Abas: Reservas (confirmar/cancelar) · Frota · Frete  
+1. `npm run dev` → `/login` (ou `/admin`, que redireciona se não autenticado)  
+2. Criar conta / entrar  
+3. Após o login, você vai para `/admin`  
+4. Se a org ainda não tem membros: **Tornar-me owner de jmd**  
+5. Abas: Reservas (confirmar/cancelar) · Frota · Frete  
 
 Cron `expire-reservation-holds` roda a cada 5 min no Postgres (`pg_cron`).
 

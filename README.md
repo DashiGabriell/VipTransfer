@@ -31,10 +31,18 @@ npx supabase db reset       # aplica migrations + seed JMD
 
 Migration inicial: multi-tenant, roles/RLS, frete, capacidade, reservas/hold, audit, seed `jmd`.
 
+## Admin
+
+1. `npm run dev` → `/admin`  
+2. Criar conta / login  
+3. Se a org ainda não tem membros: **Tornar-me owner de jmd**  
+4. Abas: Reservas (confirmar/cancelar) · Frota · Frete  
+
+Cron `expire-reservation-holds` roda a cada 5 min no Postgres (`pg_cron`).
+
 ## Próximas entregas
 
-1. Ligar form → insert `reservations` + claim de capacidade  
-2. OpenRouteService (km/autocomplete)  
-3. Cron `expire_reservation_holds`  
-4. Admin: leads, agenda, frete, frota  
-5. Webhook n8n + personificação `dev`
+1. OpenRouteService (km/autocomplete)  
+2. Agenda visual de capacidade / slots públicos  
+3. Webhook n8n + personificação `dev`  
+4. Deploy Vercel + domínio `jmd.`

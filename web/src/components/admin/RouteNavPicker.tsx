@@ -1,9 +1,11 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import {
   buildGoogleMapsDirectionsUrl,
   buildWazeNavigateUrl,
+  normalizeStops,
+  routeWaypointList,
   type RoutePlaces,
 } from '../../domain/routeLinks'
 
@@ -52,12 +54,35 @@ function WazeIcon() {
   )
 }
 
+function legLabel(
+  index: number,
+  total: number,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  if (index === 0) return t('admin.routeLegOrigin')
+  if (index === total - 1) return t('admin.routeLegDestination')
+  return t('admin.routeLegStop', { n: index })
+}
+
 export function RouteNavPicker({ places, onClose }: Props) {
   const { t } = useTranslation()
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
-  const googleUrl = buildGoogleMapsDirectionsUrl(places)
-  const wazeUrl = buildWazeNavigateUrl(places)
+  const normalizedPlaces = useMemo<RoutePlaces>(
+    () => ({
+      origin: places.origin,
+      destination: places.destination,
+      stops: normalizeStops(places.stops),
+    }),
+    [places],
+  )
+  const legs = useMemo(
+    () => routeWaypointList(normalizedPlaces),
+    [normalizedPlaces],
+  )
+  const stopCount = normalizedPlaces.stops?.length ?? 0
+  const googleUrl = buildGoogleMapsDirectionsUrl(normalizedPlaces)
+  const wazeUrl = buildWazeNavigateUrl(normalizedPlaces)
 
   useEffect(() => {
     closeRef.current?.focus()
@@ -114,6 +139,19 @@ export function RouteNavPicker({ places, onClose }: Props) {
           </button>
         </header>
 
+        {legs.length > 0 && (
+          <ol className="route-nav-picker__legs" aria-label={t('admin.detailRoute')}>
+            {legs.map((address, index) => (
+              <li key={`${index}-${address}`} className="route-nav-picker__leg">
+                <span className="route-nav-picker__leg-label">
+                  {legLabel(index, legs.length, t)}
+                </span>
+                <span className="route-nav-picker__leg-address">{address}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+
         <div className="route-nav-picker__options">
           <button
             type="button"
@@ -124,7 +162,11 @@ export function RouteNavPicker({ places, onClose }: Props) {
             <GoogleMapsIcon />
             <span>
               <strong>Google Maps</strong>
-              <small>{t('admin.viewRouteGoogleHint')}</small>
+              <small>
+                {stopCount > 0
+                  ? t('admin.viewRouteGoogleHintStops', { count: stopCount })
+                  : t('admin.viewRouteGoogleHint')}
+              </small>
             </span>
           </button>
 
@@ -153,9 +195,12 @@ export function ViewRouteButton(props: {
   onOpen: () => void
 }) {
   const { t } = useTranslation()
-  const canOpen =
-    Boolean(props.places.origin?.trim()) &&
-    Boolean(props.places.destination?.trim())
+  const points = routeWaypointList({
+    origin: props.places.origin,
+    destination: props.places.destination,
+    stops: normalizeStops(props.places.stops),
+  })
+  const canOpen = points.length >= 2
 
   return (
     <button

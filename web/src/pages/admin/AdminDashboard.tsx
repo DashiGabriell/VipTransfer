@@ -552,6 +552,7 @@ function ReservationActions(props: {
   busyId: string | null
   onConfirm: (id: string) => void
   onCancel: (id: string) => void
+  onViewRoute: (reservation: Reservation) => void
 }) {
   const { t } = useTranslation()
   const r = props.reservation
@@ -559,6 +560,14 @@ function ReservationActions(props: {
 
   return (
     <div className="admin-res-actions">
+      <ViewRouteButton
+        places={{
+          origin: r.origin_address,
+          destination: r.destination_address,
+          stops: r.stops,
+        }}
+        onOpen={() => props.onViewRoute(r)}
+      />
       {(r.status === 'hold' || r.status === 'hold_expirado') && (
         <button
           type="button"
@@ -595,6 +604,9 @@ function ReservationsPanel(props: {
   const { t, i18n } = useTranslation()
   const locale = localeFromLang(i18n.language)
   const emptyLabel = t('admin.reservationsEmpty')
+  const [routeReservation, setRouteReservation] = useState<Reservation | null>(
+    null,
+  )
 
   return (
     <section className="admin-res space-y-4">
@@ -675,6 +687,7 @@ function ReservationsPanel(props: {
               busyId={props.busyId}
               onConfirm={props.onConfirm}
               onCancel={props.onCancel}
+              onViewRoute={setRouteReservation}
             />
           </li>
         ))}
@@ -747,6 +760,7 @@ function ReservationsPanel(props: {
                     busyId={props.busyId}
                     onConfirm={props.onConfirm}
                     onCancel={props.onCancel}
+                    onViewRoute={setRouteReservation}
                   />
                 </td>
               </tr>
@@ -761,6 +775,17 @@ function ReservationsPanel(props: {
           </tbody>
         </table>
       </div>
+
+      {routeReservation && (
+        <RouteNavPicker
+          places={{
+            origin: routeReservation.origin_address,
+            destination: routeReservation.destination_address,
+            stops: routeReservation.stops,
+          }}
+          onClose={() => setRouteReservation(null)}
+        />
+      )}
     </section>
   )
 }

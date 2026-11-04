@@ -1634,6 +1634,40 @@
   height: 0.95rem;
 }
 
+.route-nav-picker__legs {
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid var(--rnp-line);
+  border-radius: 0.9rem;
+  background: #fffcf7;
+  max-height: min(40vh, 14rem);
+  overflow: auto;
+}
+
+.route-nav-picker__leg {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.route-nav-picker__leg-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rnp-bronze, #8a6a3d);
+}
+
+.route-nav-picker__leg-address {
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--rnp-ink);
+  word-break: break-word;
+}
+
 .route-nav-picker__options {
   display: grid;
   gap: 0.65rem;

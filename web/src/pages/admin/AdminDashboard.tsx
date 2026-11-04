@@ -17,6 +17,7 @@ import {
 } from '../../components/admin/AdminSidebar'
 import { AgendaSlotModal } from '../../components/admin/AgendaSlotModal'
 import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
+import { ClientsPanel } from '../../components/admin/ClientsPanel'
 import { FleetPanel } from '../../components/admin/FleetPanel'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
 import {
@@ -189,6 +190,7 @@ export function AdminDashboard() {
       agenda: t('admin.navAgenda'),
       frota: t('admin.navFrota'),
       frete: t('admin.navFrete'),
+      clientes: t('admin.navClientes'),
       perfil: t('admin.navPerfil'),
     }
     return labels[tab]
@@ -329,6 +331,13 @@ export function AdminDashboard() {
                 {user?.email ?? '—'}
                 {role ? ` · ${role}` : ''}
               </p>
+              <Link
+                className="admin-more-sheet__action"
+                to="/admin/frete"
+                onClick={() => setMoreOpen(false)}
+              >
+                {t('admin.navFrete')}
+              </Link>
               <Link
                 className="admin-more-sheet__action"
                 to="/"
@@ -524,6 +533,10 @@ export function AdminDashboard() {
                 />
               )}
 
+              {tab === 'clientes' && canOperate(role) && orgId && (
+                <ClientsPanel organizationId={orgId} onError={setError} />
+              )}
+
               {tab === 'perfil' && (
                 <ProfilePanel onError={setError} />
               )}
@@ -531,6 +544,12 @@ export function AdminDashboard() {
               {(tab === 'frota' || tab === 'frete') && !canAdmin(role) && (
                 <p className="text-sm text-text-secondary-light">
                   {t('admin.roleDenied', { role })}
+                </p>
+              )}
+
+              {tab === 'clientes' && !canOperate(role) && (
+                <p className="text-sm text-text-secondary-light">
+                  {t('admin.clients.roleDenied', { role })}
                 </p>
               )}
             </div>

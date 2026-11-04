@@ -25,7 +25,7 @@ const SIDE_RIGHT: SideItem[] = [
   { id: 'perfil', labelKey: 'admin.navPerfil', icon: 'user' },
 ]
 
-const CENTER_ID: AdminNavId = 'frete'
+const CENTER_ID: AdminNavId = 'clientes'
 
 export function AdminMobileNav() {
   const { t } = useTranslation()
@@ -100,15 +100,13 @@ export function AdminMobileNav() {
           className={({ isActive }) =>
             `admin-tabbar__fab${isActive ? ' is-active' : ''}`
           }
-          aria-label={t('admin.navFrete')}
+          aria-label={t('admin.navClientes')}
           end
         >
           <span className="admin-tabbar__fab-disc">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <AdminNavIcon name="users" />
           </span>
-          <span className="admin-tabbar__label">{t('admin.navFrete')}</span>
+          <span className="admin-tabbar__label">{t('admin.navClientes')}</span>
         </NavLink>
 
         {SIDE_RIGHT.map((item) => (

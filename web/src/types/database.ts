@@ -78,6 +78,18 @@ export type FleetVehicle = {
   updated_at: string
 }
 
+export type Customer = {
+  id: string
+  organization_id: string
+  full_name: string
+  phone: string
+  email: string
+  notes: string | null
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type FreightRule = {
   id: string
   organization_id: string
@@ -178,6 +190,12 @@ export type Database = {
             | 'body_type'
           >
         Update: Partial<FleetVehicle>
+      }
+      customers: {
+        Row: Customer
+        Insert: Partial<Customer> &
+          Pick<Customer, 'organization_id' | 'full_name' | 'phone' | 'email'>
+        Update: Partial<Customer>
       }
       freight_rules: {
         Row: FreightRule

@@ -5,6 +5,7 @@ export type AdminNavId =
   | 'agenda'
   | 'frota'
   | 'frete'
+  | 'clientes'
   | 'perfil'
 
 export const ADMIN_NAV_IDS: AdminNavId[] = [
@@ -12,6 +13,7 @@ export const ADMIN_NAV_IDS: AdminNavId[] = [
   'agenda',
   'frota',
   'frete',
+  'clientes',
   'perfil',
 ]
 
@@ -19,7 +21,13 @@ export function isAdminNavId(value: string | undefined): value is AdminNavId {
   return ADMIN_NAV_IDS.includes(value as AdminNavId)
 }
 
-export type AdminNavIconName = 'list' | 'calendar' | 'car' | 'tag' | 'user'
+export type AdminNavIconName =
+  | 'list'
+  | 'calendar'
+  | 'car'
+  | 'tag'
+  | 'users'
+  | 'user'
 
 export type AdminNavItem = {
   id: AdminNavId
@@ -32,6 +40,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'agenda', labelKey: 'admin.navAgenda', icon: 'calendar' },
   { id: 'frota', labelKey: 'admin.navFrota', icon: 'car' },
   { id: 'frete', labelKey: 'admin.navFrete', icon: 'tag' },
+  { id: 'clientes', labelKey: 'admin.navClientes', icon: 'users' },
   { id: 'perfil', labelKey: 'admin.navPerfil', icon: 'user' },
 ]
 
@@ -60,6 +69,16 @@ export function AdminNavIcon({
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 13h18l-1.5-4.5A2 2 0 0 0 17.6 7H6.4a2 2 0 0 0-1.9 1.5L3 13Z" />
         <path d="M5 17h2M17 17h2M5 13v4M19 13v4" />
+      </svg>
+    )
+  }
+  if (name === 'users') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3 19c1.2-2.4 2.8-3.5 5-3.5s3.8 1.1 5 3.5" />
+        <circle cx="17" cy="9" r="2.4" />
+        <path d="M14 19c.7-1.6 1.8-2.4 3.2-2.4 1.5 0 2.6.8 3.3 2.4" />
       </svg>
     )
   }

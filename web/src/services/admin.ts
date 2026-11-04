@@ -6,6 +6,7 @@ import {
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type {
   AirportCode,
+  Customer,
   FleetVehicle,
   FreightRule,
   OrgRole,
@@ -591,6 +592,111 @@ export async function deleteAvailabilityWindow(id: string): Promise<void> {
     .delete()
     .eq('id', id)
   if (error) throw error
+}
+
+export async function listCustomers(
+  organizationId: string,
+  options?: { includeInactive?: boolean },
+): Promise<Customer[]> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  let query = supabase
+    .from('customers')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('full_name', { ascending: true })
+
+  if (!options?.includeInactive) {
+    query = query.eq('active', true)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data ?? []) as Customer[]
+}
+
+export async function createCustomer(input: {
+  organization_id: string
+  full_name: string
+  phone: string
+  email: string
+  notes?: string | null
+}): Promise<Customer> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('customers')
+    .insert({
+      organization_id: input.organization_id,
+      full_name: input.full_name.trim(),
+      phone: input.phone.trim(),
+      email: input.email.trim().toLowerCase(),
+      notes: input.notes?.trim() || null,
+      active: true,
+    })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as Customer
+}
+
+export async function updateCustomer(input: {
+  id: string
+  full_name: string
+  phone: string
+  email: string
+  notes?: string | null
+}): Promise<Customer> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('customers')
+    .update({
+      full_name: input.full_name.trim(),
+      phone: input.phone.trim(),
+      email: input.email.trim().toLowerCase(),
+      notes: input.notes?.trim() || null,
+    })
+    .eq('id', input.id)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as Customer
+}
+
+export async function setCustomerActive(input: {
+  id: string
+  active: boolean
+}): Promise<Customer> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('customers')
+    .update({ active: input.active })
+    .eq('id', input.id)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as Customer
+}
+
+/** Match reservations by phone digits (CRM history without FK). */
+export async function listReservationsForCustomerPhone(
+  organizationId: string,
+  phone: string,
+  limit = 20,
+): Promise<Reservation[]> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length < 8) return []
+
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('slot_start', { ascending: false })
+    .limit(200)
+  if (error) throw error
+
+  return ((data ?? []) as Reservation[])
+    .filter((r) => r.customer_phone.replace(/\D/g, '').endsWith(digits.slice(-8)))
+    .slice(0, limit)
 }
 
 export function canOperate(role: OrgRole | null): boolean {

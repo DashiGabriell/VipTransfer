@@ -68,7 +68,7 @@
     "distanceRequired": "Aguarde o cálculo da distância antes de enviar.",
     "distanceNotRequired": "Distância não obrigatória para este serviço.",
     "addressChecking": "Validando endereço…",
-    "addressOk": "Endereço localizado.",
+    "addressOk": "Endereço localizado: {{label}}",
     "addressShort": "Digite o endereço com mais detalhes (rua, número, bairro/cidade).",
     "addressEmpty": "Informe o endereço.",
     "addressInvalid": "Não encontramos esse endereço. Inclua bairro e cidade (ex.: São Paulo).",

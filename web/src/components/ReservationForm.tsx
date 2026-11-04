@@ -18,7 +18,7 @@ import { buildWhatsAppUrl } from '../domain/whatsapp'
 import {
   isGeocodeOk,
   useGeocodedAddress,
-  type GeocodeFieldStatus,
+  type GeocodeFieldState,
 } from '../hooks/useGeocodedAddress'
 import {
   buildRouteWaypoints,
@@ -201,12 +201,14 @@ export function ReservationForm() {
     return isGeocodeOk(destinationGeo)
   }
 
-  function geocodeMessage(status: GeocodeFieldStatus): string {
-    switch (status) {
+  function geocodeMessage(state: GeocodeFieldState): string {
+    switch (state.status) {
       case 'checking':
         return t('reserve.addressChecking')
       case 'ok':
-        return t('reserve.addressOk')
+        return t('reserve.addressOk', {
+          label: state.label || '—',
+        })
       case 'short':
         return t('reserve.addressShort')
       case 'error':
@@ -231,7 +233,7 @@ export function ReservationForm() {
     if (!addressesOkForSubmit()) {
       setFeedbackError(true)
       setFeedback(
-        originGeo === 'checking' || destinationGeo === 'checking'
+        originGeo.status === 'checking' || destinationGeo.status === 'checking'
           ? t('reserve.addressChecking')
           : t('reserve.addressFixBeforeSubmit'),
       )
@@ -404,7 +406,9 @@ export function ReservationForm() {
 
       <div
         className={`itinerary-row${
-          originGeo === 'error' || originGeo === 'short' ? ' is-invalid' : ''
+          originGeo.status === 'error' || originGeo.status === 'short'
+            ? ' is-invalid'
+            : ''
         }`}
       >
         <label htmlFor="origem">
@@ -424,7 +428,9 @@ export function ReservationForm() {
           autoComplete="street-address"
           value={origin}
           onChange={(e) => setOrigin(e.target.value)}
-          aria-invalid={originGeo === 'error' || originGeo === 'short'}
+          aria-invalid={
+            originGeo.status === 'error' || originGeo.status === 'short'
+          }
           aria-describedby="origem-geo"
           required
         />
@@ -432,9 +438,9 @@ export function ReservationForm() {
           <p
             id="origem-geo"
             className={`form-note itinerary-geo${
-              originGeo === 'ok'
+              originGeo.status === 'ok'
                 ? ' is-ok'
-                : originGeo === 'checking'
+                : originGeo.status === 'checking'
                   ? ''
                   : ' is-error'
             }`}
@@ -490,7 +496,8 @@ export function ReservationForm() {
         <div
           className={`itinerary-row${
             destinationGeoEnabled &&
-            (destinationGeo === 'error' || destinationGeo === 'short')
+            (destinationGeo.status === 'error' ||
+              destinationGeo.status === 'short')
               ? ' is-invalid'
               : ''
           }`}
@@ -509,7 +516,8 @@ export function ReservationForm() {
             onChange={(e) => setDestination(e.target.value)}
             aria-invalid={
               destinationGeoEnabled &&
-              (destinationGeo === 'error' || destinationGeo === 'short')
+              (destinationGeo.status === 'error' ||
+                destinationGeo.status === 'short')
             }
             aria-describedby="destino-geo"
             required={destinationRequired}
@@ -518,9 +526,9 @@ export function ReservationForm() {
             <p
               id="destino-geo"
               className={`form-note itinerary-geo${
-                destinationGeo === 'ok'
+                destinationGeo.status === 'ok'
                   ? ' is-ok'
-                  : destinationGeo === 'checking'
+                  : destinationGeo.status === 'checking'
                     ? ''
                     : ' is-error'
               }`}

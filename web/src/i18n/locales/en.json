@@ -68,7 +68,7 @@
     "distanceRequired": "Wait for the distance calculation before submitting.",
     "distanceNotRequired": "Distance is not required for this service.",
     "addressChecking": "Validating address…",
-    "addressOk": "Address found.",
+    "addressOk": "Address found: {{label}}",
     "addressShort": "Add more detail (street, number, district/city).",
     "addressEmpty": "Enter an address.",
     "addressInvalid": "We could not find that address. Include district and city (e.g. São Paulo).",

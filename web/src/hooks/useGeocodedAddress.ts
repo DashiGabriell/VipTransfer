@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   DistanceError,
-  geocodeAddress,
+  geocodePlace,
   resolveAirportCode,
 } from '../services/distance'
 
@@ -13,53 +13,64 @@ export type GeocodeFieldStatus =
   | 'ok'
   | 'error'
 
+export type GeocodeFieldState = {
+  status: GeocodeFieldStatus
+  /** Endereço que o Photon devolveu (quando status === 'ok'). */
+  label: string | null
+}
+
 const MIN_CHARS = 8
 const DEBOUNCE_MS = 650
 
 /**
- * Valida endereço via Photon (geocodeAddress).
+ * Valida endereço via Photon (geocodePlace).
  * enabled=false → idle (campo oculto / não aplicável).
  * Códigos de aeroporto (GRU/CGH/VCP) passam sem mínimo de caracteres.
  */
 export function useGeocodedAddress(
   text: string,
   enabled = true,
-): GeocodeFieldStatus {
-  const [status, setStatus] = useState<GeocodeFieldStatus>('idle')
+): GeocodeFieldState {
+  const [state, setState] = useState<GeocodeFieldState>({
+    status: 'idle',
+    label: null,
+  })
 
   useEffect(() => {
     if (!enabled) {
-      setStatus('idle')
+      setState({ status: 'idle', label: null })
       return
     }
 
     const trimmed = text.trim()
     if (!trimmed) {
-      setStatus('empty')
+      setState({ status: 'empty', label: null })
       return
     }
 
     const isAirport = Boolean(resolveAirportCode(trimmed))
     if (!isAirport && trimmed.length < MIN_CHARS) {
-      setStatus('short')
+      setState({ status: 'short', label: null })
       return
     }
 
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      setStatus('checking')
-      void geocodeAddress(trimmed, controller.signal)
-        .then(() => {
-          if (!controller.signal.aborted) setStatus('ok')
+      setState({ status: 'checking', label: null })
+      void geocodePlace(trimmed, controller.signal)
+        .then((hit) => {
+          if (!controller.signal.aborted) {
+            setState({ status: 'ok', label: hit.label })
+          }
         })
         .catch((err) => {
           if (controller.signal.aborted) return
           if (err instanceof DOMException && err.name === 'AbortError') return
           if (err instanceof DistanceError && err.message === 'EMPTY_ADDRESS') {
-            setStatus('empty')
+            setState({ status: 'empty', label: null })
             return
           }
-          setStatus('error')
+          setState({ status: 'error', label: null })
         })
     }, DEBOUNCE_MS)
 
@@ -69,9 +80,9 @@ export function useGeocodedAddress(
     }
   }, [text, enabled])
 
-  return status
+  return state
 }
 
-export function isGeocodeOk(status: GeocodeFieldStatus): boolean {
-  return status === 'ok'
+export function isGeocodeOk(state: GeocodeFieldState): boolean {
+  return state.status === 'ok'
 }

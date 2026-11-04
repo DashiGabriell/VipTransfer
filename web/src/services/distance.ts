@@ -75,19 +75,64 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   })
 }
 
+export type GeocodeHit = {
+  coords: LonLat
+  /** Human-readable label from Photon / airport alias. */
+  label: string
+}
+
+type PhotonProps = {
+  name?: string
+  street?: string
+  housenumber?: string
+  district?: string
+  city?: string
+  town?: string
+  village?: string
+  county?: string
+  state?: string
+  country?: string
+  postcode?: string
+}
+
+function formatPhotonLabel(props: PhotonProps | undefined): string {
+  if (!props) return ''
+  const streetLine = [props.street, props.housenumber].filter(Boolean).join(', ')
+  const place =
+    props.city || props.town || props.village || props.district || props.county
+  const parts = [
+    props.name && props.name !== streetLine ? props.name : null,
+    streetLine || null,
+    place || null,
+    props.state || null,
+  ].filter(Boolean) as string[]
+  // Prefer street+city when name duplicates street
+  const unique: string[] = []
+  for (const p of parts) {
+    if (!unique.some((u) => u.toLowerCase() === p.toLowerCase())) unique.push(p)
+  }
+  return unique.join(' — ')
+}
+
 /**
  * Geocode via Photon (OpenStreetMap data). No API key.
  * Prefer airport aliases / fixed coords when possible.
+ * Returns coordinates + the label Photon matched (for UI confirmation).
  */
-export async function geocodeAddress(
+export async function geocodePlace(
   text: string,
   signal?: AbortSignal,
-): Promise<LonLat> {
+): Promise<GeocodeHit> {
   const trimmed = text.trim()
   if (!trimmed) throw new DistanceError('EMPTY_ADDRESS')
 
   const airport = resolveAirportCode(trimmed)
-  if (airport) return AIRPORT_COORDS[airport]
+  if (airport) {
+    return {
+      coords: AIRPORT_COORDS[airport],
+      label: `Aeroporto ${airport}`,
+    }
+  }
 
   // Bias search toward Brazil / São Paulo metro
   const query = /brasil|brazil|são paulo|sao paulo|sp\b/i.test(trimmed)
@@ -97,7 +142,7 @@ export async function geocodeAddress(
   const url = new URL(PHOTON_SEARCH)
   url.searchParams.set('q', query)
   url.searchParams.set('limit', '1')
-  url.searchParams.set('lang', 'en')
+  url.searchParams.set('lang', 'pt')
   url.searchParams.set('lat', '-23.5505')
   url.searchParams.set('lon', '-46.6333')
 
@@ -110,14 +155,30 @@ export async function geocodeAddress(
   }
 
   const data = (await res.json()) as {
-    features?: Array<{ geometry?: { coordinates?: number[] } }>
+    features?: Array<{
+      geometry?: { coordinates?: number[] }
+      properties?: PhotonProps
+    }>
   }
-  const coords = data.features?.[0]?.geometry?.coordinates
+  const feature = data.features?.[0]
+  const coords = feature?.geometry?.coordinates
   if (!coords || coords.length < 2) {
     throw new DistanceError('GEOCODE_NOT_FOUND')
   }
 
-  return [Number(coords[0]), Number(coords[1])]
+  const label = formatPhotonLabel(feature?.properties) || trimmed
+  return {
+    coords: [Number(coords[0]), Number(coords[1])],
+    label,
+  }
+}
+
+export async function geocodeAddress(
+  text: string,
+  signal?: AbortSignal,
+): Promise<LonLat> {
+  const hit = await geocodePlace(text, signal)
+  return hit.coords
 }
 
 export type RouteDistanceResult = {

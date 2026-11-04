@@ -1,132 +1,209 @@
-# JMD Transfer Platform
+<div align="center">
 
-Plataforma multi-tenant de transfer executivo (v1). Spec confirmada em [`docs/v1-spec.md`](docs/v1-spec.md).
+<img src="web/public/logo-1.png" alt="JMD Transfer" width="120" />
 
-## Estrutura
+# JMD Transfer
 
-| Caminho | Papel |
-|---------|--------|
-| `web/` | App Vite + React + TypeScript + Tailwind + i18n + PWA |
-| `supabase/` | Migrations, config local |
-| `n8n/` | Workflow importável: `reservation.created` → Gmail |
-| `Estilo-*.html` / `logos/` | Propostas de design system (soltas) |
-| `index2.html` | Referência visual da landing |
-| `docs/v1-spec.md` | Contrato de produto v1 |
+**Mobilidade executiva em São Paulo**<br>
+pontualidade · segurança · discrição
 
-## Marca (assets)
+[Spec v1](docs/v1-spec.md) · [Produto](PRODUCT.md) · App em `web/`
 
-| Arquivo | Uso |
-|---------|-----|
-| `web/public/logo-1.png` | Logo na landing, login e sidebar admin |
-| `web/public/favicon.ico` | Favicon do app |
-| `web/public/icons/pwa-*.png` | Ícones PWA (`npm run pwa:icons` para regenerar) |
+</div>
+
+---
+
+Plataforma **multi-tenant** de transfer executivo: cotação e reserva no site, operação no painel admin, Postgres/RLS no Supabase e alertas via n8n → Gmail.
+
+> Não é app de mobilidade genérico. É operação local de transfer premium — aeroportos GRU · CGH · VCP, corporativo e VIP.
+
+---
+
+## Stack
+
+| Camada | Tecnologia |
+|--------|------------|
+| App | Vite · React · TypeScript · Tailwind · i18n · PWA |
+| Dados | Supabase Auth · Postgres · RLS · `pg_cron` |
+| Automação | n8n (`reservation.created` → Gmail) |
+| Deploy | Vercel (`Root Directory` = `web`) |
+
+---
+
+## Estrutura do repositório
+
+```
+jmdtransfer/
+├── web/                 # aplicação (landing + admin + PWA)
+├── supabase/            # migrations, seed jmd, config
+├── n8n/                 # workflow Gmail importável
+├── docs/v1-spec.md      # contrato de produto
+└── PRODUCT.md           # posicionamento e fatos de marca
+```
+
+| Asset | Uso |
+|-------|-----|
+| `web/public/logo-1.png` | Landing, login, sidebar |
+| `web/public/favicon.ico` | Favicon |
+| `web/public/icons/pwa-*.png` | Ícones PWA (`npm run pwa:icons`) |
+
+---
 
 ## Desenvolvimento
 
 ```bash
 cd web
-cp .env.example .env   # preencher Supabase + webhook n8n
+cp .env.example .env   # Supabase + webhook n8n
 npm install
 npm run dev
 ```
 
-Tenant local: `http://localhost:5173` (slug default `jmd`) ou `http://jmd.localhost:5173`.
+| | |
+|--|--|
+| App local | http://localhost:5173 |
+| Tenant default | slug `jmd` (`VITE_DEFAULT_TENANT_SLUG`) |
+| Host de tenant | http://jmd.localhost:5173 |
+| Idioma | PT-BR / EN — bandeiras SVG; preferência em `jmd.lang` |
 
-Idioma do site (PT-BR / EN) via toggle com bandeiras SVG; preferência em `localStorage` (`jmd.lang`) e no perfil staff.
+Variáveis: [`web/.env.example`](web/.env.example).
 
-Variáveis: [`web/.env.example`](web/.env.example) — inclui `VITE_N8N_WEBHOOK_URL`.
+---
 
 ## Supabase
 
 ```bash
-npx supabase start          # Docker local
-npx supabase db reset       # aplica migrations + seed JMD
-npx supabase db push --remote --yes   # aplica migrations no projeto linkado
+npx supabase start
+npx supabase db reset                 # migrations + seed JMD
+npx supabase db push --remote --yes   # remoto linkado
 ```
 
-Migrations cobrem: multi-tenant, roles/RLS, frete, capacidade, reservas/hold, agenda (`list_day_slots`), audit, seed `jmd`, preferências e inbox de notificações.
+Migrations cobrem: orgs multi-tenant, roles/RLS, frete e taxas de aeroporto, capacidade, reservas/hold, agenda (`list_day_slots`), frota, notificações, audit e seed da org **`jmd`**.
 
-## Admin
+Cron `expire-reservation-holds` a cada **5 min** (`pg_cron`).
 
-Rotas autenticadas (sidebar com `NavLink`):
+---
 
-| Rota | Conteúdo |
-|------|----------|
-| `/admin` | Redireciona para `/admin/reservas` |
-| `/admin/reservas` | Lista, filtros, confirmar/cancelar |
-| `/admin/agenda` | Grade visual + disponibilidade / blackouts |
-| `/admin/frota` | Categorias e veículos |
-| `/admin/frete` | Regras de frete e taxas de aeroporto |
-| `/admin/perfil` | Nome, idioma, preferências e caixa de notificações |
+## Painel admin
 
-Fluxo:
+Rotas autenticadas:
 
-1. `npm run dev` → `/login` (ou `/admin…`, que exige sessão)  
-2. Criar conta / entrar  
-3. Se a org ainda não tem membros: **Tornar-me owner de jmd**  
-4. Header: toggle PT/EN (SVG) + menu colapsável  
+| Rota | Função |
+|------|--------|
+| `/admin` | → `/admin/reservas` |
+| `/admin/reservas` | Holds, confirmar / cancelar, ver trajeto |
+| `/admin/agenda` | Grade, ocupação, disponibilidade / blackouts |
+| `/admin/frota` | Categorias padrão + veículos (criar / editar) |
+| `/admin/frete` | R$/km, mínimo, R$/hora, taxas GRU · CGH · VCP |
+| `/admin/perfil` | Perfil, idioma, preferências e inbox |
 
-Cron `expire-reservation-holds` roda a cada 5 min no Postgres (`pg_cron`).
+**Primeiro acesso**
 
-### Notificações (perfil)
+1. `npm run dev` → `/login`
+2. Criar conta e entrar
+3. Se a org ainda não tem membros: **Tornar-me owner de jmd**
+4. Operar com toggle de idioma e menu lateral
 
-- Canais: e-mail (webhook/n8n), painel, WhatsApp (quando configurado)  
-- Eventos: hold, confirmada, cancelada, hold expirado  
-- Inbox in-app: marcar lida / todas lidas  
-- Fan-out automático para `owner` / `admin` / `operador` ao criar hold, confirmar ou cancelar  
+### Notificações
+
+- Canais: e-mail (n8n), painel, WhatsApp (quando configurado)
+- Eventos: hold · confirmada · cancelada · hold expirado
+- Fan-out para `owner` / `admin` / `operador`
+
+---
+
+## Cotação e frete
+
+Estimativa na reserva:
+
+```
+trajeto  = max(mínimo, km × R$/km)
+aeroporto → + taxa do aeroporto escolhido
+horas     → + horas × R$/hora
+```
+
+Paradas intermediárias entram na distância e no **Ver trajeto** (Google Maps: origem → paradas → destino).
+
+---
 
 ## n8n → Gmail
 
-Acordo v1: a app só dispara webhook; o n8n envia o e-mail.
+A app só dispara o webhook; o n8n envia o e-mail.
 
-1. Importar [`n8n/jmd-reservation-created-gmail.json`](n8n/jmd-reservation-created-gmail.json)  
-2. Conectar credencial Gmail OAuth2  
-3. Destinatário do alerta: `dashicorporate@gmail.com` (nó Gmail)  
-4. Ativar e copiar a URL de produção do Webhook para `VITE_N8N_WEBHOOK_URL`  
+1. Importar [`n8n/jmd-reservation-created-gmail.json`](n8n/jmd-reservation-created-gmail.json)
+2. Credencial **Gmail OAuth2**
+3. Destinatário: `dashicorporate@gmail.com`
+4. Ativar e copiar a URL do Webhook → `VITE_N8N_WEBHOOK_URL`
 
-Payload: `{ "event": "reservation.created", "reservation": { … } }`.
+```json
+{ "event": "reservation.created", "reservation": { "…" } }
+```
 
-## Agenda visual
+---
 
-- Público: grade de slots no formulário de reserva (`list_day_slots`)  
-- Admin: `/admin/agenda` com ocupação, confirmar/cancelar e janelas de indisponibilidade  
-- Janelas seed JMD: seg–sáb 06:00–22:00 (America/Sao_Paulo)
+## Agenda
+
+- **Público** — slots no formulário (`list_day_slots`)
+- **Admin** — `/admin/agenda` com ocupação e blackouts
+- **Seed JMD** — seg–sáb 06:00–22:00 (`America/Sao_Paulo`)
+
+---
 
 ## PWA
 
-O app em `web/` está preparado como Progressive Web App (instalável):
+Instalável via `vite-plugin-pwa`:
 
-- Manifest + Service Worker via `vite-plugin-pwa`
-- Ícones em `web/public/icons/` (`npm run pwa:icons` para regenerar)
-- Helpers:
-  - `web/src/lib/geolocation.ts` — permissão + posição / watch
-  - `web/src/lib/notifications.ts` — permissão, notificação local e stub de Web Push (VAPID)
-  - `web/src/lib/pwa.ts` — registro do SW e estado de atualização
+- Manifest + Service Worker
+- Ícones em `web/public/icons/`
+- Helpers: `geolocation.ts` · `notifications.ts` · `pwa.ts`
 
-Para testar instalação: `cd web && npm run build && npm run preview` (HTTPS/localhost).
+```bash
+cd web && npm run build && npm run preview
+```
+
+---
 
 ## Deploy (Vercel)
 
-**Root Directory no projeto Vercel:** `web` (não a raiz do monorepo).
+> **Root Directory** do projeto = `web`<br>
+> Rewrite SPA em [`web/vercel.json`](web/vercel.json) — sem isso, `/admin/*` e `/login` retornam 404 da plataforma.
 
-`vercel.json` na raiz do repo (comandos relativos a `web/`):
-
-| Campo | Valor |
-|-------|--------|
+| | |
+|--|--|
 | Install | `npm install` |
 | Build | `npm run build` |
 | Output | `dist` |
-| SPA | rewrite para `index.html` (rotas `/admin/*`, `/login`, etc.) |
 
-### Checklist
+**Checklist**
 
-1. Import do repositório · **Root Directory = `web`**.  
-2. Env (Production + Preview): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_DEFAULT_TENANT_SLUG`, opcional `VITE_N8N_WEBHOOK_URL`.  
-3. Supabase Auth → Site URL / Redirect URLs com o domínio Vercel.  
-4. Deploy. Domínio customizado / subdomínio de tenant fica para o passo seguinte.
+1. Import do repo · Root Directory = `web`
+2. Env (Production + Preview):<br>
+   `VITE_SUPABASE_URL` · `VITE_SUPABASE_PUBLISHABLE_KEY` · `VITE_DEFAULT_TENANT_SLUG` · opcional `VITE_N8N_WEBHOOK_URL`
+3. Supabase Auth → Site URL / Redirect URLs com o domínio Vercel
+4. Deploy
+
+Hostname apex / `*.vercel.app` resolve o tenant default (`jmd`) — o nome do projeto Vercel **não** é o slug da org.
+
+---
+
+## Contato (produto)
+
+| | |
+|--|--|
+| E-mail | `contato@jmdtransfer.com.br` |
+| WhatsApp | `+55 11 94924-7258` |
+
+---
 
 ## Próximas entregas
 
-1. Personificação `dev`  
-2. Domínio customizado / tenant por host (`jmd.`)  
+1. Personificação `dev`
+2. Domínio customizado / tenant por host (`jmd.…`)
 3. Autocomplete de endereço na cotação
+
+---
+
+<div align="center">
+
+<sub>JMD Transfer · São Paulo</sub>
+
+</div>

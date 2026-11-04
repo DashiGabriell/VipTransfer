@@ -19,7 +19,7 @@ function localeFromLang(lang: string): string {
 }
 
 function formatMoney(price: number | null | undefined) {
-  if (price == null) return '—'
+  if (price == null) return 'WhatsApp'
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -187,6 +187,12 @@ export function AgendaSlotModal({
                   <dt>{t('admin.detailPrice')}</dt>
                   <dd>{formatMoney(r.estimated_price)}</dd>
                 </div>
+                {r.service_notes ? (
+                  <div>
+                    <dt>{t('reserve.notes')}</dt>
+                    <dd>{r.service_notes}</dd>
+                  </div>
+                ) : null}
                 {r.hold_expires_at && r.status === 'hold' && (
                   <div>
                     <dt>{t('admin.detailHold')}</dt>

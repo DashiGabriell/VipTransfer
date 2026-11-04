@@ -111,17 +111,16 @@ Rotas autenticadas:
 
 ---
 
-## Cotação e frete
+## Serviços e preço
 
-Estimativa na reserva:
+| Serviço | Uso |
+|---------|-----|
+| **Ponto A → B** | Origem, destino, paradas; aeroporto opcional |
+| **À disposição** | Por tempo (horas); destino opcional |
+| **Concierge** | Por tarefa (descrição livre) |
 
-```
-trajeto  = max(mínimo, km × R$/km)
-aeroporto → + taxa do aeroporto escolhido
-horas     → + horas × R$/hora
-```
-
-Paradas intermediárias entram na distância e no **Ver trajeto** (Google Maps: origem → paradas → destino).
+O **cliente não vê preço** no site nem no WhatsApp — o valor fecha com o motorista.  
+`/admin/frete` é só referência interna. Paradas entram no **Ver trajeto** (origem → paradas → destino).
 
 ---
 

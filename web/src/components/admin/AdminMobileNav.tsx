@@ -36,7 +36,9 @@ export function AdminMobileNav() {
 
   const activeId = (() => {
     const match = location.pathname.match(/^\/admin\/([^/]+)/)
-    return match?.[1] ?? 'reservas'
+    const section = match?.[1] ?? 'reservas'
+    // Detail route /admin/clientes/:id still highlights the Clientes FAB
+    return section === 'clientes' ? 'clientes' : section
   })()
 
   const measure = useCallback(() => {
@@ -101,7 +103,6 @@ export function AdminMobileNav() {
             `admin-tabbar__fab${isActive ? ' is-active' : ''}`
           }
           aria-label={t('admin.navClientes')}
-          end
         >
           <span className="admin-tabbar__fab-disc">
             <AdminNavIcon name="users" />

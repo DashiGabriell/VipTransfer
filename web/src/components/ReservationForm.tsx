@@ -14,8 +14,6 @@ import {
   isValidEmail,
   isValidFullName,
 } from '../domain/customerFields'
-import { calculateFreightEstimate } from '../domain/freight'
-import { formatCurrencyBRL } from '../domain/slots'
 import { buildWhatsAppUrl } from '../domain/whatsapp'
 import {
   buildRouteWaypoints,
@@ -27,16 +25,12 @@ import {
   notifyReservationWebhook,
   SlotUnavailableError,
 } from '../services/reservations'
-import { pickFreightRule } from '../services/tenantCatalog'
-import type { AirportCode, ServiceType } from '../types/database'
+import {
+  SERVICE_TYPES,
+  type AirportCode,
+  type ServiceType,
+} from '../types/database'
 import { SlotAgenda } from './SlotAgenda'
-
-const SERVICE_TYPES: ServiceType[] = [
-  'aeroporto',
-  'corporativo',
-  'horas_a_disposicao',
-  'viagem',
-]
 
 const AIRPORTS: AirportCode[] = ['GRU', 'CGH', 'VCP']
 const MAX_STOPS = 8
@@ -53,9 +47,18 @@ function localizedName(
 type DistanceState =
   | { status: 'idle' }
   | { status: 'need_addresses' }
+  | { status: 'skipped' }
   | { status: 'loading' }
   | { status: 'ready'; km: number }
   | { status: 'error'; code: string }
+
+function needsRouteDistance(service: ServiceType | ''): boolean {
+  return service === 'ponto_a_b'
+}
+
+function mayMeasureDistance(service: ServiceType | ''): boolean {
+  return service === 'ponto_a_b' || service === 'a_disposicao'
+}
 
 export function ReservationForm() {
   const { t, i18n } = useTranslation()
@@ -69,6 +72,7 @@ export function ReservationForm() {
   const [serviceType, setServiceType] = useState<ServiceType | ''>('')
   const [airport, setAirport] = useState<AirportCode | ''>('')
   const [hours, setHours] = useState('4')
+  const [serviceNotes, setServiceNotes] = useState('')
   const [vehicleId, setVehicleId] = useState('')
   const [selectedSlot, setSelectedSlot] = useState<DaySlot | null>(null)
   const [name, setName] = useState('')
@@ -94,55 +98,40 @@ export function ReservationForm() {
   }
 
   const vehicles = tenant.catalog?.vehicles ?? []
-  const freightRules = tenant.catalog?.freightRules ?? []
-  const airportFees = tenant.catalog?.airportFees ?? []
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
 
-  const freightRule = useMemo(
-    () =>
-      pickFreightRule(freightRules, {
-        vehicleCategoryId: vehicleId || null,
-        serviceType: serviceType || null,
-      }),
-    [freightRules, vehicleId, serviceType],
-  )
-
-  const airportFee = useMemo(() => {
-    if (!airport) return 0
-    return airportFees.find((f) => f.airport === airport)?.flat_fee ?? 0
-  }, [airport, airportFees])
-
-  const routeKm = distance.status === 'ready' ? distance.km : 0
-
-  const estimate = useMemo(() => {
-    if (!serviceType || !freightRule || distance.status !== 'ready') return null
-    return calculateFreightEstimate({
-      km: routeKm,
-      pricePerKm: Number(freightRule.price_per_km),
-      minimumFare: Number(freightRule.minimum_fare),
-      pricePerHour: freightRule.price_per_hour
-        ? Number(freightRule.price_per_hour)
-        : 0,
-      hours: Number(hours) || 0,
-      airportFlatFee: airportFee,
-      serviceType,
-    })
-  }, [serviceType, freightRule, routeKm, hours, airportFee, distance.status])
+  const showStops = serviceType === 'ponto_a_b'
+  const showDestination =
+    serviceType === 'ponto_a_b' || serviceType === 'a_disposicao'
+  const destinationRequired = serviceType === 'ponto_a_b'
+  const showAirport = serviceType === 'ponto_a_b'
+  const showHours = serviceType === 'a_disposicao'
+  const showNotes = serviceType === 'concierge'
 
   const waypointsKey = useMemo(() => {
+    if (!mayMeasureDistance(serviceType)) return ''
     const points = buildRouteWaypoints({
       origin,
-      stops,
+      stops: showStops ? stops : [],
       destination,
-      airport: serviceType === 'aeroporto' ? airport : null,
+      airport: showAirport ? airport : null,
     })
     return points.join('||')
-  }, [origin, stops, destination, serviceType, airport])
+  }, [origin, stops, destination, serviceType, airport, showStops, showAirport])
 
   useEffect(() => {
+    if (!mayMeasureDistance(serviceType)) {
+      setDistance({ status: 'skipped' })
+      return
+    }
+
     const points = waypointsKey.split('||').filter(Boolean)
     if (points.length < 2) {
-      setDistance({ status: 'need_addresses' })
+      setDistance(
+        needsRouteDistance(serviceType)
+          ? { status: 'need_addresses' }
+          : { status: 'skipped' },
+      )
       return
     }
 
@@ -167,7 +156,7 @@ export function ReservationForm() {
       controller.abort()
       window.clearTimeout(timer)
     }
-  }, [waypointsKey])
+  }, [waypointsKey, serviceType])
 
   function distanceMessage(): string {
     switch (distance.status) {
@@ -179,9 +168,21 @@ export function ReservationForm() {
         return t('reserve.distanceNeedAddresses')
       case 'error':
         return t('reserve.distanceError')
+      case 'skipped':
+        return t('reserve.distanceNotRequired')
       default:
         return ''
     }
+  }
+
+  function distanceOkForSubmit(): boolean {
+    if (needsRouteDistance(serviceType)) {
+      return distance.status === 'ready'
+    }
+    if (serviceType === 'a_disposicao') {
+      return distance.status === 'ready' || distance.status === 'skipped'
+    }
+    return true
   }
 
   async function onSubmit(event: FormEvent) {
@@ -189,15 +190,27 @@ export function ReservationForm() {
     setFeedback(null)
     setFeedbackError(false)
 
-    if (distance.status !== 'ready') {
+    if (!serviceType || !selectedSlot) {
+      setFeedbackError(true)
+      setFeedback(t('agenda.pickSlot'))
+      return
+    }
+
+    if (!distanceOkForSubmit()) {
       setFeedbackError(true)
       setFeedback(t('reserve.distanceRequired'))
       return
     }
 
-    if (!serviceType || !selectedSlot || !estimate) {
+    if (serviceType === 'a_disposicao' && !(Number(hours) > 0)) {
       setFeedbackError(true)
-      setFeedback(t('agenda.pickSlot'))
+      setFeedback(t('reserve.hoursInvalid'))
+      return
+    }
+
+    if (serviceType === 'concierge' && !serviceNotes.trim()) {
+      setFeedbackError(true)
+      setFeedback(t('reserve.notesRequired'))
       return
     }
 
@@ -237,32 +250,37 @@ export function ReservationForm() {
 
     setSubmitting(true)
     try {
-      const cleanedStops = stops.map((s) => s.trim()).filter(Boolean)
+      const cleanedStops = showStops
+        ? stops.map((s) => s.trim()).filter(Boolean)
+        : []
+      const dest = destination.trim()
+      const notes = serviceNotes.trim()
+      const km = distance.status === 'ready' ? distance.km : null
 
       const reservation = await createReservationWithHold({
         organization_id: tenant.organizationId,
         customer_name: trimmedName,
         customer_phone: trimmedPhone,
         customer_email: trimmedEmail,
-        origin_address: origin,
-        destination_address: destination,
+        origin_address: origin.trim(),
+        destination_address: dest,
         stops: cleanedStops,
         service_type: serviceType,
         vehicle_category_id: vehicleId || null,
-        airport: serviceType === 'aeroporto' ? airport || null : null,
+        airport: showAirport && airport ? airport : null,
         slot_start: selectedSlot.slot_start,
         slot_end: selectedSlot.slot_end,
         hours_requested:
-          serviceType === 'horas_a_disposicao' ? Number(hours) || null : null,
-        estimated_km: distance.km,
-        estimated_price: estimate.total,
+          serviceType === 'a_disposicao' ? Number(hours) || null : null,
+        estimated_km: km,
+        estimated_price: null,
+        service_notes: notes || null,
         locale,
         source: 'web',
       })
 
       void notifyReservationWebhook(reservation)
 
-      const estimateLabel = formatCurrencyBRL(estimate.total, locale)
       const holdLabel = reservation.hold_expires_at
         ? new Date(reservation.hold_expires_at).toLocaleString(locale)
         : ''
@@ -272,25 +290,29 @@ export function ReservationForm() {
         name: trimmedName,
         phone: trimmedPhone,
         email: trimmedEmail,
-        origin,
-        destination,
+        origin: origin.trim(),
+        destination: dest,
         stops: cleanedStops,
         serviceLabel: t(`reserve.services.${serviceType}`),
         vehicleLabel,
         slotLabel: `${slotLabel} (hold até ${holdLabel})`,
-        estimateLabel,
-        distanceKm: distance.km,
+        distanceKm: km,
+        hoursRequested:
+          serviceType === 'a_disposicao' ? Number(hours) || null : null,
+        airport: showAirport && airport ? airport : null,
+        serviceNotes: notes || null,
         locale,
       })
       window.open(url, '_blank', 'noopener,noreferrer')
 
       setFeedback(
         locale === 'en'
-          ? `Reservation held until ${holdLabel}.`
-          : `Reserva em hold até ${holdLabel}.`,
+          ? `Request held until ${holdLabel}. Fare will be confirmed on WhatsApp.`
+          : `Solicitação em hold até ${holdLabel}. O valor será combinado no WhatsApp.`,
       )
       setSelectedSlot(null)
       setStops([])
+      setServiceNotes('')
       setAgendaKey((k) => k + 1)
     } catch (err) {
       setFeedbackError(true)
@@ -309,12 +331,50 @@ export function ReservationForm() {
   return (
     <form className="itinerary" id="cotacao" onSubmit={onSubmit} noValidate>
       <div className="itinerary-row">
-        <label htmlFor="origem">{t('reserve.origin')}</label>
+        <label htmlFor="servico">{t('reserve.serviceType')}</label>
+        <select
+          id="servico"
+          name="servico"
+          value={serviceType}
+          onChange={(e) => {
+            const next = e.target.value as ServiceType | ''
+            setServiceType(next)
+            if (next !== 'ponto_a_b') {
+              setStops([])
+              setAirport('')
+            }
+            if (next === 'concierge') {
+              setDestination('')
+            }
+          }}
+          required
+        >
+          <option value="" disabled>
+            {t('reserve.servicePlaceholder')}
+          </option>
+          {SERVICE_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {t(`reserve.services.${type}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="itinerary-row">
+        <label htmlFor="origem">
+          {serviceType === 'concierge'
+            ? t('reserve.originConcierge')
+            : t('reserve.origin')}
+        </label>
         <input
           id="origem"
           name="origem"
           type="text"
-          placeholder="Endereço ou hotel"
+          placeholder={
+            serviceType === 'concierge'
+              ? t('reserve.originConciergePlaceholder')
+              : t('reserve.originPlaceholder')
+          }
           autoComplete="street-address"
           value={origin}
           onChange={(e) => setOrigin(e.target.value)}
@@ -322,34 +382,35 @@ export function ReservationForm() {
         />
       </div>
 
-      {stops.map((stop, index) => (
-        <div className="itinerary-row itinerary-row--stop" key={`stop-${index}`}>
-          <label htmlFor={`parada-${index}`}>
-            {t('reserve.stop', { n: index + 1 })}
-          </label>
-          <div className="itinerary-stop-field">
-            <input
-              id={`parada-${index}`}
-              name={`parada-${index}`}
-              type="text"
-              placeholder={t('reserve.stopPlaceholder')}
-              value={stop}
-              onChange={(e) => updateStop(index, e.target.value)}
-              required
-            />
-            <button
-              type="button"
-              className="itinerary-stop-remove"
-              onClick={() => removeStop(index)}
-              aria-label={t('reserve.removeStop')}
-            >
-              {t('reserve.removeStop')}
-            </button>
+      {showStops &&
+        stops.map((stop, index) => (
+          <div className="itinerary-row itinerary-row--stop" key={`stop-${index}`}>
+            <label htmlFor={`parada-${index}`}>
+              {t('reserve.stop', { n: index + 1 })}
+            </label>
+            <div className="itinerary-stop-field">
+              <input
+                id={`parada-${index}`}
+                name={`parada-${index}`}
+                type="text"
+                placeholder={t('reserve.stopPlaceholder')}
+                value={stop}
+                onChange={(e) => updateStop(index, e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="itinerary-stop-remove"
+                onClick={() => removeStop(index)}
+                aria-label={t('reserve.removeStop')}
+              >
+                {t('reserve.removeStop')}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      {stops.length < MAX_STOPS && (
+      {showStops && stops.length < MAX_STOPS && (
         <div className="itinerary-stop-actions">
           <button
             type="button"
@@ -361,51 +422,34 @@ export function ReservationForm() {
         </div>
       )}
 
-      <div className="itinerary-row">
-        <label htmlFor="destino">{t('reserve.destination')}</label>
-        <input
-          id="destino"
-          name="destino"
-          type="text"
-          placeholder="GRU, CGH, VCP ou endereço"
-          value={destination}
-          onChange={(e) => setDestination(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="itinerary-row">
-        <label htmlFor="servico">{t('reserve.serviceType')}</label>
-        <select
-          id="servico"
-          name="servico"
-          value={serviceType}
-          onChange={(e) => setServiceType(e.target.value as ServiceType | '')}
-          required
-        >
-          <option value="" disabled>
-            Escolha o tipo
-          </option>
-          {SERVICE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {t(`reserve.services.${type}`)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {serviceType === 'aeroporto' && (
+      {showDestination && (
         <div className="itinerary-row">
-          <label htmlFor="aeroporto">{t('reserve.airport')}</label>
+          <label htmlFor="destino">
+            {destinationRequired
+              ? t('reserve.destination')
+              : t('reserve.destinationOptional')}
+          </label>
+          <input
+            id="destino"
+            name="destino"
+            type="text"
+            placeholder={t('reserve.destinationPlaceholder')}
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            required={destinationRequired}
+          />
+        </div>
+      )}
+
+      {showAirport && (
+        <div className="itinerary-row">
+          <label htmlFor="aeroporto">{t('reserve.airportOptional')}</label>
           <select
             id="aeroporto"
             value={airport}
             onChange={(e) => setAirport(e.target.value as AirportCode | '')}
-            required
           >
-            <option value="" disabled>
-              {t('reserve.airport')}
-            </option>
+            <option value="">{t('reserve.airportNone')}</option>
             {AIRPORTS.map((code) => (
               <option key={code} value={code}>
                 {code}
@@ -415,7 +459,7 @@ export function ReservationForm() {
         </div>
       )}
 
-      {serviceType === 'horas_a_disposicao' && (
+      {showHours && (
         <div className="itinerary-row">
           <label htmlFor="horas">{t('reserve.hours')}</label>
           <input
@@ -425,6 +469,21 @@ export function ReservationForm() {
             step={0.5}
             value={hours}
             onChange={(e) => setHours(e.target.value)}
+            required
+          />
+        </div>
+      )}
+
+      {showNotes && (
+        <div className="itinerary-row">
+          <label htmlFor="notas">{t('reserve.notes')}</label>
+          <textarea
+            id="notas"
+            name="notas"
+            rows={3}
+            placeholder={t('reserve.notesPlaceholder')}
+            value={serviceNotes}
+            onChange={(e) => setServiceNotes(e.target.value)}
             required
           />
         </div>
@@ -449,15 +508,17 @@ export function ReservationForm() {
         </select>
       </div>
 
-      <p
-        className={`form-note itinerary-distance${
-          distance.status === 'error' ? ' is-error' : ''
-        }${distance.status === 'ready' ? ' is-ok' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        <strong>{t('reserve.distance')}:</strong> {distanceMessage()}
-      </p>
+      {mayMeasureDistance(serviceType) && (
+        <p
+          className={`form-note itinerary-distance${
+            distance.status === 'error' ? ' is-error' : ''
+          }${distance.status === 'ready' ? ' is-ok' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          <strong>{t('reserve.distance')}:</strong> {distanceMessage()}
+        </p>
+      )}
 
       <SlotAgenda
         key={agendaKey}
@@ -517,12 +578,7 @@ export function ReservationForm() {
         />
       </div>
 
-      {estimate && (
-        <p className="form-note">
-          {t('reserve.estimate')}: {formatCurrencyBRL(estimate.total, locale)} —{' '}
-          {t('reserve.estimateHint')}
-        </p>
-      )}
+      <p className="form-note">{t('reserve.priceWhatsappHint')}</p>
 
       <div className="itinerary-actions">
         <button
@@ -532,7 +588,7 @@ export function ReservationForm() {
             submitting ||
             tenant.loading ||
             !selectedSlot ||
-            distance.status !== 'ready'
+            !distanceOkForSubmit()
           }
         >
           {submitting ? '…' : t('reserve.submit')}

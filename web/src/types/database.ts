@@ -6,12 +6,14 @@ export type ReservationStatus =
   | 'confirmado'
   | 'cancelado'
   | 'concluido'
-export type ServiceType =
-  | 'aeroporto'
-  | 'corporativo'
-  | 'horas_a_disposicao'
-  | 'viagem'
+export type ServiceType = 'ponto_a_b' | 'a_disposicao' | 'concierge'
 export type AirportCode = 'GRU' | 'CGH' | 'VCP'
+
+export const SERVICE_TYPES: ServiceType[] = [
+  'ponto_a_b',
+  'a_disposicao',
+  'concierge',
+]
 
 export type Json =
   | string
@@ -135,7 +137,10 @@ export type Reservation = {
   slot_end: string
   hours_requested: number | null
   estimated_km: number | null
+  /** Internal/legacy only — never shown to the customer. */
   estimated_price: number | null
+  /** Concierge details or extra notes. */
+  service_notes: string | null
   hold_expires_at: string | null
   locale: string
   source: string
@@ -158,6 +163,7 @@ export type CreateReservationInput = {
   hours_requested?: number | null
   estimated_km?: number | null
   estimated_price?: number | null
+  service_notes?: string | null
   locale?: string
   source?: string
 }
@@ -244,6 +250,7 @@ export type Database = {
           p_locale?: string
           p_source?: string
           p_stops?: string[]
+          p_service_notes?: string | null
         }
         Returns: Reservation
       }

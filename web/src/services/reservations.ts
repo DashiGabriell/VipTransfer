@@ -38,6 +38,7 @@ export async function createReservationWithHold(
     p_locale: input.locale ?? 'pt-BR',
     p_source: input.source ?? 'web',
     p_stops: stops,
+    p_service_notes: input.service_notes ?? null,
   })
 
   if (error) {

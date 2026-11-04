@@ -63,7 +63,7 @@ export function AdminSidebar({
                 `admin-sidebar__item${isActive ? ' is-active' : ''}`
               }
               title={collapsed ? label : undefined}
-              end
+              end={item.id !== 'clientes'}
             >
               <span className="admin-sidebar__icon">
                 <AdminNavIcon name={item.icon} />

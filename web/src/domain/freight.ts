@@ -1,3 +1,5 @@
+import type { ServiceType } from '../types/database'
+
 export type FreightInput = {
   km: number
   pricePerKm: number
@@ -5,7 +7,7 @@ export type FreightInput = {
   airportFlatFee?: number
   hours?: number
   pricePerHour?: number
-  serviceType: 'aeroporto' | 'corporativo' | 'horas_a_disposicao' | 'viagem'
+  serviceType: ServiceType
 }
 
 export type FreightResult = {
@@ -16,10 +18,23 @@ export type FreightResult = {
 }
 
 /**
- * v1 formula: max(minimum, km * pricePerKm) + airport fee
- * + hours * pricePerHour when service is horas_a_disposicao
+ * Referência interna (admin / operação). Não exibida ao cliente —
+ * o valor fecha no WhatsApp com o motorista.
+ *
+ * ponto_a_b: max(mínimo, km × R$/km) + taxa aeroporto (se houver)
+ * a_disposicao: horas × R$/hora (+ componente de km se houver)
+ * concierge: sem fórmula automática (total 0)
  */
 export function calculateFreightEstimate(input: FreightInput): FreightResult {
+  if (input.serviceType === 'concierge') {
+    return {
+      distanceComponent: 0,
+      hourlyComponent: 0,
+      airportFee: 0,
+      total: 0,
+    }
+  }
+
   const km = Math.max(0, input.km)
   const distanceComponent = Math.max(
     input.minimumFare,
@@ -27,17 +42,21 @@ export function calculateFreightEstimate(input: FreightInput): FreightResult {
   )
 
   const hourlyComponent =
-    input.serviceType === 'horas_a_disposicao'
+    input.serviceType === 'a_disposicao'
       ? Math.max(0, input.hours ?? 0) * Math.max(0, input.pricePerHour ?? 0)
       : 0
 
-  const airportFee =
-    input.serviceType === 'aeroporto' ? Math.max(0, input.airportFlatFee ?? 0) : 0
+  const airportFee = Math.max(0, input.airportFlatFee ?? 0)
+
+  const total =
+    input.serviceType === 'a_disposicao'
+      ? hourlyComponent + (km > 0 ? distanceComponent : 0)
+      : distanceComponent + airportFee
 
   return {
     distanceComponent,
     hourlyComponent,
     airportFee,
-    total: distanceComponent + hourlyComponent + airportFee,
+    total,
   }
 }

@@ -17,6 +17,7 @@ import {
 } from '../../components/admin/AdminSidebar'
 import { AgendaSlotModal } from '../../components/admin/AgendaSlotModal'
 import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
+import { ClientDetailPanel } from '../../components/admin/ClientDetailPanel'
 import { ClientsPanel } from '../../components/admin/ClientsPanel'
 import { FleetPanel } from '../../components/admin/FleetPanel'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
@@ -80,10 +81,17 @@ function localeFromLang(lang: string): string {
 export function AdminDashboard() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { section } = useParams<{ section: string }>()
+  const { section, customerId } = useParams<{
+    section?: string
+    customerId?: string
+  }>()
   const { user, signOut } = useAuth()
   const tenant = useTenant()
-  const tab: Tab = isAdminNavId(section) ? section : 'reservas'
+  const tab: Tab = customerId
+    ? 'clientes'
+    : isAdminNavId(section)
+      ? section
+      : 'reservas'
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [moreOpen, setMoreOpen] = useState(false)
   const [membership, setMembership] = useState<Membership | null>(null)
@@ -185,6 +193,7 @@ export function AdminDashboard() {
   }, [refreshReservations, refreshCatalogAdmin])
 
   const title = useMemo(() => {
+    if (customerId) return t('admin.clients.detailTitle')
     const labels: Record<Tab, string> = {
       reservas: t('admin.navReservas'),
       agenda: t('admin.navAgenda'),
@@ -194,7 +203,7 @@ export function AdminDashboard() {
       perfil: t('admin.navPerfil'),
     }
     return labels[tab]
-  }, [t, tab, i18n.language])
+  }, [t, tab, i18n.language, customerId])
 
   useEffect(() => {
     try {
@@ -254,7 +263,7 @@ export function AdminDashboard() {
     void signOut().then(() => navigate('/login', { replace: true }))
   }
 
-  if (!isAdminNavId(section)) {
+  if (!customerId && !isAdminNavId(section)) {
     return <Navigate to="/admin/reservas" replace />
   }
 
@@ -534,7 +543,15 @@ export function AdminDashboard() {
               )}
 
               {tab === 'clientes' && canOperate(role) && orgId && (
-                <ClientsPanel organizationId={orgId} onError={setError} />
+                customerId ? (
+                  <ClientDetailPanel
+                    organizationId={orgId}
+                    customerId={customerId}
+                    onError={setError}
+                  />
+                ) : (
+                  <ClientsPanel organizationId={orgId} onError={setError} />
+                )
               )}
 
               {tab === 'perfil' && (
@@ -563,7 +580,9 @@ export function AdminDashboard() {
 }
 
 function reservationEstimate(price: number | null | undefined) {
-  return price != null ? `R$ ${Number(price).toFixed(2)}` : '—'
+  // Cliente não vê preço; no admin, null = combinado no WhatsApp
+  if (price == null) return 'WhatsApp'
+  return `R$ ${Number(price).toFixed(2)}`
 }
 
 function ReservationActions(props: {

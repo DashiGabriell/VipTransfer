@@ -1232,7 +1232,7 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .admin-clients__detail {
+  .admin-clients__list-panel {
     grid-column: 1 / -1;
   }
 }
@@ -1305,6 +1305,11 @@
   font-weight: 600;
   letter-spacing: 0.03em;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .admin-clients__btn:disabled {
@@ -1376,11 +1381,6 @@
   background: color-mix(in srgb, var(--admin-paper-warm) 70%, #fff);
 }
 
-.admin-clients__card.is-selected {
-  border-color: color-mix(in srgb, var(--admin-bronze) 50%, var(--admin-line));
-  box-shadow: inset 3px 0 0 var(--admin-bronze);
-}
-
 .admin-clients__card.is-editing {
   border-color: color-mix(in srgb, var(--admin-bronze) 40%, var(--admin-line));
 }
@@ -1390,18 +1390,10 @@
 }
 
 .admin-clients__card-main {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  text-align: left;
   flex: 1 1 12rem;
   min-width: 0;
   display: grid;
   gap: 0.2rem;
-  cursor: pointer;
-  padding: 0;
-  color: inherit;
-  font: inherit;
 }
 
 .admin-clients__card-main strong {
@@ -1434,61 +1426,185 @@
   gap: 0.35rem;
 }
 
-.admin-clients__meta {
+.admin-client-detail {
   display: grid;
-  gap: 0.75rem;
+  gap: 1.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-client-detail__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.admin-client-detail__header {
+  margin-bottom: 1rem;
+}
+
+.admin-client-detail__header h2 {
   margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-bronze, #b08d57);
 }
 
-@media (min-width: 640px) {
-  .admin-clients__meta {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .admin-clients__meta--full {
-    grid-column: 1 / -1;
-  }
+.admin-client-detail__header p {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: var(--admin-ink);
 }
 
-.admin-clients__meta dt {
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-kv-table,
+.admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 0.7rem;
+  overflow: hidden;
+}
+
+.admin-kv-table th,
+.admin-kv-table td,
+.admin-data-table th,
+.admin-data-table td {
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-kv-table thead th,
+.admin-data-table thead th {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--admin-muted);
+  background: color-mix(in srgb, var(--admin-paper-warm) 85%, #fff);
+  white-space: nowrap;
 }
 
-.admin-clients__meta dd {
-  margin: 0.2rem 0 0;
-  font-size: 0.92rem;
+.admin-kv-table tbody th {
+  width: 11rem;
+  max-width: 38%;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  background: color-mix(in srgb, var(--admin-paper-warm) 55%, #fff);
+}
+
+.admin-kv-table td,
+.admin-data-table td {
+  font-size: 0.9rem;
   color: var(--admin-ink);
   word-break: break-word;
 }
 
-.admin-clients__history {
-  list-style: none;
-  margin: 0;
+.admin-kv-table tr:last-child th,
+.admin-kv-table tr:last-child td,
+.admin-data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-kv-table a,
+.admin-data-table a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.admin-data-table__route {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   padding: 0;
-  display: grid;
-  gap: 0.45rem;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.admin-clients__history li {
-  display: grid;
-  gap: 0.15rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--admin-line);
-  border-radius: 0.55rem;
-  background: #fff;
-}
+@media (max-width: 719px) {
+  .admin-kv-table,
+  .admin-data-table {
+    border: 0;
+    background: transparent;
+  }
 
-.admin-clients__history strong {
-  font-size: 0.85rem;
-  color: var(--admin-ink);
-}
+  .admin-kv-table thead,
+  .admin-data-table thead {
+    display: none;
+  }
 
-.admin-clients__history span {
-  font-size: 0.75rem;
-  color: var(--admin-muted);
+  .admin-kv-table tbody,
+  .admin-data-table tbody {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .admin-kv-table tr,
+  .admin-data-table tr {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--admin-line);
+    border-radius: 0.7rem;
+    background: #fff;
+  }
+
+  .admin-kv-table th,
+  .admin-kv-table td,
+  .admin-data-table th,
+  .admin-data-table td {
+    display: block;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .admin-kv-table tbody th {
+    margin-bottom: 0.1rem;
+  }
+
+  .admin-data-table td {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .admin-data-table td::before {
+    content: attr(data-label);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+  }
+
+  .admin-data-table__route {
+    -webkit-line-clamp: 4;
+  }
 }
 
 /* Agenda slot detail modal — portaled to body (own tokens, viewport-centered) */

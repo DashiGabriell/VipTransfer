@@ -614,6 +614,21 @@ export async function listCustomers(
   return (data ?? []) as Customer[]
 }
 
+export async function getCustomer(
+  organizationId: string,
+  customerId: string,
+): Promise<Customer | null> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .eq('id', customerId)
+    .maybeSingle()
+  if (error) throw error
+  return (data as Customer | null) ?? null
+}
+
 export async function createCustomer(input: {
   organization_id: string
   full_name: string

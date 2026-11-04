@@ -16,6 +16,10 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/admin" element={<AdminPage />}>
               <Route index element={<Navigate to="reservas" replace />} />
+              <Route
+                path="clientes/:customerId"
+                element={<AdminDashboard />}
+              />
               <Route path=":section" element={<AdminDashboard />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

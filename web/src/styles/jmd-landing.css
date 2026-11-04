@@ -377,7 +377,8 @@
       padding-bottom: 0.1rem;
     }
     .itinerary-row input,
-    .itinerary-row select {
+    .itinerary-row select,
+    .itinerary-row textarea {
       width: 100%;
       min-width: 0;
       border: 0;
@@ -389,10 +390,17 @@
       caret-color: var(--bronze);
     }
     .itinerary-row input:focus,
-    .itinerary-row select:focus {
+    .itinerary-row select:focus,
+    .itinerary-row textarea:focus {
       outline: none;
     }
     .itinerary-row select { cursor: pointer; }
+    .itinerary-row textarea {
+      resize: vertical;
+      min-height: 4.5rem;
+      line-height: 1.45;
+      font-family: inherit;
+    }
     .itinerary-row input[type="datetime-local"] {
       min-height: 1.5rem;
       color-scheme: light;

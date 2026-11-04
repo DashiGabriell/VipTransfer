@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   formatBrazilPhoneInput,
@@ -9,23 +10,18 @@ import {
 import {
   createCustomer,
   listCustomers,
-  listReservationsForCustomerPhone,
   setCustomerActive,
   updateCustomer,
 } from '../../services/admin'
-import type { Customer, Reservation } from '../../types/database'
+import type { Customer } from '../../types/database'
 
 type Props = {
   organizationId: string
   onError: (msg: string) => void
 }
 
-function localeFromLang(lang: string): string {
-  return lang.startsWith('en') ? 'en-US' : 'pt-BR'
-}
-
 export function ClientsPanel({ organizationId, onError }: Props) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const formRef = useRef<HTMLFormElement>(null)
 
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -40,10 +36,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
-
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [history, setHistory] = useState<Reservation[]>([])
-  const [historyLoading, setHistoryLoading] = useState(false)
 
   const isEditing = Boolean(editingId)
 
@@ -84,33 +76,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
     })
   }, [customers, query])
 
-  const selected = useMemo(
-    () => customers.find((c) => c.id === selectedId) ?? null,
-    [customers, selectedId],
-  )
-
-  useEffect(() => {
-    if (!selected) {
-      setHistory([])
-      return
-    }
-    let cancelled = false
-    setHistoryLoading(true)
-    void listReservationsForCustomerPhone(organizationId, selected.phone)
-      .then((rows) => {
-        if (!cancelled) setHistory(rows)
-      })
-      .catch(() => {
-        if (!cancelled) setHistory([])
-      })
-      .finally(() => {
-        if (!cancelled) setHistoryLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [organizationId, selected])
-
   function resetForm() {
     setEditingId(null)
     setFullName('')
@@ -122,7 +87,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
   function startEdit(customer: Customer) {
     onError('')
     setEditingId(customer.id)
-    setSelectedId(customer.id)
     setFullName(customer.full_name)
     setPhone(customer.phone)
     setEmail(customer.email)
@@ -162,7 +126,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
         setCustomers((prev) =>
           prev.map((c) => (c.id === updated.id ? updated : c)),
         )
-        setSelectedId(updated.id)
       } else {
         const created = await createCustomer({
           organization_id: organizationId,
@@ -176,7 +139,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
             a.full_name.localeCompare(b.full_name, 'pt'),
           ),
         )
-        setSelectedId(created.id)
       }
       resetForm()
     } catch (err) {
@@ -201,7 +163,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
       })
       if (!showInactive && !updated.active) {
         setCustomers((prev) => prev.filter((c) => c.id !== updated.id))
-        if (selectedId === updated.id) setSelectedId(null)
         if (editingId === updated.id) resetForm()
       } else {
         setCustomers((prev) =>
@@ -347,27 +308,30 @@ export function ClientsPanel({ organizationId, onError }: Props) {
 
         <ul className="admin-clients__list">
           {filtered.map((customer) => {
-            const isSelected = selectedId === customer.id
             const isBusy = busyId === customer.id
             return (
               <li
                 key={customer.id}
-                className={`admin-clients__card${isSelected ? ' is-selected' : ''}${!customer.active ? ' is-inactive' : ''}${editingId === customer.id ? ' is-editing' : ''}`}
+                className={`admin-clients__card${!customer.active ? ' is-inactive' : ''}${editingId === customer.id ? ' is-editing' : ''}`}
               >
-                <button
-                  type="button"
-                  className="admin-clients__card-main"
-                  onClick={() => setSelectedId(customer.id)}
-                >
+                <div className="admin-clients__card-main">
                   <strong>{customer.full_name}</strong>
                   <span>
                     {customer.phone} · {customer.email}
                   </span>
                   {!customer.active ? (
-                    <em className="admin-clients__badge">{t('admin.clients.inactive')}</em>
+                    <em className="admin-clients__badge">
+                      {t('admin.clients.inactive')}
+                    </em>
                   ) : null}
-                </button>
+                </div>
                 <div className="admin-clients__card-actions">
+                  <Link
+                    to={`/admin/clientes/${customer.id}`}
+                    className="admin-clients__btn is-ghost"
+                  >
+                    {t('admin.clients.details')}
+                  </Link>
                   <button
                     type="button"
                     className="admin-clients__btn is-ghost"
@@ -391,63 +355,6 @@ export function ClientsPanel({ organizationId, onError }: Props) {
           })}
         </ul>
       </div>
-
-      {selected ? (
-        <div className="admin-clients__detail rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5">
-          <h2 className="mb-1 font-semibold text-primary">
-            {t('admin.clients.detailTitle')}
-          </h2>
-          <p className="mb-3 text-sm text-text-secondary-light">
-            {selected.full_name}
-          </p>
-          <dl className="admin-clients__meta">
-            <div>
-              <dt>{t('reserve.phone')}</dt>
-              <dd>{selected.phone}</dd>
-            </div>
-            <div>
-              <dt>{t('reserve.email')}</dt>
-              <dd>{selected.email}</dd>
-            </div>
-            {selected.notes ? (
-              <div className="admin-clients__meta--full">
-                <dt>{t('admin.clients.notes')}</dt>
-                <dd>{selected.notes}</dd>
-              </div>
-            ) : null}
-          </dl>
-
-          <h3 className="mt-5 mb-2 text-sm font-semibold text-primary">
-            {t('admin.clients.historyTitle')}
-          </h3>
-          {historyLoading ? (
-            <p className="text-sm text-text-secondary-light">…</p>
-          ) : null}
-          {!historyLoading && history.length === 0 ? (
-            <p className="text-sm text-text-secondary-light">
-              {t('admin.clients.historyEmpty')}
-            </p>
-          ) : null}
-          <ul className="admin-clients__history">
-            {history.map((r) => (
-              <li key={r.id}>
-                <strong>
-                  {new Date(r.slot_start).toLocaleString(
-                    localeFromLang(i18n.language),
-                  )}
-                </strong>
-                <span>
-                  {t(`admin.status.${r.status}`)} ·{' '}
-                  {t(`reserve.services.${r.service_type}`)}
-                  {r.estimated_price != null
-                    ? ` · R$ ${Number(r.estimated_price).toFixed(2)}`
-                    : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </section>
   )
 }

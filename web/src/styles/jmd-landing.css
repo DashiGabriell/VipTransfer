@@ -514,6 +514,11 @@
     }
     .form-note.is-error { color: #9b3b2e; }
     .form-note.is-ok { color: #2f5d3a; }
+    .itinerary-geo {
+      grid-column: 1 / -1;
+      margin: 0.15rem 0 0;
+      font-size: 0.78rem;
+    }
     .itinerary-distance strong {
       color: var(--ink);
       font-weight: 650;

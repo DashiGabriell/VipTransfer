@@ -67,6 +67,12 @@
     "distanceError": "Não foi possível calcular a rota. Confira os endereços (inclua cidade/bairro quando possível).",
     "distanceRequired": "Aguarde o cálculo da distância antes de enviar.",
     "distanceNotRequired": "Distância não obrigatória para este serviço.",
+    "addressChecking": "Validando endereço…",
+    "addressOk": "Endereço localizado.",
+    "addressShort": "Digite o endereço com mais detalhes (rua, número, bairro/cidade).",
+    "addressEmpty": "Informe o endereço.",
+    "addressInvalid": "Não encontramos esse endereço. Inclua bairro e cidade (ex.: São Paulo).",
+    "addressFixBeforeSubmit": "Corrija os endereços destacados antes de enviar.",
     "holdHint": "Ao enviar, o horário fica reservado por 60 minutos até a confirmação da JMD. O valor fecha no WhatsApp.",
     "submit": "Solicitar no WhatsApp",
     "services": {

@@ -16,6 +16,11 @@ import {
 } from '../domain/customerFields'
 import { buildWhatsAppUrl } from '../domain/whatsapp'
 import {
+  isGeocodeOk,
+  useGeocodedAddress,
+  type GeocodeFieldStatus,
+} from '../hooks/useGeocodedAddress'
+import {
   buildRouteWaypoints,
   DistanceError,
   measureDrivingDistanceKm,
@@ -108,6 +113,11 @@ export function ReservationForm() {
   const showHours = serviceType === 'a_disposicao'
   const showNotes = serviceType === 'concierge'
 
+  const originGeo = useGeocodedAddress(origin, true)
+  const destinationGeoEnabled =
+    showDestination && (destinationRequired || destination.trim().length > 0)
+  const destinationGeo = useGeocodedAddress(destination, destinationGeoEnabled)
+
   const waypointsKey = useMemo(() => {
     if (!mayMeasureDistance(serviceType)) return ''
     const points = buildRouteWaypoints({
@@ -185,6 +195,28 @@ export function ReservationForm() {
     return true
   }
 
+  function addressesOkForSubmit(): boolean {
+    if (!isGeocodeOk(originGeo)) return false
+    if (!destinationGeoEnabled) return true
+    return isGeocodeOk(destinationGeo)
+  }
+
+  function geocodeMessage(status: GeocodeFieldStatus): string {
+    switch (status) {
+      case 'checking':
+        return t('reserve.addressChecking')
+      case 'ok':
+        return t('reserve.addressOk')
+      case 'short':
+        return t('reserve.addressShort')
+      case 'error':
+        return t('reserve.addressInvalid')
+      default:
+        // idle / empty: sem mensagem até o usuário digitar
+        return ''
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setFeedback(null)
@@ -193,6 +225,16 @@ export function ReservationForm() {
     if (!serviceType || !selectedSlot) {
       setFeedbackError(true)
       setFeedback(t('agenda.pickSlot'))
+      return
+    }
+
+    if (!addressesOkForSubmit()) {
+      setFeedbackError(true)
+      setFeedback(
+        originGeo === 'checking' || destinationGeo === 'checking'
+          ? t('reserve.addressChecking')
+          : t('reserve.addressFixBeforeSubmit'),
+      )
       return
     }
 
@@ -360,7 +402,11 @@ export function ReservationForm() {
         </select>
       </div>
 
-      <div className="itinerary-row">
+      <div
+        className={`itinerary-row${
+          originGeo === 'error' || originGeo === 'short' ? ' is-invalid' : ''
+        }`}
+      >
         <label htmlFor="origem">
           {serviceType === 'concierge'
             ? t('reserve.originConcierge')
@@ -378,8 +424,26 @@ export function ReservationForm() {
           autoComplete="street-address"
           value={origin}
           onChange={(e) => setOrigin(e.target.value)}
+          aria-invalid={originGeo === 'error' || originGeo === 'short'}
+          aria-describedby="origem-geo"
           required
         />
+        {geocodeMessage(originGeo) ? (
+          <p
+            id="origem-geo"
+            className={`form-note itinerary-geo${
+              originGeo === 'ok'
+                ? ' is-ok'
+                : originGeo === 'checking'
+                  ? ''
+                  : ' is-error'
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {geocodeMessage(originGeo)}
+          </p>
+        ) : null}
       </div>
 
       {showStops &&
@@ -423,7 +487,14 @@ export function ReservationForm() {
       )}
 
       {showDestination && (
-        <div className="itinerary-row">
+        <div
+          className={`itinerary-row${
+            destinationGeoEnabled &&
+            (destinationGeo === 'error' || destinationGeo === 'short')
+              ? ' is-invalid'
+              : ''
+          }`}
+        >
           <label htmlFor="destino">
             {destinationRequired
               ? t('reserve.destination')
@@ -436,8 +507,29 @@ export function ReservationForm() {
             placeholder={t('reserve.destinationPlaceholder')}
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
+            aria-invalid={
+              destinationGeoEnabled &&
+              (destinationGeo === 'error' || destinationGeo === 'short')
+            }
+            aria-describedby="destino-geo"
             required={destinationRequired}
           />
+          {destinationGeoEnabled && geocodeMessage(destinationGeo) ? (
+            <p
+              id="destino-geo"
+              className={`form-note itinerary-geo${
+                destinationGeo === 'ok'
+                  ? ' is-ok'
+                  : destinationGeo === 'checking'
+                    ? ''
+                    : ' is-error'
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              {geocodeMessage(destinationGeo)}
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -588,6 +680,7 @@ export function ReservationForm() {
             submitting ||
             tenant.loading ||
             !selectedSlot ||
+            !addressesOkForSubmit() ||
             !distanceOkForSubmit()
           }
         >

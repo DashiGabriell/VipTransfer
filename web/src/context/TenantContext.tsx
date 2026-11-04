@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { resolveTenantSlug } from '../lib/tenant'
+import { defaultTenantSlug, resolveTenantSlug } from '../lib/tenant'
 import {
   loadTenantCatalog,
   type TenantCatalog,
@@ -50,7 +50,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       setError(null)
       try {
-        const data = await loadTenantCatalog(slug)
+        let data = await loadTenantCatalog(slug)
+        const fallback = defaultTenantSlug()
+        // Apex/host mal resolvido (ex.: "jmdtransfer") → tenta org seed
+        if (!data && slug !== fallback) {
+          data = await loadTenantCatalog(fallback)
+        }
         if (!cancelled) {
           setCatalog(data)
           if (!data) {

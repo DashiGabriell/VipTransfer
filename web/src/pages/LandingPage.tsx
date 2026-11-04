@@ -14,7 +14,7 @@ const SEDAN_IMG =
 export function LandingPage() {
   const { t } = useTranslation()
   const tenant = useTenant()
-  const wa = tenant.whatsapp.replace(/\D/g, '') || '5511999999999'
+  const wa = tenant.whatsapp.replace(/\D/g, '') || '5511949247258'
   const [navSolid, setNavSolid] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 

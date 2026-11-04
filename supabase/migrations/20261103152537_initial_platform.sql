@@ -558,7 +558,7 @@ values (
     'timezone', 'America/Sao_Paulo',
     'locales', jsonb_build_array('pt-BR', 'en'),
     'defaultLocale', 'pt-BR',
-    'whatsapp', '5511999999999',
+    'whatsapp', '5511949247258',
     'contactEmail', 'contato@jmdtransfer.com.br',
     'brand', jsonb_build_object(
       'primary', '#20324D',

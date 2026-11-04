@@ -94,7 +94,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return {
       slug,
       name: slug === 'jmd' ? 'JMD Transfer' : slug.toUpperCase(),
-      whatsapp: '5511999999999',
+      whatsapp: '5511949247258',
       contactEmail: 'contato@jmdtransfer.com.br',
       organizationId: null,
       catalog: null,

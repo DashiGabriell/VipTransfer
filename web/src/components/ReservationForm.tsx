@@ -61,7 +61,7 @@ export function ReservationForm() {
   const { t, i18n } = useTranslation()
   const tenant = useTenant()
   const locale = i18n.language.startsWith('en') ? 'en' : 'pt-BR'
-  const waDigits = tenant.whatsapp.replace(/\D/g, '') || '5511999999999'
+  const waDigits = tenant.whatsapp.replace(/\D/g, '') || '5511949247258'
 
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')

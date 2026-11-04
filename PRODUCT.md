@@ -31,7 +31,7 @@ Visitante chega pelo site para entender a oferta e solicitar cotação / falar c
 - Serviços confirmados: transfer aeroporto (GRU/CGH/VCP), transfer corporativo, viagens VIP/eventos, horas à disposição, viagens.
 - Cobertura: São Paulo capital, Grande SP, aeroportos GRU, CGH, VCP.
 - Frota: SUV executivo premium e sedan executivo de luxo; blindagem opcional.
-- Contato publicado: `contato@jmdtransfer.com.br`; WhatsApp usa placeholder `5511999999999` até substituição futura.
+- Contato publicado: `contato@jmdtransfer.com.br`; WhatsApp: `5511949247258`.
 - Entrega atual: landing HTML estática (`index2.html`); redesign substitui o visual e pode reescrever copy mantendo fatos.
 
 ## Brand Commitments

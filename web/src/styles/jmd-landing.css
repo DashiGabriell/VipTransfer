@@ -518,6 +518,8 @@
       grid-column: 1 / -1;
       margin: 0.15rem 0 0;
       font-size: 0.78rem;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
     .itinerary-distance strong {
       color: var(--ink);

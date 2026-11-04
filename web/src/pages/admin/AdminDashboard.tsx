@@ -672,8 +672,8 @@ function ReservationsPanel(props: {
         </button>
       </div>
 
-      {/* Mobile: stacked cards — no horizontal table scroll */}
-      <ul className="admin-res-cards md:hidden">
+      {/* Mobile cards; desktop table only (visibility in admin-layout.css) */}
+      <ul className="admin-res-cards">
         {props.reservations.map((r, index) => (
           <li
             key={r.id}
@@ -734,8 +734,7 @@ function ReservationsPanel(props: {
         )}
       </ul>
 
-      {/* Desktop table */}
-      <div className="admin-res-table-wrap hidden md:block">
+      <div className="admin-res-table-wrap">
         <table className="admin-res-table min-w-full text-left text-sm">
           <thead>
             <tr>

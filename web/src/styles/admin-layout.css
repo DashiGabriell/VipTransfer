@@ -794,9 +794,15 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
+  display: none;
   gap: 0.75rem;
   min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .admin-res-cards {
+    display: grid;
+  }
 }
 
 .admin-res-card {
@@ -943,11 +949,18 @@
 }
 
 .admin-res-table-wrap {
+  display: block;
   overflow-x: auto;
   border-radius: 1rem;
   border: 1px solid var(--admin-line);
   background: var(--admin-paper-warm);
   -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  .admin-res-table-wrap {
+    display: none;
+  }
 }
 
 .admin-res-table {

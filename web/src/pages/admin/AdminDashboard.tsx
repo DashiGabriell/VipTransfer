@@ -797,6 +797,7 @@ function FreightPanel(props: {
   onChanged: () => void
   onError: (msg: string) => void
 }) {
+  const { t } = useTranslation()
   const base = props.rules.find(
     (r) => r.vehicle_category_id == null && r.service_type == null,
   )
@@ -849,20 +850,25 @@ function FreightPanel(props: {
       onSubmit={onSave}
       className="w-full max-w-4xl space-y-5 rounded-2xl border border-border-light bg-surface-light p-5"
     >
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-semibold text-primary">Regra base de transfer</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-2xl">
+          <h2 className="font-semibold text-primary">{t('admin.freightTitle')}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary-light">
+            {t('admin.freightLead')}
+          </p>
+        </div>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
+          className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
         >
-          {saving ? '…' : 'Salvar transfer'}
+          {saving ? '…' : t('admin.freightSave')}
         </button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block text-sm">
-          R$/km
+          {t('admin.freightPricePerKm')}
           <input
             className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
             type="number"
@@ -873,7 +879,7 @@ function FreightPanel(props: {
           />
         </label>
         <label className="block text-sm">
-          Mínimo
+          {t('admin.freightMinimum')}
           <input
             className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
             type="number"
@@ -884,7 +890,7 @@ function FreightPanel(props: {
           />
         </label>
         <label className="block text-sm">
-          R$/hora
+          {t('admin.freightPricePerHour')}
           <input
             className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
             type="number"
@@ -899,7 +905,7 @@ function FreightPanel(props: {
       <div className="grid gap-3 sm:grid-cols-3">
         {(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) => (
           <label key={airport} className="block text-sm">
-            Taxa {airport}
+            {t('admin.freightAirportFee', { airport })}
             <input
               className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
               type="number"

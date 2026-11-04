@@ -224,13 +224,8 @@
 .admin-layout.is-collapsed .admin-sidebar__link,
 .admin-layout.is-collapsed .admin-sidebar__signout {
   justify-content: center;
+  gap: 0;
   padding: 0;
-}
-
-.admin-layout.is-collapsed .admin-sidebar__toggle span,
-.admin-layout.is-collapsed .admin-sidebar__link span,
-.admin-layout.is-collapsed .admin-sidebar__signout span {
-  display: none;
 }
 
 .admin-main {
@@ -1124,6 +1119,16 @@
   border-radius: 0.85rem;
   background: color-mix(in srgb, var(--admin-paper) 70%, #fff);
   min-width: 0;
+}
+
+.admin-fleet__vehicle.is-editing,
+.admin-fleet__form.is-editing {
+  border-color: color-mix(in srgb, var(--admin-bronze) 55%, var(--admin-line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--admin-bronze) 25%, transparent);
+}
+
+.admin-fleet__form.is-editing {
+  scroll-margin-top: 1rem;
 }
 
 @media (min-width: 640px) {

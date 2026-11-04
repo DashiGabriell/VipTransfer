@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FLEET_BRANDS,
@@ -13,6 +13,7 @@ import {
   createFleetVehicle,
   setFleetVehicleActive,
   setStandardCategoryActive,
+  updateFleetVehicle,
   uploadFleetVehiclePhoto,
 } from '../../services/admin'
 import type { FleetVehicle, VehicleCategory } from '../../types/database'
@@ -27,9 +28,16 @@ type Props = {
 
 const YEAR_OPTIONS = fleetYearOptions()
 
+function brandLabel(brand: string): string {
+  if (brand === 'LandRover') return 'Land Rover'
+  if (brand === 'CaoaChery') return 'Caoa Chery'
+  return brand
+}
+
 export function FleetPanel(props: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language.startsWith('en') ? 'en' : 'pt'
+  const formRef = useRef<HTMLFormElement>(null)
 
   const categoryByCode = useMemo(() => {
     const map = new Map<string, VehicleCategory>()
@@ -49,6 +57,7 @@ export function FleetPanel(props: Props) {
   )
 
   const [togglingCode, setTogglingCode] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [categoryId, setCategoryId] = useState('')
   const [brand, setBrand] = useState('')
   const [model, setModel] = useState('')
@@ -58,12 +67,55 @@ export function FleetPanel(props: Props) {
   const [plate, setPlate] = useState('')
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [busyVehicleId, setBusyVehicleId] = useState<string | null>(null)
 
   const modelOptions = useMemo(() => modelsForBrand(brand), [brand])
+  const isEditing = Boolean(editingId)
 
-  async function onToggleCategory(code: (typeof STANDARD_VEHICLE_CATEGORIES)[number]['code'], next: boolean) {
+  function resetForm() {
+    setEditingId(null)
+    setCategoryId('')
+    setBrand('')
+    setModel('')
+    setYear('')
+    setColor('')
+    setBodyType('sedan')
+    setPlate('')
+    setExistingPhotoUrl(null)
+    onPhotoChange(null)
+  }
+
+  function onPhotoChange(file: File | null) {
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return file ? URL.createObjectURL(file) : null
+    })
+    setPhoto(file)
+  }
+
+  function startEdit(vehicle: FleetVehicle) {
+    props.onError('')
+    setEditingId(vehicle.id)
+    setCategoryId(vehicle.vehicle_category_id)
+    setBrand(vehicle.brand)
+    setModel(vehicle.model)
+    setYear(String(vehicle.year))
+    setColor(vehicle.color)
+    setBodyType(vehicle.body_type)
+    setPlate(vehicle.plate ?? '')
+    setExistingPhotoUrl(vehicle.photo_url)
+    onPhotoChange(null)
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  async function onToggleCategory(
+    code: (typeof STANDARD_VEHICLE_CATEGORIES)[number]['code'],
+    next: boolean,
+  ) {
     setTogglingCode(code)
     props.onError('')
     try {
@@ -82,13 +134,7 @@ export function FleetPanel(props: Props) {
     }
   }
 
-  function onPhotoChange(file: File | null) {
-    if (photoPreview) URL.revokeObjectURL(photoPreview)
-    setPhoto(file)
-    setPhotoPreview(file ? URL.createObjectURL(file) : null)
-  }
-
-  async function onCreateVehicle(e: FormEvent) {
+  async function onSubmitVehicle(e: FormEvent) {
     e.preventDefault()
     props.onError('')
 
@@ -112,8 +158,7 @@ export function FleetPanel(props: Props) {
 
     setSaving(true)
     try {
-      const created = await createFleetVehicle({
-        organization_id: props.organizationId,
+      const payload = {
         vehicle_category_id: categoryId,
         brand,
         model,
@@ -121,27 +166,34 @@ export function FleetPanel(props: Props) {
         color,
         body_type: bodyType,
         plate: plate || null,
-      })
+      }
 
-      if (photo) {
+      let vehicleId = editingId
+      if (editingId) {
+        await updateFleetVehicle({ id: editingId, ...payload })
+      } else {
+        const created = await createFleetVehicle({
+          organization_id: props.organizationId,
+          ...payload,
+        })
+        vehicleId = created.id
+      }
+
+      if (photo && vehicleId) {
         await uploadFleetVehiclePhoto({
           organization_id: props.organizationId,
-          vehicle_id: created.id,
+          vehicle_id: vehicleId,
           file: photo,
         })
       }
 
-      setBrand('')
-      setModel('')
-      setYear('')
-      setColor('')
-      setBodyType('sedan')
-      setPlate('')
-      onPhotoChange(null)
+      resetForm()
       props.onChanged()
     } catch (err) {
       props.onError(
-        err instanceof Error ? err.message : t('admin.fleet.createError'),
+        err instanceof Error
+          ? err.message
+          : t(isEditing ? 'admin.fleet.updateError' : 'admin.fleet.createError'),
       )
     } finally {
       setSaving(false)
@@ -162,6 +214,8 @@ export function FleetPanel(props: Props) {
       setBusyVehicleId(null)
     }
   }
+
+  const previewSrc = photoPreview ?? existingPhotoUrl
 
   return (
     <section className="admin-fleet">
@@ -203,14 +257,15 @@ export function FleetPanel(props: Props) {
       </div>
 
       <form
-        onSubmit={onCreateVehicle}
-        className="admin-fleet__form rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5"
+        ref={formRef}
+        onSubmit={onSubmitVehicle}
+        className={`admin-fleet__form rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5${isEditing ? ' is-editing' : ''}`}
       >
         <h2 className="mb-1 font-semibold text-primary">
-          {t('admin.fleet.createTitle')}
+          {isEditing ? t('admin.fleet.editTitle') : t('admin.fleet.createTitle')}
         </h2>
         <p className="mb-4 text-sm text-text-secondary-light">
-          {t('admin.fleet.createLead')}
+          {isEditing ? t('admin.fleet.editLead') : t('admin.fleet.createLead')}
         </p>
 
         {!activeCategories.length ? (
@@ -243,6 +298,22 @@ export function FleetPanel(props: Props) {
                     c.code}
                 </option>
               ))}
+              {/* Keep current category visible while editing even if inactive */}
+              {isEditing &&
+              categoryId &&
+              !activeCategories.some((c) => c.id === categoryId) &&
+              categoryById.get(categoryId) ? (
+                <option value={categoryId}>
+                  {(
+                    categoryById.get(categoryId)!.name_i18n as {
+                      pt?: string
+                      en?: string
+                    }
+                  )[lang] ||
+                    categoryById.get(categoryId)!.name_i18n.pt ||
+                    categoryById.get(categoryId)!.code}
+                </option>
+              ) : null}
             </select>
           </label>
 
@@ -255,18 +326,17 @@ export function FleetPanel(props: Props) {
                 setModel('')
               }}
               required
-              disabled={!activeCategories.length}
+              disabled={!activeCategories.length && !isEditing}
             >
               <option value="">{t('admin.fleet.brandPlaceholder')}</option>
               {FLEET_BRANDS.map((b) => (
                 <option key={b} value={b}>
-                  {b === 'LandRover'
-                    ? 'Land Rover'
-                    : b === 'CaoaChery'
-                      ? 'Caoa Chery'
-                      : b}
+                  {brandLabel(b)}
                 </option>
               ))}
+              {brand && !FLEET_BRANDS.includes(brand) ? (
+                <option value={brand}>{brandLabel(brand)}</option>
+              ) : null}
             </select>
           </label>
 
@@ -276,7 +346,7 @@ export function FleetPanel(props: Props) {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               required
-              disabled={!brand || !activeCategories.length}
+              disabled={!brand || (!activeCategories.length && !isEditing)}
             >
               <option value="">
                 {brand
@@ -288,6 +358,9 @@ export function FleetPanel(props: Props) {
                   {m}
                 </option>
               ))}
+              {model && !modelOptions.includes(model) ? (
+                <option value={model}>{model}</option>
+              ) : null}
             </select>
           </label>
 
@@ -297,7 +370,7 @@ export function FleetPanel(props: Props) {
               value={year}
               onChange={(e) => setYear(e.target.value)}
               required
-              disabled={!activeCategories.length}
+              disabled={!activeCategories.length && !isEditing}
             >
               <option value="">{t('admin.fleet.yearPlaceholder')}</option>
               {YEAR_OPTIONS.map((y) => (
@@ -314,7 +387,7 @@ export function FleetPanel(props: Props) {
               value={color}
               onChange={(e) => setColor(e.target.value)}
               required
-              disabled={!activeCategories.length}
+              disabled={!activeCategories.length && !isEditing}
             >
               <option value="">{t('admin.fleet.colorPlaceholder')}</option>
               {FLEET_COLORS.map((c) => (
@@ -322,6 +395,9 @@ export function FleetPanel(props: Props) {
                   {t(c.labelKey)}
                 </option>
               ))}
+              {color && !FLEET_COLORS.some((c) => c.value === color) ? (
+                <option value={color}>{color}</option>
+              ) : null}
             </select>
           </label>
 
@@ -357,9 +433,9 @@ export function FleetPanel(props: Props) {
               accept="image/jpeg,image/png,image/webp"
               onChange={(e) => onPhotoChange(e.target.files?.[0] ?? null)}
             />
-            {photoPreview ? (
+            {previewSrc ? (
               <img
-                src={photoPreview}
+                src={previewSrc}
                 alt=""
                 className="admin-fleet__photo-preview"
               />
@@ -367,13 +443,29 @@ export function FleetPanel(props: Props) {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={saving || !activeCategories.length}
-          className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
-        >
-          {saving ? t('admin.fleet.saving') : t('admin.fleet.saveVehicle')}
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={saving || (!activeCategories.length && !isEditing)}
+            className="rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
+          >
+            {saving
+              ? t('admin.fleet.saving')
+              : isEditing
+                ? t('admin.fleet.saveChanges')
+                : t('admin.fleet.saveVehicle')}
+          </button>
+          {isEditing ? (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={resetForm}
+              className="rounded-lg border border-border-light px-4 py-2 text-sm text-text-secondary-light disabled:opacity-60"
+            >
+              {t('admin.fleet.cancelEdit')}
+            </button>
+          ) : null}
+        </div>
       </form>
 
       <div className="admin-fleet__list rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5 md:col-span-2">
@@ -389,8 +481,12 @@ export function FleetPanel(props: Props) {
               ] ||
               cat?.name_i18n?.pt ||
               '—'
+            const editingThis = editingId === v.id
             return (
-              <li key={v.id} className="admin-fleet__vehicle">
+              <li
+                key={v.id}
+                className={`admin-fleet__vehicle${editingThis ? ' is-editing' : ''}`}
+              >
                 <div className="admin-fleet__vehicle-media">
                   {v.photo_url ? (
                     <img src={v.photo_url} alt="" />
@@ -412,13 +508,23 @@ export function FleetPanel(props: Props) {
                   <span
                     className={`admin-fleet__badge${v.active ? ' is-on' : ''}`}
                   >
-                    {v.active
-                      ? t('admin.fleet.active')
-                      : t('admin.fleet.inactive')}
+                    {editingThis
+                      ? t('admin.fleet.editingBadge')
+                      : v.active
+                        ? t('admin.fleet.active')
+                        : t('admin.fleet.inactive')}
                   </span>
                   <button
                     type="button"
-                    disabled={busyVehicleId === v.id}
+                    disabled={busyVehicleId === v.id || saving}
+                    onClick={() => startEdit(v)}
+                    className="rounded border border-border-light px-2 py-1 text-xs disabled:opacity-50"
+                  >
+                    {t('admin.fleet.edit')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyVehicleId === v.id || saving}
                     onClick={() => void onToggleVehicle(v)}
                     className="rounded border border-border-light px-2 py-1 text-xs disabled:opacity-50"
                   >

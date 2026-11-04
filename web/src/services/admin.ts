@@ -234,6 +234,38 @@ export async function uploadFleetVehiclePhoto(input: {
   return { path, url }
 }
 
+export async function updateFleetVehicle(input: {
+  id: string
+  vehicle_category_id: string
+  brand: string
+  model: string
+  year: number
+  color: string
+  body_type: VehicleBodyType
+  plate?: string | null
+  notes?: string | null
+}): Promise<FleetVehicle> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from('fleet_vehicles')
+    .update({
+      vehicle_category_id: input.vehicle_category_id,
+      brand: input.brand.trim(),
+      model: input.model.trim(),
+      year: input.year,
+      color: input.color.trim(),
+      body_type: input.body_type,
+      plate: input.plate?.trim() || null,
+      notes: input.notes?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.id)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as FleetVehicle
+}
+
 export async function setFleetVehicleActive(input: {
   id: string
   active: boolean

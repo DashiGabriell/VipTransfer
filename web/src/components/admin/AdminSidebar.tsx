@@ -96,7 +96,9 @@ export function AdminSidebar({
               )}
             </svg>
           </span>
-          <span>{collapsed ? t('admin.expand') : t('admin.collapse')}</span>
+          <span className="admin-sidebar__label">
+            {collapsed ? t('admin.expand') : t('admin.collapse')}
+          </span>
         </button>
 
         <NavLink to="/" className="admin-sidebar__link" title={t('admin.site')}>
@@ -105,7 +107,7 @@ export function AdminSidebar({
               <path d="M4 12h16M10 6l-6 6 6 6" />
             </svg>
           </span>
-          <span>{t('admin.site')}</span>
+          <span className="admin-sidebar__label">{t('admin.site')}</span>
         </NavLink>
 
         <button
@@ -119,7 +121,7 @@ export function AdminSidebar({
               <path d="M10 17l5-5-5-5M15 12H3M21 4v16" />
             </svg>
           </span>
-          <span>{t('admin.signOut')}</span>
+          <span className="admin-sidebar__label">{t('admin.signOut')}</span>
         </button>
       </div>
     </aside>

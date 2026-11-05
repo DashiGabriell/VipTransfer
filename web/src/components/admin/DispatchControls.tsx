@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buildDriverDemandWhatsAppUrl } from '../../domain/whatsapp'
+import { driverOffersPageUrl } from '../../lib/siteUrl'
 import {
   assignReservationToDriver,
   completeReservationJob,
@@ -89,7 +90,7 @@ export function DispatchControls({
       hoursRequested: reservation.hours_requested,
       airport: reservation.airport,
       serviceNotes: reservation.service_notes,
-      offersUrl: `${window.location.origin}/motorista/ofertas`,
+      offersUrl: driverOffersPageUrl(),
       locale: waLocale,
     })
     if (!url) {

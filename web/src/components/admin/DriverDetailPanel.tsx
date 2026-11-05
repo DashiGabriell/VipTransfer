@@ -265,6 +265,27 @@ export function DriverDetailPanel({
                 </td>
               </tr>
               <tr>
+                <th scope="row">{t('driver.photosTitle')}</th>
+                <td data-label={t('driver.photosTitle')}>
+                  {driver.vehicle_photo_urls?.length ? (
+                    <div className="admin-drivers__photos">
+                      {driver.vehicle_photo_urls.map((url) => (
+                        <a
+                          key={url}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <img src={url} alt="" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    '—'
+                  )}
+                </td>
+              </tr>
+              <tr>
                 <th scope="row">{t('admin.drivers.skills')}</th>
                 <td data-label={t('admin.drivers.skills')}>{skills}</td>
               </tr>

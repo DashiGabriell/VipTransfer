@@ -394,16 +394,103 @@ function normalizeDriver(row: Driver): Driver {
     ? (row.availability as DriverAvailabilitySlot[])
     : []
   const inviteStatus = row.invite_status
+  const photos = Array.isArray(row.vehicle_photo_urls)
+    ? row.vehicle_photo_urls.filter((u): u is string => typeof u === 'string' && u.length > 0)
+    : []
   return {
     ...row,
     skills: Array.isArray(row.skills) ? row.skills : [],
     availability,
+    vehicle_photo_urls: photos.slice(0, 4),
     invite_status:
       inviteStatus === 'pending' || inviteStatus === 'accepted'
         ? inviteStatus
         : 'none',
     invited_at: row.invited_at ?? null,
   }
+}
+
+export type MyDriverProfileInput = {
+  organization_id: string
+  full_name: string
+  phone: string
+  vehicle_category_id: string | null
+  vehicle_brand: string
+  vehicle_model: string
+  vehicle_year: number | null
+  vehicle_color: string
+  vehicle_plate: string | null
+  vehicle_body_type: VehicleBodyType | null
+  skills: string[]
+  availability: DriverAvailabilitySlot[]
+  vehicle_photo_urls: string[]
+}
+
+export async function updateMyDriverProfile(
+  input: MyDriverProfileInput,
+): Promise<Driver> {
+  const client = assertClient()
+  const { data, error } = await client.rpc('update_my_driver_profile', {
+    p_organization_id: input.organization_id,
+    p_full_name: input.full_name.trim(),
+    p_phone: input.phone.trim(),
+    p_vehicle_category_id: input.vehicle_category_id,
+    p_vehicle_brand: input.vehicle_brand.trim(),
+    p_vehicle_model: input.vehicle_model.trim(),
+    p_vehicle_year: input.vehicle_year,
+    p_vehicle_color: input.vehicle_color.trim(),
+    p_vehicle_plate: input.vehicle_plate?.trim() || null,
+    p_vehicle_body_type: input.vehicle_body_type,
+    p_skills: input.skills,
+    p_availability: input.availability,
+    p_vehicle_photo_urls: input.vehicle_photo_urls.slice(0, 4),
+  })
+  if (error) throw error
+  return normalizeDriver(data as Driver)
+}
+
+const DRIVER_PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
+export async function uploadDriverVehiclePhoto(input: {
+  organization_id: string
+  driver_id: string
+  file: File
+}): Promise<string> {
+  const client = assertClient()
+  if (input.file.size > DRIVER_PHOTO_MAX_BYTES) {
+    throw new Error('PHOTO_TOO_LARGE')
+  }
+
+  const ext = (input.file.name.split('.').pop() || 'jpg')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+  const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg'
+  const path = `${input.organization_id}/${input.driver_id}/${crypto.randomUUID()}.${safeExt}`
+
+  const { error: uploadError } = await client.storage
+    .from('driver-vehicle-photos')
+    .upload(path, input.file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: input.file.type || `image/${safeExt}`,
+    })
+  if (uploadError) throw uploadError
+
+  const { data: pub } = client.storage
+    .from('driver-vehicle-photos')
+    .getPublicUrl(path)
+  return pub.publicUrl
+}
+
+export async function removeDriverVehiclePhotoByUrl(url: string): Promise<void> {
+  const client = assertClient()
+  const marker = '/driver-vehicle-photos/'
+  const idx = url.indexOf(marker)
+  if (idx < 0) return
+  const path = decodeURIComponent(url.slice(idx + marker.length).split('?')[0] ?? '')
+  if (!path) return
+  const { error } = await client.storage.from('driver-vehicle-photos').remove([path])
+  if (error) throw error
 }
 
 /** Admin: envia/reenvia convite Auth para o motorista definir senha. */

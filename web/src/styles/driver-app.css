@@ -573,6 +573,7 @@
   margin-bottom: 0.85rem;
 }
 
+.driver-profile__hero h1,
 .driver-profile__hero h2 {
   margin: 0;
   font-family: 'Bodoni Moda', 'Times New Roman', serif;
@@ -593,12 +594,198 @@
   border-radius: 1rem;
 }
 
+.driver-profile__block h2,
 .driver-profile__block h3 {
   margin: 0 0 0.75rem;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--da-muted);
+}
+
+.driver-app__success {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--da-ok) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--da-ok) 28%, transparent);
+  color: var(--da-ok);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.driver-profile__fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.driver-profile__field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.driver-profile__field span {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--da-muted);
+  font-weight: 650;
+}
+
+.driver-profile__field input,
+.driver-profile__field select {
+  min-height: 2.55rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--da-line);
+  background: #fff;
+  color: var(--da-ink);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.driver-profile__field input:disabled,
+.driver-profile__field input[readonly] {
+  background: color-mix(in srgb, var(--da-paper) 70%, #fff);
+  color: var(--da-muted);
+}
+
+.driver-profile__field input:focus,
+.driver-profile__field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--da-bronze) 55%, var(--da-line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--da-bronze) 18%, transparent);
+}
+
+.driver-profile__photos {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--da-line);
+}
+
+.driver-profile__photos-head h3 {
+  margin: 0 0 0.25rem;
+}
+
+.driver-profile__photos-head p {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  color: var(--da-muted);
+}
+
+.driver-profile__photo-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.driver-profile__photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  border: 1px solid var(--da-line);
+  background: color-mix(in srgb, var(--da-ink-deep) 4%, #fff);
+}
+
+.driver-profile__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.driver-profile__photo-remove {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--da-ink-deep) 78%, transparent);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.driver-profile__photo.is-add label {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 6.5rem;
+  cursor: pointer;
+  color: var(--da-bronze-deep);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.driver-profile__photo.is-add input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.driver-profile__checks {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.driver-profile__check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.driver-profile__avail-edit {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.driver-profile__avail-edit li {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.driver-profile__avail-edit select,
+.driver-profile__avail-edit input[type='time'] {
+  min-height: 2.4rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--da-line);
+  background: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.driver-profile__avail-edit .driver-app__btn {
+  grid-column: 1 / -1;
+  min-height: 2.25rem;
+}
+
+.driver-profile__save {
+  position: sticky;
+  bottom: calc(var(--da-bottom) + 0.5rem);
+  padding-top: 0.25rem;
+}
+
+.driver-profile__save .driver-app__btn {
+  width: 100%;
 }
 
 .driver-profile__rows {

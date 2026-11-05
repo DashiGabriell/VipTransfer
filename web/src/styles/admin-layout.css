@@ -2289,3 +2289,24 @@
   border-radius: 0.45rem;
   font: inherit;
 }
+
+.admin-drivers__photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.admin-drivers__photos a {
+  display: block;
+  width: 4.5rem;
+  height: 3.4rem;
+  border-radius: 0.45rem;
+  overflow: hidden;
+  border: 1px solid #d8cfc0;
+}
+
+.admin-drivers__photos img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

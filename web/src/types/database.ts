@@ -114,6 +114,7 @@ export type Driver = {
   vehicle_color: string
   vehicle_plate: string | null
   vehicle_body_type: VehicleBodyType | null
+  vehicle_photo_urls: string[]
   skills: string[]
   availability: DriverAvailabilitySlot[]
   notes: string | null

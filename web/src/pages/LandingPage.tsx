@@ -198,12 +198,6 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="section section-paper" id="captacao" data-reveal>
-          <div className="section-inner">
-            <LeadCaptureForm />
-          </div>
-        </section>
-
         <section className="section section-paper" id="servicos" data-reveal>
           <div className="section-inner">
             <div className="section-head">
@@ -377,9 +371,15 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section className="section section-paper" id="contato" data-reveal>
+          <div className="section-inner">
+            <LeadCaptureForm />
+          </div>
+        </section>
       </main>
 
-      <footer className="site-footer" id="contato" data-reveal>
+      <footer className="site-footer" data-reveal>
         <div className="section-inner">
           <div className="footer-grid">
             <div>

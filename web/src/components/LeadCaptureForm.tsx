@@ -65,7 +65,7 @@ export function LeadCaptureForm() {
   }
 
   return (
-    <form className="lead-capture" onSubmit={onSubmit} id="captacao">
+    <form className="lead-capture" onSubmit={onSubmit}>
       <div className="lead-capture__head">
         <h2>{t('lead.title')}</h2>
         <p>{t('lead.lead')}</p>

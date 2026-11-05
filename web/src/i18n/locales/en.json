@@ -411,6 +411,7 @@
       "complete": "Complete job",
       "assignError": "Failed to assign job.",
       "completeError": "Failed to complete job.",
+      "whatsappPhoneInvalid": "Job sent in the app, but the driver’s phone/WhatsApp is invalid.",
       "status": {
         "sem_motorista": "No driver",
         "oferecido": "Offered",

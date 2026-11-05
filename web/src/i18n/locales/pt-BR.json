@@ -411,6 +411,7 @@
       "complete": "Concluir serviço",
       "assignError": "Falha ao enviar demanda.",
       "completeError": "Falha ao concluir serviço.",
+      "whatsappPhoneInvalid": "Demanda enviada no app, mas o telefone/WhatsApp do motorista é inválido.",
       "status": {
         "sem_motorista": "Sem motorista",
         "oferecido": "Oferecido",

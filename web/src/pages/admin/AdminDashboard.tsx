@@ -431,6 +431,7 @@ export function AdminDashboard() {
                   onRefresh={() => void refreshReservations()}
                   drivers={drivers}
                   assignments={assignments}
+                  categories={categories}
                   onDispatchChanged={() => {
                     void refreshReservations()
                     void refreshDrivers()
@@ -652,6 +653,7 @@ function ReservationActions(props: {
   onViewRoute: (reservation: Reservation) => void
   drivers: Driver[]
   assignments: JobAssignment[]
+  categories: VehicleCategory[]
   onDispatchChanged: () => void
   onError: (msg: string) => void
 }) {
@@ -693,6 +695,7 @@ function ReservationActions(props: {
         reservation={r}
         drivers={props.drivers}
         assignments={props.assignments}
+        categories={props.categories}
         onChanged={props.onDispatchChanged}
         onError={props.onError}
       />
@@ -710,6 +713,7 @@ function ReservationsPanel(props: {
   onRefresh: () => void
   drivers: Driver[]
   assignments: JobAssignment[]
+  categories: VehicleCategory[]
   onDispatchChanged: () => void
   onError: (msg: string) => void
 }) {
@@ -802,6 +806,7 @@ function ReservationsPanel(props: {
               onViewRoute={setRouteReservation}
               drivers={props.drivers}
               assignments={props.assignments}
+              categories={props.categories}
               onDispatchChanged={props.onDispatchChanged}
               onError={props.onError}
             />
@@ -878,6 +883,7 @@ function ReservationsPanel(props: {
                     onViewRoute={setRouteReservation}
                     drivers={props.drivers}
                     assignments={props.assignments}
+                    categories={props.categories}
                     onDispatchChanged={props.onDispatchChanged}
                     onError={props.onError}
                   />

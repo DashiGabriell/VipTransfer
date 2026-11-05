@@ -19,6 +19,10 @@ import { AgendaSlotModal } from '../../components/admin/AgendaSlotModal'
 import { AvailabilityPanel } from '../../components/admin/AvailabilityPanel'
 import { ClientDetailPanel } from '../../components/admin/ClientDetailPanel'
 import { ClientsPanel } from '../../components/admin/ClientsPanel'
+import { DispatchControls } from '../../components/admin/DispatchControls'
+import { DriverDetailPanel } from '../../components/admin/DriverDetailPanel'
+import { DriversPanel } from '../../components/admin/DriversPanel'
+import { FinancePanel } from '../../components/admin/FinancePanel'
 import { FleetPanel } from '../../components/admin/FleetPanel'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
 import {
@@ -41,10 +45,16 @@ import {
   upsertFreightRule,
   type Membership,
 } from '../../services/admin'
+import {
+  listAssignmentsForReservations,
+  listDrivers,
+} from '../../services/coreV2'
 import type {
   AirportCode,
+  Driver,
   FleetVehicle,
   FreightRule,
+  JobAssignment,
   OrgRole,
   Reservation,
   ReservationStatus,
@@ -81,17 +91,20 @@ function localeFromLang(lang: string): string {
 export function AdminDashboard() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { section, customerId } = useParams<{
+  const { section, customerId, driverId } = useParams<{
     section?: string
     customerId?: string
+    driverId?: string
   }>()
   const { user, signOut } = useAuth()
   const tenant = useTenant()
   const tab: Tab = customerId
     ? 'clientes'
-    : isAdminNavId(section)
-      ? section
-      : 'reservas'
+    : driverId
+      ? 'motoristas'
+      : isAdminNavId(section)
+        ? section
+        : 'reservas'
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [moreOpen, setMoreOpen] = useState(false)
   const [membership, setMembership] = useState<Membership | null>(null)
@@ -104,6 +117,8 @@ export function AdminDashboard() {
   const [categories, setCategories] = useState<VehicleCategory[]>([])
   const [fleetVehicles, setFleetVehicles] = useState<FleetVehicle[]>([])
   const [freightRules, setFreightRules] = useState<FreightRule[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [assignments, setAssignments] = useState<JobAssignment[]>([])
   const [busyId, setBusyId] = useState<string | null>(null)
   const [agendaFocus, setAgendaFocus] = useState<DaySlot | null>(null)
   const [agendaKey, setAgendaKey] = useState(0)
@@ -141,7 +156,18 @@ export function AdminDashboard() {
     const filter = tab === 'agenda' ? 'all' : statusFilter
     const rows = await listReservations(orgId, filter)
     setReservations(rows)
+    const asg = await listAssignmentsForReservations(
+      orgId,
+      rows.map((r) => r.id),
+    )
+    setAssignments(asg)
   }, [orgId, role, statusFilter, tab])
+
+  const refreshDrivers = useCallback(async () => {
+    if (!orgId || !canOperate(role)) return
+    const rows = await listDrivers(orgId, { includeInactive: true })
+    setDrivers(rows)
+  }, [orgId, role])
 
   const refreshCatalogAdmin = useCallback(async () => {
     if (!orgId || !canAdmin(role)) return
@@ -185,25 +211,29 @@ export function AdminDashboard() {
       try {
         setError(null)
         await refreshReservations()
+        await refreshDrivers()
         await refreshCatalogAdmin()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar painel')
       }
     })()
-  }, [refreshReservations, refreshCatalogAdmin])
+  }, [refreshReservations, refreshDrivers, refreshCatalogAdmin])
 
   const title = useMemo(() => {
     if (customerId) return t('admin.clients.detailTitle')
+    if (driverId) return t('admin.drivers.detailTitle')
     const labels: Record<Tab, string> = {
       reservas: t('admin.navReservas'),
       agenda: t('admin.navAgenda'),
       frota: t('admin.navFrota'),
       frete: t('admin.navFrete'),
       clientes: t('admin.navClientes'),
+      motoristas: t('admin.navMotoristas'),
+      financeiro: t('admin.navFinanceiro'),
       perfil: t('admin.navPerfil'),
     }
     return labels[tab]
-  }, [t, tab, i18n.language, customerId])
+  }, [t, tab, i18n.language, customerId, driverId])
 
   useEffect(() => {
     try {
@@ -263,7 +293,7 @@ export function AdminDashboard() {
     void signOut().then(() => navigate('/login', { replace: true }))
   }
 
-  if (!customerId && !isAdminNavId(section)) {
+  if (!customerId && !driverId && !isAdminNavId(section)) {
     return <Navigate to="/admin/reservas" replace />
   }
 
@@ -349,6 +379,20 @@ export function AdminDashboard() {
               </Link>
               <Link
                 className="admin-more-sheet__action"
+                to="/admin/motoristas"
+                onClick={() => setMoreOpen(false)}
+              >
+                {t('admin.navMotoristas')}
+              </Link>
+              <Link
+                className="admin-more-sheet__action"
+                to="/admin/financeiro"
+                onClick={() => setMoreOpen(false)}
+              >
+                {t('admin.navFinanceiro')}
+              </Link>
+              <Link
+                className="admin-more-sheet__action"
                 to="/"
                 onClick={() => setMoreOpen(false)}
               >
@@ -404,6 +448,13 @@ export function AdminDashboard() {
                   onConfirm={onConfirm}
                   onCancel={onCancel}
                   onRefresh={() => void refreshReservations()}
+                  drivers={drivers}
+                  assignments={assignments}
+                  onDispatchChanged={() => {
+                    void refreshReservations()
+                    void refreshDrivers()
+                  }}
+                  onError={setError}
                 />
               )}
 
@@ -554,11 +605,38 @@ export function AdminDashboard() {
                 )
               )}
 
+              {tab === 'motoristas' && canAdmin(role) && orgId && (
+                driverId ? (
+                  <DriverDetailPanel
+                    organizationId={orgId}
+                    driverId={driverId}
+                    categories={categories}
+                    onError={setError}
+                  />
+                ) : (
+                  <DriversPanel
+                    organizationId={orgId}
+                    categories={categories}
+                    onError={setError}
+                  />
+                )
+              )}
+
+              {tab === 'financeiro' && canAdmin(role) && orgId && (
+                <FinancePanel
+                  organizationId={orgId}
+                  orgSettings={tenant.catalog?.organization.settings}
+                  onError={setError}
+                  onSettingsChanged={() => undefined}
+                />
+              )}
+
               {tab === 'perfil' && (
                 <ProfilePanel onError={setError} />
               )}
 
-              {(tab === 'frota' || tab === 'frete') && !canAdmin(role) && (
+              {(tab === 'frota' || tab === 'frete' || tab === 'motoristas' || tab === 'financeiro') &&
+                !canAdmin(role) && (
                 <p className="text-sm text-text-secondary-light">
                   {t('admin.roleDenied', { role })}
                 </p>
@@ -591,6 +669,10 @@ function ReservationActions(props: {
   onConfirm: (id: string) => void
   onCancel: (id: string) => void
   onViewRoute: (reservation: Reservation) => void
+  drivers: Driver[]
+  assignments: JobAssignment[]
+  onDispatchChanged: () => void
+  onError: (msg: string) => void
 }) {
   const { t } = useTranslation()
   const r = props.reservation
@@ -626,6 +708,13 @@ function ReservationActions(props: {
           {t('admin.cancel')}
         </button>
       )}
+      <DispatchControls
+        reservation={r}
+        drivers={props.drivers}
+        assignments={props.assignments}
+        onChanged={props.onDispatchChanged}
+        onError={props.onError}
+      />
     </div>
   )
 }
@@ -638,6 +727,10 @@ function ReservationsPanel(props: {
   onConfirm: (id: string) => void
   onCancel: (id: string) => void
   onRefresh: () => void
+  drivers: Driver[]
+  assignments: JobAssignment[]
+  onDispatchChanged: () => void
+  onError: (msg: string) => void
 }) {
   const { t, i18n } = useTranslation()
   const locale = localeFromLang(i18n.language)
@@ -726,6 +819,10 @@ function ReservationsPanel(props: {
               onConfirm={props.onConfirm}
               onCancel={props.onCancel}
               onViewRoute={setRouteReservation}
+              drivers={props.drivers}
+              assignments={props.assignments}
+              onDispatchChanged={props.onDispatchChanged}
+              onError={props.onError}
             />
           </li>
         ))}
@@ -798,6 +895,10 @@ function ReservationsPanel(props: {
                     onConfirm={props.onConfirm}
                     onCancel={props.onCancel}
                     onViewRoute={setRouteReservation}
+                    drivers={props.drivers}
+                    assignments={props.assignments}
+                    onDispatchChanged={props.onDispatchChanged}
+                    onError={props.onError}
                   />
                 </td>
               </tr>

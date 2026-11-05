@@ -92,6 +92,112 @@ export type Customer = {
   updated_at: string
 }
 
+export type DriverAvailabilitySlot = {
+  day_of_week: number
+  start_time: string
+  end_time: string
+}
+
+export type Driver = {
+  id: string
+  organization_id: string
+  user_id: string | null
+  full_name: string
+  phone: string
+  email: string
+  vehicle_category_id: string
+  vehicle_brand: string
+  vehicle_model: string
+  vehicle_year: number | null
+  vehicle_color: string
+  vehicle_plate: string | null
+  vehicle_body_type: VehicleBodyType | null
+  skills: string[]
+  availability: DriverAvailabilitySlot[]
+  notes: string | null
+  documents_notes: string | null
+  profile_complete: boolean
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type AssignmentStatus =
+  | 'oferecido'
+  | 'aceito'
+  | 'recusado'
+  | 'cancelado'
+  | 'concluido'
+
+export type JobAssignment = {
+  id: string
+  organization_id: string
+  reservation_id: string
+  driver_id: string
+  status: AssignmentStatus
+  offered_at: string
+  offered_by: string | null
+  responded_at: string | null
+  refuse_reason: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type FinancialEntryStatus = 'previsto' | 'a_liquidar' | 'liquidado'
+
+export type FinancialEntry = {
+  id: string
+  organization_id: string
+  reservation_id: string
+  driver_id: string | null
+  assignment_id: string | null
+  gross_amount: number
+  commission_percent: number
+  commission_amount: number
+  driver_amount: number
+  currency: string
+  status: FinancialEntryStatus
+  notes: string | null
+  liquidated_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Lead = {
+  id: string
+  organization_id: string
+  full_name: string
+  phone: string
+  email: string
+  message: string | null
+  source: string
+  status: string
+  created_at: string
+}
+
+export type DriverJobDetail = {
+  assignment_id: string
+  status: AssignmentStatus
+  offered_at: string
+  responded_at: string | null
+  refuse_reason: string | null
+  service: {
+    reservation_id: string
+    customer_first_name: string
+    origin_address: string
+    destination_address: string
+    stops: string[]
+    service_type: ServiceType
+    airport: AirportCode | null
+    slot_start: string
+    slot_end: string
+    hours_requested: number | null
+    estimated_km: number | null
+    notes: string | null
+  }
+}
+
 export type FreightRule = {
   id: string
   organization_id: string

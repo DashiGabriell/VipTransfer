@@ -1,9 +1,12 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { useAuth } from '../context/AuthContext'
+import { useTenant } from '../context/TenantContext'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { getMyDriverProfile } from '../services/coreV2'
+import { listMyMemberships, canOperate } from '../services/admin'
 
 function safeNextPath(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/admin/reservas'
@@ -20,23 +23,56 @@ export function LoginPage() {
     [searchParams],
   )
   const { user, loading, signIn, signUp } = useAuth()
+  const tenant = useTenant()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [postLoginPath, setPostLoginPath] = useState<string | null>(null)
 
-  if (loading) {
-    return (
-      <div className="login-shell">
-        <p className="login-status">{t('auth.loading')}</p>
-      </div>
-    )
-  }
+  const orgId = tenant.organizationId
 
-  if (user) {
-    return <Navigate to={next} replace />
+  useEffect(() => {
+    if (loading || !user || postLoginPath) return
+
+    let cancelled = false
+    void (async () => {
+      let path = next
+      if (!next.startsWith('/motorista') && orgId) {
+        try {
+          const memberships = await listMyMemberships()
+          const membership = memberships.find((m) => m.organization_id === orgId)
+          if (!(membership && canOperate(membership.role))) {
+            const driver = await getMyDriverProfile(orgId)
+            if (driver) path = '/motorista'
+          }
+        } catch {
+          /* keep preferred path */
+        }
+      }
+      if (!cancelled) setPostLoginPath(path)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [loading, user, postLoginPath, next, orgId])
+
+  async function resolveLandingPath(preferred: string): Promise<string> {
+    if (preferred.startsWith('/motorista')) return preferred
+    if (!orgId) return preferred
+    try {
+      const memberships = await listMyMemberships()
+      const membership = memberships.find((m) => m.organization_id === orgId)
+      if (membership && canOperate(membership.role)) return preferred
+      const driver = await getMyDriverProfile(orgId)
+      if (driver) return '/motorista'
+    } catch {
+      /* fall through */
+    }
+    return preferred
   }
 
   async function onSubmit(event: FormEvent) {
@@ -53,7 +89,9 @@ export function LoginPage() {
     try {
       if (mode === 'login') {
         await signIn(email.trim(), password)
-        navigate(next, { replace: true })
+        const path = await resolveLandingPath(next)
+        setPostLoginPath(path)
+        navigate(path, { replace: true })
       } else {
         await signUp(email.trim(), password)
         setMessage(t('auth.signupSuccess'))
@@ -66,6 +104,18 @@ export function LoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (loading || (user && !postLoginPath)) {
+    return (
+      <div className="login-shell">
+        <p className="login-status">{t('auth.loading')}</p>
+      </div>
+    )
+  }
+
+  if (user && postLoginPath) {
+    return <Navigate to={postLoginPath} replace />
   }
 
   return (

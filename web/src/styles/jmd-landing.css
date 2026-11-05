@@ -1095,3 +1095,101 @@
     @media (min-width: 900px) {
       .nav-install { display: grid; }
     }
+
+/* Landing lead capture (additive — does not replace reservation form) */
+.lead-capture {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--paper-line, #d8cfc0);
+  background: color-mix(in srgb, var(--paper, #f7f2ea) 92%, #fff);
+}
+
+.lead-capture__head h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  color: #152033;
+}
+
+.lead-capture__head p {
+  margin: 0 0 1.1rem;
+  color: #4f483f;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.lead-capture__grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .lead-capture__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .lead-capture__full {
+    grid-column: 1 / -1;
+  }
+}
+
+.lead-capture label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4f483f;
+}
+
+.lead-capture input,
+.lead-capture textarea {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d8cfc0;
+  background: #fff;
+  color: #152033;
+  font: inherit;
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.lead-capture textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.lead-capture__error {
+  margin: 0.75rem 0 0;
+  color: #9b1c1c;
+  font-size: 0.85rem;
+}
+
+.lead-capture__ok {
+  margin: 0.75rem 0 0;
+  color: #1f6b3a;
+  font-size: 0.85rem;
+}
+
+.lead-capture button[type='submit'] {
+  margin-top: 1rem;
+  appearance: none;
+  border: 0;
+  background: #152033;
+  color: #f2ebe0;
+  min-height: 2.7rem;
+  padding: 0 1.1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.lead-capture button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

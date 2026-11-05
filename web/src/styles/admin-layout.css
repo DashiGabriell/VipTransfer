@@ -344,7 +344,7 @@
   flex: 1;
 }
 
-/* Bottom tab bar — mobile app chrome */
+/* Bottom tab bar â mobile app chrome */
 .admin-tabbar {
   display: none;
 }
@@ -784,7 +784,7 @@
   }
 }
 
-/* Reservations list — mobile cards + desktop table */
+/* Reservations list â mobile cards + desktop table */
 .admin-res {
   min-width: 0;
   max-width: 100%;
@@ -1280,6 +1280,7 @@
 }
 
 .admin-clients__field input,
+.admin-clients__field select,
 .admin-clients__field textarea {
   width: 100%;
   min-height: 2.5rem;
@@ -1620,7 +1621,7 @@
   }
 }
 
-/* Agenda slot detail modal — portaled to body (own tokens, viewport-centered) */
+/* Agenda slot detail modal â portaled to body (own tokens, viewport-centered) */
 .agenda-slot-modal {
   --asm-ink: #152033;
   --asm-ink-deep: #0e1624;
@@ -2130,4 +2131,161 @@
   font-size: 0.72rem;
   color: var(--rnp-muted);
   line-height: 1.35;
+}
+
+/* Core v2  dispatch */
+.admin-dispatch {
+  display: grid;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.admin-dispatch__badge {
+  display: inline-flex;
+  align-self: start;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--admin-bronze) 16%, #fff);
+  color: color-mix(in srgb, var(--admin-ink) 75%, var(--admin-bronze));
+}
+
+.admin-dispatch__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.admin-dispatch__row select {
+  min-height: 2.15rem;
+  min-width: 10rem;
+  flex: 1 1 10rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 0.45rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+/* Driver portal */
+.driver-shell {
+  min-height: 100svh;
+  background: #f2ebe0;
+  color: #152033;
+  padding: 1rem 1rem 2rem;
+}
+
+.driver-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.driver-top__brand {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b08d57;
+}
+
+.driver-top h1 {
+  margin: 0.2rem 0;
+  font-size: 1.45rem;
+}
+
+.driver-top p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #4f483f;
+}
+
+.driver-top__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.driver-main {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.driver-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.driver-card {
+  background: #fffdf8;
+  border: 1px solid #d8cfc0;
+  border-radius: 1rem;
+  padding: 1rem 1.05rem;
+}
+
+.driver-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.driver-card__body {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.driver-card__body p {
+  margin: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.driver-card__body span {
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #4f483f;
+}
+
+.driver-card__body strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.driver-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.driver-refuse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.driver-refuse input {
+  flex: 1 1 12rem;
+  min-height: 2.15rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #d8cfc0;
+  border-radius: 0.45rem;
+  font: inherit;
 }

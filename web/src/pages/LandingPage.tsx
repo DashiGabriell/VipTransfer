@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { InstallAppButton } from '../components/InstallAppButton'
 import { LanguageToggle } from '../components/LanguageToggle'
+import { LeadCaptureForm } from '../components/LeadCaptureForm'
 import { ReservationForm } from '../components/ReservationForm'
 import { useTenant } from '../context/TenantContext'
 
@@ -194,6 +195,12 @@ export function LandingPage() {
               </div>
               <ReservationForm />
             </div>
+          </div>
+        </section>
+
+        <section className="section section-paper" id="captacao" data-reveal>
+          <div className="section-inner">
+            <LeadCaptureForm />
           </div>
         </section>
 

@@ -126,7 +126,9 @@ O **cliente não vê preço** no site nem no WhatsApp — o valor fecha com o mo
 
 ## n8n → Gmail
 
-A app só dispara o webhook; o n8n envia o e-mail.
+A app só dispara o webhook; o n8n envia o e-mail (nó Gmail).
+
+### Reserva criada (alerta admin)
 
 1. Importar [`n8n/jmd-reservation-created-gmail.json`](n8n/jmd-reservation-created-gmail.json)
 2. Credencial **Gmail OAuth2**
@@ -136,6 +138,30 @@ A app só dispara o webhook; o n8n envia o e-mail.
 ```json
 { "event": "reservation.created", "reservation": { "…" } }
 ```
+
+### Convite de motorista
+
+1. Importar [`n8n/jmd-driver-invite-gmail.json`](n8n/jmd-driver-invite-gmail.json)
+2. Reutilizar a mesma credencial **Gmail OAuth2**
+3. Ativar → URL do Webhook (ex.: `…/webhook/jmd-driver-invite`)
+4. Secret da Edge Function:
+
+```bash
+npx supabase secrets set N8N_DRIVER_INVITE_WEBHOOK_URL=https://SEU-N8N/webhook/jmd-driver-invite
+```
+
+A Edge `invite-driver` gera o link Auth (`generateLink`, sem e-mail do Supabase) e posta:
+
+```json
+{
+  "event": "driver.invite",
+  "invited_by": "admin@…",
+  "driver": { "id": "…", "full_name": "…", "email": "…", "phone": "…" },
+  "invite": { "mode": "invite|recovery", "action_link": "https://…", "redirect_to": "…" }
+}
+```
+
+O Gmail envia para o **e-mail do motorista** com o botão de ativar acesso / definir senha.
 
 ---
 

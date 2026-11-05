@@ -1,0 +1,316 @@
+{
+  "name": "JMD · driver.invite → Gmail",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jmd-driver-invite",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+      "name": "Webhook driver.invite",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-560, 96],
+      "webhookId": "jmd-driver-invite"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-event",
+              "leftValue": "={{ $json.body?.event ?? $json.event }}",
+              "rightValue": "driver.invite",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-f6a7-4890-b123-456789abcdef",
+      "name": "Só driver.invite",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-320, 96]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1",
+              "name": "event",
+              "value": "={{ $json.body?.event ?? $json.event }}",
+              "type": "string"
+            },
+            {
+              "id": "d2",
+              "name": "driver_id",
+              "value": "={{ ($json.body?.driver ?? $json.driver).id }}",
+              "type": "string"
+            },
+            {
+              "id": "d3",
+              "name": "full_name",
+              "value": "={{ ($json.body?.driver ?? $json.driver).full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "d4",
+              "name": "email",
+              "value": "={{ ($json.body?.driver ?? $json.driver).email }}",
+              "type": "string"
+            },
+            {
+              "id": "d5",
+              "name": "phone",
+              "value": "={{ ($json.body?.driver ?? $json.driver).phone || '—' }}",
+              "type": "string"
+            },
+            {
+              "id": "d6",
+              "name": "organization_id",
+              "value": "={{ ($json.body?.driver ?? $json.driver).organization_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d7",
+              "name": "mode",
+              "value": "={{ ($json.body?.invite ?? $json.invite).mode || 'invite' }}",
+              "type": "string"
+            },
+            {
+              "id": "d8",
+              "name": "action_link",
+              "value": "={{ ($json.body?.invite ?? $json.invite).action_link }}",
+              "type": "string"
+            },
+            {
+              "id": "d9",
+              "name": "redirect_to",
+              "value": "={{ ($json.body?.invite ?? $json.invite).redirect_to || '—' }}",
+              "type": "string"
+            },
+            {
+              "id": "d10",
+              "name": "invited_by",
+              "value": "={{ ($json.body?.invited_by ?? $json.invited_by) || 'admin' }}",
+              "type": "string"
+            },
+            {
+              "id": "d11",
+              "name": "subject_line",
+              "value": "={{ (($json.body?.invite ?? $json.invite).mode || 'invite') === 'recovery' ? 'JMD Transfer · Redefina sua senha de motorista' : 'JMD Transfer · Convite para acessar como motorista' }}",
+              "type": "string"
+            },
+            {
+              "id": "d12",
+              "name": "cta_label",
+              "value": "={{ (($json.body?.invite ?? $json.invite).mode || 'invite') === 'recovery' ? 'Definir nova senha' : 'Ativar acesso' }}",
+              "type": "string"
+            },
+            {
+              "id": "d13",
+              "name": "intro_text",
+              "value": "={{ (($json.body?.invite ?? $json.invite).mode || 'invite') === 'recovery' ? 'Recebemos um pedido para (re)definir a senha do seu acesso de motorista na JMD Transfer.' : 'Você foi cadastrado(a) como motorista na JMD Transfer. Ative seu acesso definindo uma senha.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-a7b8-4901-c234-56789abcdef0",
+      "name": "Normalizar payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-80, 16]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-email",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "cond-link",
+              "leftValue": "={{ $json.action_link }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-b8c9-4012-d345-6789abcdef01",
+      "name": "Tem e-mail e link?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [144, 16]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.subject_line }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<body style=\"margin:0;padding:24px;background:#f4f1ea;font-family:Segoe UI,Arial,sans-serif;color:#152033;\">\n  <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:560px;margin:0 auto;background:#fffdf8;border:1px solid #d8cfc0;\">\n    <tr>\n      <td style=\"padding:20px 24px;border-bottom:1px solid #d8cfc0;\">\n        <div style=\"font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#6e542c;\">JMD Transfer</div>\n        <h1 style=\"margin:8px 0 0;font-size:22px;font-weight:600;\">{{ $json.cta_label }}</h1>\n      </td>\n    </tr>\n    <tr>\n      <td style=\"padding:20px 24px;\">\n        <p style=\"margin:0 0 12px;line-height:1.5;\">Olá <strong>{{ $json.full_name }}</strong>,</p>\n        <p style=\"margin:0 0 20px;line-height:1.5;\">{{ $json.intro_text }}</p>\n        <p style=\"margin:0 0 24px;\">\n          <a href=\"{{ $json.action_link }}\" style=\"display:inline-block;padding:12px 20px;background:#152033;color:#fffdf8;text-decoration:none;font-size:14px;font-weight:600;border-radius:4px;\">{{ $json.cta_label }}</a>\n        </p>\n        <p style=\"margin:0 0 8px;font-size:13px;color:#4f483f;line-height:1.5;\">Se o botão não funcionar, copie e cole este link no navegador:</p>\n        <p style=\"margin:0 0 20px;font-size:12px;word-break:break-all;font-family:ui-monospace,Consolas,monospace;color:#6e542c;\">{{ $json.action_link }}</p>\n        <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"font-size:13px;line-height:1.55;border-top:1px solid #d8cfc0;padding-top:12px;\">\n          <tr><td style=\"padding:4px 0;color:#4f483f;width:120px;\">E-mail</td><td style=\"padding:4px 0;\">{{ $json.email }}</td></tr>\n          <tr><td style=\"padding:4px 0;color:#4f483f;\">Telefone</td><td style=\"padding:4px 0;\">{{ $json.phone }}</td></tr>\n          <tr><td style=\"padding:4px 0;color:#4f483f;\">Convidado por</td><td style=\"padding:4px 0;\">{{ $json.invited_by }}</td></tr>\n        </table>\n        <p style=\"margin:20px 0 0;font-size:12px;color:#4f483f;\">Se você não esperava este e-mail, ignore-o. O link expira em breve.</p>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e5f6a7b8-c9d0-4123-e456-789abcdef012",
+      "name": "Gmail convite motorista",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [400, -48],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OLa6lIWl4HCeJMEE",
+          "name": "DESPERT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, event: $json.event, driver_id: $json.driver_id, email: $json.email, mode: $json.mode }) }}",
+        "options": {}
+      },
+      "id": "f6a7b8c9-d0e1-4234-f567-89abcdef0123",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, -48]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, reason: 'ignored_event' }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "a7b8c9d0-e1f2-4345-a678-9abcdef01234",
+      "name": "Respond ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-80, 224]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, reason: 'missing_email_or_link' }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "b8c9d0e1-f2a3-4456-b789-abcdef012345",
+      "name": "Respond missing",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [400, 144]
+    }
+  ],
+  "connections": {
+    "Webhook driver.invite": {
+      "main": [
+        [
+          {
+            "node": "Só driver.invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Só driver.invite": {
+      "main": [
+        [
+          {
+            "node": "Normalizar payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond ignored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar payload": {
+      "main": [
+        [
+          {
+            "node": "Tem e-mail e link?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem e-mail e link?": {
+      "main": [
+        [
+          {
+            "node": "Gmail convite motorista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail convite motorista": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

@@ -23,11 +23,16 @@ function isAllowedRedirect(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (!["http:", "https:"].includes(parsed.protocol)) return false;
-    // Local + production hosts for this product
     const host = parsed.hostname.toLowerCase();
     if (host === "localhost" || host === "127.0.0.1") return true;
     if (host.endsWith(".vercel.app")) return true;
-    if (host.includes("jmd") || host.includes("viptransfer")) return true;
+    if (
+      host.includes("jmd") ||
+      host.includes("jmdtrasnfer") ||
+      host.includes("viptransfer")
+    ) {
+      return true;
+    }
     const site = Deno.env.get("SITE_URL");
     if (site) {
       try {
@@ -40,6 +45,30 @@ function isAllowedRedirect(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function resolveN8nWebhookUrl(): string | null {
+  const dedicated = Deno.env.get("N8N_DRIVER_INVITE_WEBHOOK_URL")?.trim();
+  if (dedicated) return dedicated;
+
+  // Fallback: same host as reservation webhook, different path.
+  const reservation = Deno.env.get("N8N_WEBHOOK_URL")?.trim();
+  if (reservation) {
+    try {
+      const u = new URL(reservation);
+      u.pathname = u.pathname.replace(
+        /jmd-reservation-created\/?$/,
+        "jmd-driver-invite",
+      );
+      if (!u.pathname.includes("jmd-driver-invite")) {
+        u.pathname = "/webhook/jmd-driver-invite";
+      }
+      return u.toString();
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -57,6 +86,11 @@ Deno.serve(async (req: Request) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !anonKey || !serviceKey) {
       return json(500, { error: "MISSING_SUPABASE_ENV" });
+    }
+
+    const n8nUrl = resolveN8nWebhookUrl();
+    if (!n8nUrl) {
+      return json(500, { error: "MISSING_N8N_DRIVER_INVITE_WEBHOOK_URL" });
     }
 
     const authHeader = req.headers.get("Authorization");
@@ -117,49 +151,52 @@ Deno.serve(async (req: Request) => {
     const email = String(driver.email).trim().toLowerCase();
     let authUserId: string | null = driver.user_id ?? null;
     let mode: "invite" | "recovery" = "invite";
+    let actionLink: string | null = null;
 
-    const inviteResult = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: {
-        full_name: driver.full_name,
-        driver_id: driver.id,
-        organization_id: driver.organization_id,
-        role: "driver",
+    // Gera link sem disparar e-mail do Supabase — o n8n/Gmail envia.
+    const inviteLink = await admin.auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: {
+        redirectTo,
+        data: {
+          full_name: driver.full_name,
+          driver_id: driver.id,
+          organization_id: driver.organization_id,
+          role: "driver",
+        },
       },
     });
 
-    if (inviteResult.error) {
-      const msg = inviteResult.error.message || "";
+    if (inviteLink.error) {
+      const msg = inviteLink.error.message || "";
       const already =
         /already|registered|exists/i.test(msg) ||
-        inviteResult.error.status === 422;
+        inviteLink.error.status === 422;
 
       if (!already) {
-        return json(400, { error: msg || "INVITE_FAILED" });
+        return json(400, { error: msg || "INVITE_LINK_FAILED" });
       }
 
-      // Conta já existe: reenvia link de recuperação para definir/redefinir senha.
       mode = "recovery";
-      const { error: recoveryError } = await admin.auth.resetPasswordForEmail(
+      const recoveryLink = await admin.auth.admin.generateLink({
+        type: "recovery",
         email,
-        { redirectTo },
-      );
-      if (recoveryError) {
+        options: { redirectTo },
+      });
+      if (recoveryLink.error || !recoveryLink.data.properties?.action_link) {
         return json(400, {
-          error: recoveryError.message || "RECOVERY_FAILED",
+          error: recoveryLink.error?.message || "RECOVERY_LINK_FAILED",
         });
       }
-
-      if (!authUserId) {
-        const { data: linkData } = await admin.auth.admin.generateLink({
-          type: "recovery",
-          email,
-          options: { redirectTo },
-        });
-        authUserId = linkData.user?.id ?? null;
-      }
+      actionLink = recoveryLink.data.properties.action_link;
+      authUserId = recoveryLink.data.user?.id ?? authUserId;
     } else {
-      authUserId = inviteResult.data.user?.id ?? authUserId;
+      actionLink = inviteLink.data.properties?.action_link ?? null;
+      authUserId = inviteLink.data.user?.id ?? authUserId;
+      if (!actionLink) {
+        return json(400, { error: "INVITE_LINK_MISSING" });
+      }
     }
 
     const { data: updated, error: markError } = await userClient.rpc(
@@ -173,10 +210,46 @@ Deno.serve(async (req: Request) => {
       return json(400, { error: markError.message || "MARK_FAILED" });
     }
 
+    const webhookPayload = {
+      event: "driver.invite",
+      invited_by: user.email ?? "admin",
+      driver: {
+        id: updated?.id ?? driver.id,
+        organization_id: updated?.organization_id ?? driver.organization_id,
+        full_name: updated?.full_name ?? driver.full_name,
+        email: updated?.email ?? email,
+        phone: updated?.phone ?? driver.phone,
+        invite_status: updated?.invite_status ?? "pending",
+      },
+      invite: {
+        mode,
+        action_link: actionLink,
+        redirect_to: redirectTo,
+      },
+    };
+
+    const n8nRes = await fetch(n8nUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(webhookPayload),
+    });
+
+    if (!n8nRes.ok) {
+      const detail = await n8nRes.text().catch(() => "");
+      return json(502, {
+        error: "N8N_WEBHOOK_FAILED",
+        status: n8nRes.status,
+        detail: detail.slice(0, 400),
+        // Convite Auth já marcado pending; admin pode reenviar.
+        driver: updated,
+      });
+    }
+
     return json(200, {
       ok: true,
       mode,
       driver: updated,
+      emailed_via: "n8n",
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "UNEXPECTED";

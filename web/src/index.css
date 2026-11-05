@@ -2,6 +2,7 @@
 @import './styles/jmd-landing.css';
 @import './styles/admin-layout.css';
 @import './styles/login.css';
+@import './styles/driver-app.css';
 
 @theme {
   --font-sans: 'Public Sans', system-ui, sans-serif;

@@ -30,6 +30,7 @@ function brandLabel(brand: string): string {
 }
 import {
   createDriver,
+  inviteDriver,
   listDrivers,
   setDriverActive,
   updateDriver,
@@ -215,8 +216,18 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
           organization_id: organizationId,
           ...payload,
         })
+        let withInvite = created
+        try {
+          withInvite = await inviteDriver(created.id)
+        } catch (inviteErr) {
+          onError(
+            inviteErr instanceof Error
+              ? `${t('admin.drivers.createdInviteFailed')}: ${inviteErr.message}`
+              : t('admin.drivers.createdInviteFailed'),
+          )
+        }
         setDrivers((prev) =>
-          [...prev, created].sort((a, b) =>
+          [...prev, withInvite].sort((a, b) =>
             a.full_name.localeCompare(b.full_name, 'pt'),
           ),
         )
@@ -226,6 +237,21 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
       onError(err instanceof Error ? err.message : t('admin.drivers.saveError'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function onInvite(driver: Driver) {
+    setBusyId(driver.id)
+    onError('')
+    try {
+      const updated = await inviteDriver(driver.id)
+      setDrivers((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
+    } catch (err) {
+      onError(
+        err instanceof Error ? err.message : t('admin.drivers.inviteError'),
+      )
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -564,6 +590,7 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
                   {driver.profile_complete
                     ? t('admin.drivers.ready')
                     : t('admin.drivers.incomplete')}
+                  {` · ${t(`admin.drivers.inviteStatus.${driver.invite_status}`)}`}
                   {!driver.active ? ` · ${t('admin.clients.inactive')}` : ''}
                 </em>
               </div>
@@ -581,6 +608,18 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
                 >
                   {t('admin.clients.edit')}
                 </button>
+                {driver.invite_status !== 'accepted' ? (
+                  <button
+                    type="button"
+                    className="admin-clients__btn is-ghost"
+                    disabled={busyId === driver.id}
+                    onClick={() => void onInvite(driver)}
+                  >
+                    {driver.invite_status === 'pending'
+                      ? t('admin.drivers.resendInvite')
+                      : t('admin.drivers.sendInvite')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="admin-clients__btn is-ghost"

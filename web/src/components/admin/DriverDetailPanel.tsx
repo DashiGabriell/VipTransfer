@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { WEEK_DAYS } from '../../domain/drivers'
 import {
   getDriver,
+  inviteDriver,
   listAssignmentsForDriver,
   type DriverAssignmentRow,
 } from '../../services/coreV2'
@@ -41,6 +42,7 @@ export function DriverDetailPanel({
   const [loading, setLoading] = useState(true)
   const [jobsLoading, setJobsLoading] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [inviting, setInviting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -115,6 +117,22 @@ export function DriverDetailPanel({
     )
   }, [categories, driver, lang])
 
+  async function onInvite() {
+    if (!driver) return
+    setInviting(true)
+    onError('')
+    try {
+      const updated = await inviteDriver(driver.id)
+      setDriver(updated)
+    } catch (err) {
+      onError(
+        err instanceof Error ? err.message : t('admin.drivers.inviteError'),
+      )
+    } finally {
+      setInviting(false)
+    }
+  }
+
   if (loading) {
     return (
       <section className="admin-client-detail">
@@ -158,6 +176,18 @@ export function DriverDetailPanel({
         <Link to="/admin/motoristas" className="admin-clients__btn is-ghost">
           {t('admin.drivers.backToList')}
         </Link>
+        {driver.invite_status !== 'accepted' ? (
+          <button
+            type="button"
+            className="admin-clients__btn is-ghost"
+            disabled={inviting}
+            onClick={() => void onInvite()}
+          >
+            {driver.invite_status === 'pending'
+              ? t('admin.drivers.resendInvite')
+              : t('admin.drivers.sendInvite')}
+          </button>
+        ) : null}
       </div>
 
       <div className="admin-client-detail__panel rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5">
@@ -269,9 +299,10 @@ export function DriverDetailPanel({
               <tr>
                 <th scope="row">{t('admin.drivers.accountLinked')}</th>
                 <td data-label={t('admin.drivers.accountLinked')}>
+                  {t(`admin.drivers.inviteStatus.${driver.invite_status}`)}
                   {driver.user_id
-                    ? t('admin.drivers.accountLinkedYes')
-                    : t('admin.drivers.accountLinkedNo')}
+                    ? ` · ${t('admin.drivers.accountLinkedYes')}`
+                    : ` · ${t('admin.drivers.accountLinkedNo')}`}
                 </td>
               </tr>
               <tr>

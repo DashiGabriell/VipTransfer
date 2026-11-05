@@ -393,11 +393,55 @@ function normalizeDriver(row: Driver): Driver {
   const availability = Array.isArray(row.availability)
     ? (row.availability as DriverAvailabilitySlot[])
     : []
+  const inviteStatus = row.invite_status
   return {
     ...row,
     skills: Array.isArray(row.skills) ? row.skills : [],
     availability,
+    invite_status:
+      inviteStatus === 'pending' || inviteStatus === 'accepted'
+        ? inviteStatus
+        : 'none',
+    invited_at: row.invited_at ?? null,
   }
+}
+
+/** Admin: envia/reenvia convite Auth para o motorista definir senha. */
+export async function inviteDriver(driverId: string): Promise<Driver> {
+  const client = assertClient()
+  const redirectTo = `${window.location.origin}/aceitar-convite`
+  const { data, error } = await client.functions.invoke('invite-driver', {
+    body: { driver_id: driverId, redirect_to: redirectTo },
+  })
+  const payload = data as {
+    ok?: boolean
+    error?: string
+    driver?: Driver
+    already_accepted?: boolean
+  } | null
+
+  if (error) {
+    const fromBody = payload?.error
+    throw new Error(fromBody || error.message || 'Falha ao enviar convite')
+  }
+  if (!payload?.ok) {
+    throw new Error(payload?.error || 'Falha ao enviar convite')
+  }
+  if (!payload.driver) {
+    throw new Error('Convite enviado, mas motorista não retornou')
+  }
+  return normalizeDriver(payload.driver)
+}
+
+export async function acceptMyDriverInvite(
+  organizationId: string,
+): Promise<Driver> {
+  const client = assertClient()
+  const { data, error } = await client.rpc('accept_my_driver_invite', {
+    p_organization_id: organizationId,
+  })
+  if (error) throw error
+  return normalizeDriver(data as Driver)
 }
 
 /** Active dispatch label for a reservation from its assignments. */

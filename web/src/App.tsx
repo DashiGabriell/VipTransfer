@@ -4,6 +4,7 @@ import { TenantProvider } from './context/TenantContext'
 import { AdminPage } from './pages/AdminPage'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { DriverPortal } from './pages/driver/DriverPortal'
+import { AcceptInvitePage } from './pages/AcceptInvitePage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 
@@ -15,6 +16,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
             <Route path="/motorista" element={<DriverPortal />} />
             <Route path="/admin" element={<AdminPage />}>
               <Route index element={<Navigate to="reservas" replace />} />

@@ -98,6 +98,8 @@ export type DriverAvailabilitySlot = {
   end_time: string
 }
 
+export type DriverInviteStatus = 'none' | 'pending' | 'accepted'
+
 export type Driver = {
   id: string
   organization_id: string
@@ -118,6 +120,8 @@ export type Driver = {
   documents_notes: string | null
   profile_complete: boolean
   active: boolean
+  invite_status: DriverInviteStatus
+  invited_at: string | null
   created_at: string
   updated_at: string
 }

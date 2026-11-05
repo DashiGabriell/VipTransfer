@@ -334,6 +334,18 @@ export async function getMyDriverProfile(
   return claimed ? normalizeDriver(claimed as Driver) : null
 }
 
+/** Creates/links a driver profile for login-page signups. Never changes owners. */
+export async function ensureDriverProfileForSignup(
+  organizationId: string,
+): Promise<Driver | null> {
+  const client = assertClient()
+  const { data, error } = await client.rpc('ensure_driver_profile_for_signup', {
+    p_organization_id: organizationId,
+  })
+  if (error) throw error
+  return data ? normalizeDriver(data as Driver) : null
+}
+
 export async function listMyDriverAssignments(
   organizationId: string,
 ): Promise<JobAssignment[]> {

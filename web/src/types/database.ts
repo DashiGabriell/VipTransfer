@@ -105,7 +105,7 @@ export type Driver = {
   full_name: string
   phone: string
   email: string
-  vehicle_category_id: string
+  vehicle_category_id: string | null
   vehicle_brand: string
   vehicle_model: string
   vehicle_year: number | null

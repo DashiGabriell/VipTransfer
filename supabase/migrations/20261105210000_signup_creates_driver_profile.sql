@@ -1,4 +1,4 @@
--- Signup via login page → automatic driver profile.
+-- Login-page signup → automatic driver profile.
 -- Does NOT alter existing organization_members / owners.
 
 alter table public.drivers
@@ -26,8 +26,8 @@ begin
 end;
 $$;
 
--- Restore previously overwritten driver row as Gabriel Farias (unlinked staff-side record),
--- keeping the test driver account separate.
+-- Restore previously overwritten driver row as Gabriel Farias (unlinked),
+-- keeping the test driver account separate. Owners untouched.
 insert into public.drivers (
   organization_id,
   user_id,
@@ -51,7 +51,14 @@ select
   'Gabriel Farias',
   '(11) 97866-5791',
   'gabriel@gmail.com',
-  'd4aeeb62-5f2c-4ba5-b35b-6a70e2ede5b1'::uuid,
+  (
+    select vc.id
+    from public.vehicle_categories vc
+    where vc.organization_id = o.id
+      and vc.active
+    order by vc.sort_order, vc.created_at
+    limit 1
+  ),
   'Toyota',
   'Corolla',
   2022,
@@ -67,7 +74,10 @@ where o.slug = 'jmd'
     select 1
     from public.drivers d
     where d.organization_id = o.id
-      and lower(d.email) = 'gabriel@gmail.com'
+      and (
+        lower(d.email) = 'gabriel@gmail.com'
+        or lower(d.full_name) = 'gabriel farias'
+      )
   );
 
 create or replace function public.ensure_driver_profile_for_signup(
@@ -179,3 +189,18 @@ $$;
 
 revoke all on function public.ensure_driver_profile_for_signup(uuid) from public;
 grant execute on function public.ensure_driver_profile_for_signup(uuid) to authenticated;
+
+-- Owners already defined: keep claim_org_owner blocked for new accounts.
+create or replace function public.claim_org_owner(p_slug text)
+returns public.organization_members
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  raise exception 'OWNER_CLAIM_DISABLED' using errcode = 'P0001';
+end;
+$$;
+
+revoke all on function public.claim_org_owner(text) from public;
+grant execute on function public.claim_org_owner(text) to authenticated;

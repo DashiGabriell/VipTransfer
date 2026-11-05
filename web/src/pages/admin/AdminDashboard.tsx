@@ -34,7 +34,6 @@ import {
   cancelReservation,
   canAdmin,
   canOperate,
-  claimOrgOwner,
   confirmReservation,
   listFleetVehiclesAdmin,
   listFreightRulesAdmin,
@@ -108,7 +107,6 @@ export function AdminDashboard() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [moreOpen, setMoreOpen] = useState(false)
   const [membership, setMembership] = useState<Membership | null>(null)
-  const [bootstrapping, setBootstrapping] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | 'all'>(
     'hold',
@@ -242,19 +240,6 @@ export function AdminDashboard() {
       /* ignore */
     }
   }, [collapsed])
-
-  async function onClaimOwner() {
-    setBootstrapping(true)
-    setError(null)
-    try {
-      await claimOrgOwner(tenant.slug)
-      await refreshMembership()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha no bootstrap')
-    } finally {
-      setBootstrapping(false)
-    }
-  }
 
   async function onConfirm(id: string) {
     setBusyId(id)
@@ -419,21 +404,17 @@ export function AdminDashboard() {
           {!membership && (
             <div className="admin-panel-enter mb-8 rounded-2xl border border-border-light bg-surface-light p-6">
               <h2 className="text-lg font-semibold text-primary">
-                {t('admin.bootstrapTitle')}
+                {t('admin.noAccessTitle')}
               </h2>
               <p className="mt-2 text-sm text-text-secondary-light">
-                {t('admin.bootstrapLead', { slug: tenant.slug })}
+                {t('admin.noAccessLead')}
               </p>
-              <button
-                type="button"
-                disabled={bootstrapping || !orgId}
-                onClick={() => void onClaimOwner()}
-                className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-text-primary-dark hover:bg-primary-dark disabled:opacity-60"
+              <Link
+                to="/motorista"
+                className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-text-primary-dark hover:bg-primary-dark"
               >
-                {bootstrapping
-                  ? '…'
-                  : t('admin.bootstrapCta', { slug: tenant.slug })}
-              </button>
+                {t('admin.goDriverPanel')}
+              </Link>
             </div>
           )}
 

@@ -162,6 +162,9 @@
     "bootstrapTitle": "Owner bootstrap",
     "bootstrapLead": "No members in org {{slug}}. The first authenticated user can claim the owner role.",
     "bootstrapCta": "Become owner of {{slug}}",
+    "noAccessTitle": "No admin access",
+    "noAccessLead": "New accounts from the login page become drivers. Existing owners stay on the admin panel.",
+    "goDriverPanel": "Go to driver panel",
     "roleDenied": "Your role ({{role}}) cannot edit fleet/transfer.",
     "refresh": "Refresh",
     "confirm": "Confirm",
@@ -473,7 +476,7 @@
     "loginTitle": "Sign in to the panel",
     "signupTitle": "Create your staff account",
     "loginLead": "Reservations, fleet and transfer — sign in for the JMD team.",
-    "signupLead": "Create an account, then claim organization ownership in the panel.",
+    "signupLead": "Create your driver account. Existing owners stay on the admin panel.",
     "modeLabel": "Authentication mode",
     "login": "Sign in",
     "signup": "Create account",
@@ -484,7 +487,7 @@
     "submitting": "Please wait…",
     "backToSite": "Back to site",
     "supabaseMissing": "Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY",
-    "signupSuccess": "Account created. If email confirmation is required, check your inbox; then sign in and claim ownership.",
+    "signupSuccess": "Driver account created. If email confirmation is required, check your inbox and sign in next.",
     "genericError": "Authentication failed"
   },
   "agenda": {

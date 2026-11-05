@@ -5,7 +5,10 @@ import { LanguageToggle } from '../components/LanguageToggle'
 import { useAuth } from '../context/AuthContext'
 import { useTenant } from '../context/TenantContext'
 import { isSupabaseConfigured } from '../lib/supabase'
-import { getMyDriverProfile } from '../services/coreV2'
+import {
+  ensureDriverProfileForSignup,
+  getMyDriverProfile,
+} from '../services/coreV2'
 import { listMyMemberships, canOperate } from '../services/admin'
 
 function safeNextPath(raw: string | null): string {
@@ -34,32 +37,6 @@ export function LoginPage() {
 
   const orgId = tenant.organizationId
 
-  useEffect(() => {
-    if (loading || !user || postLoginPath) return
-
-    let cancelled = false
-    void (async () => {
-      let path = next
-      if (!next.startsWith('/motorista') && orgId) {
-        try {
-          const memberships = await listMyMemberships()
-          const membership = memberships.find((m) => m.organization_id === orgId)
-          if (!(membership && canOperate(membership.role))) {
-            const driver = await getMyDriverProfile(orgId)
-            if (driver) path = '/motorista'
-          }
-        } catch {
-          /* keep preferred path */
-        }
-      }
-      if (!cancelled) setPostLoginPath(path)
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [loading, user, postLoginPath, next, orgId])
-
   async function resolveLandingPath(preferred: string): Promise<string> {
     if (preferred.startsWith('/motorista')) return preferred
     if (!orgId) return preferred
@@ -67,6 +44,11 @@ export function LoginPage() {
       const memberships = await listMyMemberships()
       const membership = memberships.find((m) => m.organization_id === orgId)
       if (membership && canOperate(membership.role)) return preferred
+
+      // New accounts from login page become drivers automatically.
+      const ensured = await ensureDriverProfileForSignup(orgId)
+      if (ensured) return '/motorista'
+
       const driver = await getMyDriverProfile(orgId)
       if (driver) return '/motorista'
     } catch {
@@ -74,6 +56,20 @@ export function LoginPage() {
     }
     return preferred
   }
+
+  useEffect(() => {
+    if (loading || !user || postLoginPath) return
+
+    let cancelled = false
+    void resolveLandingPath(next).then((path) => {
+      if (!cancelled) setPostLoginPath(path)
+    })
+
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resolve once per session user
+  }, [loading, user, postLoginPath, next, orgId])
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -94,6 +90,14 @@ export function LoginPage() {
         navigate(path, { replace: true })
       } else {
         await signUp(email.trim(), password)
+        // If session is available immediately, provision driver profile now.
+        if (orgId) {
+          try {
+            await ensureDriverProfileForSignup(orgId)
+          } catch {
+            /* may need email confirmation first — created on next login */
+          }
+        }
         setMessage(t('auth.signupSuccess'))
         setMode('login')
       }

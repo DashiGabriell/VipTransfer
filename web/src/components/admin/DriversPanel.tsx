@@ -122,7 +122,7 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
     setFullName(driver.full_name)
     setPhone(driver.phone)
     setEmail(driver.email)
-    setCategoryId(driver.vehicle_category_id)
+    setCategoryId(driver.vehicle_category_id ?? '')
     setBrand(driver.vehicle_brand)
     setModel(driver.vehicle_model)
     setYear(driver.vehicle_year ? String(driver.vehicle_year) : '')
@@ -247,7 +247,8 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
     }
   }
 
-  function categoryLabel(id: string) {
+  function categoryLabel(id: string | null) {
+    if (!id) return '—'
     const cat = categories.find((c) => c.id === id)
     if (!cat) return '—'
     return (cat.name_i18n as { pt?: string; en?: string })[lang] || cat.name_i18n.pt || cat.code

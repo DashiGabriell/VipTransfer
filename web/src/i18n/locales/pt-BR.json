@@ -162,6 +162,9 @@
     "bootstrapTitle": "Bootstrap do owner",
     "bootstrapLead": "Nenhum membro na org {{slug}}. O primeiro usuário autenticado pode reivindicar o papel de owner.",
     "bootstrapCta": "Tornar-me owner de {{slug}}",
+    "noAccessTitle": "Sem acesso ao painel admin",
+    "noAccessLead": "Novas contas pela página de login entram como motoristas. Owners já existentes permanecem no admin.",
+    "goDriverPanel": "Ir para o painel do motorista",
     "roleDenied": "Seu papel ({{role}}) não edita frota/transfer.",
     "refresh": "Atualizar",
     "confirm": "Confirmar",
@@ -473,7 +476,7 @@
     "loginTitle": "Entre no painel",
     "signupTitle": "Crie sua conta staff",
     "loginLead": "Reservas, frota e transfer — login para a equipe JMD.",
-    "signupLead": "Crie a conta e depois reivindique o owner da organização no painel.",
+    "signupLead": "Crie sua conta de motorista. Owners já existentes permanecem no painel admin.",
     "modeLabel": "Modo de autenticação",
     "login": "Entrar",
     "signup": "Criar conta",
@@ -484,7 +487,7 @@
     "submitting": "Aguarde…",
     "backToSite": "Voltar ao site",
     "supabaseMissing": "Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY",
-    "signupSuccess": "Conta criada. Se o projeto exigir confirmação de e-mail, verifique a caixa de entrada; depois faça login e reivindique o owner.",
+    "signupSuccess": "Conta de motorista criada. Se o projeto exigir confirmação de e-mail, verifique a caixa de entrada e faça login em seguida.",
     "genericError": "Falha na autenticação"
   },
   "agenda": {

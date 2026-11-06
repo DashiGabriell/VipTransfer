@@ -2331,12 +2331,22 @@
   gap: 0.65rem;
 }
 .admin-form-modal {
+  /* Portaled to body — redeclare tokens so fields/buttons stay readable */
+  --admin-ink: #152033;
+  --admin-ink-deep: #0e1624;
+  --admin-paper: #f2ebe0;
+  --admin-paper-warm: #f7f2ea;
+  --admin-line: #d8cfc0;
+  --admin-bronze: #b08d57;
+  --admin-muted: #4f483f;
+
   position: fixed;
   inset: 0;
   z-index: 80;
   display: grid;
   place-items: center;
   padding: 1rem;
+  color: var(--admin-ink);
 }
 .admin-form-modal__backdrop {
   position: absolute;
@@ -2353,8 +2363,9 @@
   overflow: auto;
   padding: 1.15rem 1.25rem 1.25rem;
   border-radius: 1rem;
-  border: 1px solid var(--admin-line, #d8cfc0);
+  border: 1px solid var(--admin-line);
   background: #fffdf8;
+  color: var(--admin-ink);
   box-shadow: 0 24px 48px color-mix(in srgb, #0e1624 28%, transparent);
 }
 .admin-form-modal__head {
@@ -2367,12 +2378,13 @@
 .admin-form-modal__head h2 {
   margin: 0;
   font-size: 1.15rem;
-  color: var(--admin-ink, #152033);
+  font-weight: 650;
+  color: var(--admin-ink);
 }
 .admin-form-modal__head p {
   margin: 0.25rem 0 0;
   font-size: 0.85rem;
-  color: var(--admin-muted, #5c554c);
+  color: var(--admin-muted);
 }
 .admin-form-modal__close {
   appearance: none;
@@ -2381,8 +2393,68 @@
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
-  color: var(--admin-muted, #5c554c);
+  color: var(--admin-muted);
 }
+.admin-form-modal__close:hover {
+  color: var(--admin-ink);
+}
+
+/* Force readable field chrome inside portaled modal */
+.admin-form-modal .admin-clients__field,
+.admin-form-modal .admin-clients__field span {
+  color: var(--admin-muted);
+}
+.admin-form-modal .admin-clients__field input,
+.admin-form-modal .admin-clients__field select,
+.admin-form-modal .admin-clients__field textarea {
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  color: var(--admin-ink);
+}
+.admin-form-modal .admin-clients__field input::placeholder,
+.admin-form-modal .admin-clients__field textarea::placeholder {
+  color: color-mix(in srgb, var(--admin-muted) 72%, transparent);
+}
+.admin-form-modal .admin-clients__field input:focus,
+.admin-form-modal .admin-clients__field select:focus,
+.admin-form-modal .admin-clients__field textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--admin-bronze) 55%, var(--admin-line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-bronze) 18%, transparent);
+}
+.admin-form-modal .admin-clients__btn {
+  border: 1px solid var(--admin-line);
+  background: #fff;
+  color: var(--admin-ink);
+}
+.admin-form-modal .admin-clients__btn.is-ghost:hover {
+  background: color-mix(in srgb, var(--admin-ink) 5%, transparent);
+}
+.admin-form-modal .admin-clients__btn.is-primary {
+  background: var(--admin-ink);
+  border-color: var(--admin-ink);
+  color: var(--admin-paper);
+}
+.admin-form-modal .admin-clients__btn.is-primary:hover:not(:disabled) {
+  background: var(--admin-ink-deep);
+}
+.admin-form-modal label,
+.admin-form-modal strong,
+.admin-form-modal p,
+.admin-form-modal h2,
+.admin-form-modal h3 {
+  color: inherit;
+}
+.admin-form-modal .admin-clients__grid > h3,
+.admin-form-modal .admin-clients__grid > p {
+  grid-column: 1 / -1;
+  color: var(--admin-ink);
+}
+.admin-form-modal .admin-clients__grid > p {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+}
+
 @media (min-width: 800px) {
   .admin-clients__grid--horizontal {
     grid-template-columns: repeat(3, minmax(0, 1fr));

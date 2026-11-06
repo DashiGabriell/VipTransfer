@@ -213,8 +213,8 @@ export function LandingPage() {
                 </div>
                 <div className="schedule-media">
                   <img
-                    src="https://i.postimg.cc/Dfxn3zGW/avi-o-comercial-estacionado-no-p-tio-ou-taxiando-(1).jpg"
-                    alt=""
+                    src="/ponto-a-ponto-b.jpg"
+                    alt={t('landing.svcAirportTitle')}
                     width={800}
                     height={500}
                     loading="lazy"
@@ -230,8 +230,8 @@ export function LandingPage() {
                 </div>
                 <div className="schedule-media">
                   <img
-                    src="https://i.postimg.cc/9MtTQ92F/image1.jpg"
-                    alt=""
+                    src="/a-disposicao.jpg"
+                    alt={t('landing.svcCorpTitle')}
                     width={800}
                     height={500}
                     loading="lazy"
@@ -247,8 +247,8 @@ export function LandingPage() {
                 </div>
                 <div className="schedule-media">
                   <img
-                    src="https://i.postimg.cc/C1z1WfKX/altere-o-modelo-do-carro-para-que.jpg"
-                    alt=""
+                    src="/concierge.jpg"
+                    alt={t('landing.svcVipTitle')}
                     width={800}
                     height={500}
                     loading="lazy"

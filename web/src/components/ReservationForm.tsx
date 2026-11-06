@@ -4,6 +4,7 @@ import {
   useState,
   type FormEvent,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useTenant } from '../context/TenantContext'
 import type { DaySlot } from '../domain/agenda'
@@ -88,6 +89,7 @@ export function ReservationForm() {
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackError, setFeedbackError] = useState(false)
   const [agendaKey, setAgendaKey] = useState(0)
+  const [successCode, setSuccessCode] = useState<string | null>(null)
 
   function addStop() {
     if (stops.length >= MAX_STOPS) return
@@ -349,16 +351,9 @@ export function ReservationForm() {
         locale,
       })
       window.open(url, '_blank', 'noopener,noreferrer')
-
-      setFeedback(
-        locale === 'en'
-          ? `Request ${reservation.service_code} held until ${holdLabel}. Fare will be confirmed on WhatsApp.`
-          : `Solicitação ${reservation.service_code} em hold até ${holdLabel}. O valor será combinado no WhatsApp.`,
-      )
-      setSelectedSlot(null)
-      setStops([])
-      setServiceNotes('')
-      setAgendaKey((k) => k + 1)
+      setFeedback(null)
+      setFeedbackError(false)
+      setSuccessCode(reservation.service_code)
     } catch (err) {
       setFeedbackError(true)
       if (err instanceof SlotUnavailableError) {
@@ -373,310 +368,352 @@ export function ReservationForm() {
     }
   }
 
+  useEffect(() => {
+    if (!successCode) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [successCode])
+
+  function resetFormAfterSuccess() {
+    setOrigin('')
+    setDestination('')
+    setStops([])
+    setServiceType('')
+    setAirport('')
+    setHours('4')
+    setServiceNotes('')
+    setVehicleId('')
+    setSelectedSlot(null)
+    setName('')
+    setPhone('')
+    setEmail('')
+    setDistance({ status: 'idle' })
+    setFeedback(null)
+    setFeedbackError(false)
+    setAgendaKey((k) => k + 1)
+    setSuccessCode(null)
+  }
+
   return (
     <form className="itinerary" id="cotacao" onSubmit={onSubmit} noValidate>
-      <div className="itinerary-row">
-        <label htmlFor="servico">{t('reserve.serviceType')}</label>
-        <select
-          id="servico"
-          name="servico"
-          value={serviceType}
-          onChange={(e) => {
-            const next = e.target.value as ServiceType | ''
-            setServiceType(next)
-            if (next !== 'ponto_a_b') {
-              setStops([])
-              setAirport('')
-            }
-            if (next === 'concierge') {
-              setDestination('')
-            }
-          }}
-          required
-        >
-          <option value="" disabled>
-            {t('reserve.servicePlaceholder')}
-          </option>
-          {SERVICE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {t(`reserve.services.${type}`)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="itinerary-board">
+        <div className="itinerary-trip">
+          <div className="itinerary-row">
+            <label htmlFor="servico">{t('reserve.serviceType')}</label>
+            <select
+              id="servico"
+              name="servico"
+              value={serviceType}
+              onChange={(e) => {
+                const next = e.target.value as ServiceType | ''
+                setServiceType(next)
+                if (next !== 'ponto_a_b') {
+                  setStops([])
+                  setAirport('')
+                }
+                if (next === 'concierge') {
+                  setDestination('')
+                }
+              }}
+              required
+            >
+              <option value="" disabled>
+                {t('reserve.servicePlaceholder')}
+              </option>
+              {SERVICE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {t(`reserve.services.${type}`)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <div
-        className={`itinerary-row${
-          originGeo.status === 'error' || originGeo.status === 'short'
-            ? ' is-invalid'
-            : ''
-        }`}
-      >
-        <label htmlFor="origem">
-          {serviceType === 'concierge'
-            ? t('reserve.originConcierge')
-            : t('reserve.origin')}
-        </label>
-        <input
-          id="origem"
-          name="origem"
-          type="text"
-          placeholder={
-            serviceType === 'concierge'
-              ? t('reserve.originConciergePlaceholder')
-              : t('reserve.originPlaceholder')
-          }
-          autoComplete="street-address"
-          value={origin}
-          onChange={(e) => setOrigin(e.target.value)}
-          aria-invalid={
-            originGeo.status === 'error' || originGeo.status === 'short'
-          }
-          aria-describedby="origem-geo"
-          required
-        />
-        {geocodeMessage(originGeo) ? (
-          <p
-            id="origem-geo"
-            className={`form-note itinerary-geo${
-              originGeo.status === 'ok'
-                ? ' is-ok'
-                : originGeo.status === 'checking'
-                  ? ''
-                  : ' is-error'
+          <div
+            className={`itinerary-row${
+              originGeo.status === 'error' || originGeo.status === 'short'
+                ? ' is-invalid'
+                : ''
             }`}
-            role="status"
-            aria-live="polite"
           >
-            {geocodeMessage(originGeo)}
-          </p>
-        ) : null}
-      </div>
-
-      {showStops &&
-        stops.map((stop, index) => (
-          <div className="itinerary-row itinerary-row--stop" key={`stop-${index}`}>
-            <label htmlFor={`parada-${index}`}>
-              {t('reserve.stop', { n: index + 1 })}
+            <label htmlFor="origem">
+              {serviceType === 'concierge'
+                ? t('reserve.originConcierge')
+                : t('reserve.origin')}
             </label>
-            <div className="itinerary-stop-field">
-              <input
-                id={`parada-${index}`}
-                name={`parada-${index}`}
-                type="text"
-                placeholder={t('reserve.stopPlaceholder')}
-                value={stop}
-                onChange={(e) => updateStop(index, e.target.value)}
-                required
-              />
+            <input
+              id="origem"
+              name="origem"
+              type="text"
+              placeholder={
+                serviceType === 'concierge'
+                  ? t('reserve.originConciergePlaceholder')
+                  : t('reserve.originPlaceholder')
+              }
+              autoComplete="street-address"
+              value={origin}
+              onChange={(e) => setOrigin(e.target.value)}
+              aria-invalid={
+                originGeo.status === 'error' || originGeo.status === 'short'
+              }
+              aria-describedby="origem-geo"
+              required
+            />
+            {geocodeMessage(originGeo) ? (
+              <p
+                id="origem-geo"
+                className={`form-note itinerary-geo${
+                  originGeo.status === 'ok'
+                    ? ' is-ok'
+                    : originGeo.status === 'checking'
+                      ? ''
+                      : ' is-error'
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                {geocodeMessage(originGeo)}
+              </p>
+            ) : null}
+          </div>
+
+          {showStops &&
+            stops.map((stop, index) => (
+              <div
+                className="itinerary-row itinerary-row--stop"
+                key={`stop-${index}`}
+              >
+                <label htmlFor={`parada-${index}`}>
+                  {t('reserve.stop', { n: index + 1 })}
+                </label>
+                <div className="itinerary-stop-field">
+                  <input
+                    id={`parada-${index}`}
+                    name={`parada-${index}`}
+                    type="text"
+                    placeholder={t('reserve.stopPlaceholder')}
+                    value={stop}
+                    onChange={(e) => updateStop(index, e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="itinerary-stop-remove"
+                    onClick={() => removeStop(index)}
+                    aria-label={t('reserve.removeStop')}
+                  >
+                    {t('reserve.removeStop')}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+          {showStops && stops.length < MAX_STOPS && (
+            <div className="itinerary-stop-actions">
               <button
                 type="button"
-                className="itinerary-stop-remove"
-                onClick={() => removeStop(index)}
-                aria-label={t('reserve.removeStop')}
+                className="itinerary-add-stop"
+                onClick={addStop}
               >
-                {t('reserve.removeStop')}
+                {t('reserve.addStop')}
               </button>
             </div>
-          </div>
-        ))}
+          )}
 
-      {showStops && stops.length < MAX_STOPS && (
-        <div className="itinerary-stop-actions">
-          <button
-            type="button"
-            className="itinerary-add-stop"
-            onClick={addStop}
-          >
-            {t('reserve.addStop')}
-          </button>
-        </div>
-      )}
-
-      {showDestination && (
-        <div
-          className={`itinerary-row${
-            destinationGeoEnabled &&
-            (destinationGeo.status === 'error' ||
-              destinationGeo.status === 'short')
-              ? ' is-invalid'
-              : ''
-          }`}
-        >
-          <label htmlFor="destino">
-            {destinationRequired
-              ? t('reserve.destination')
-              : t('reserve.destinationOptional')}
-          </label>
-          <input
-            id="destino"
-            name="destino"
-            type="text"
-            placeholder={t('reserve.destinationPlaceholder')}
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            aria-invalid={
-              destinationGeoEnabled &&
-              (destinationGeo.status === 'error' ||
-                destinationGeo.status === 'short')
-            }
-            aria-describedby="destino-geo"
-            required={destinationRequired}
-          />
-          {destinationGeoEnabled && geocodeMessage(destinationGeo) ? (
-            <p
-              id="destino-geo"
-              className={`form-note itinerary-geo${
-                destinationGeo.status === 'ok'
-                  ? ' is-ok'
-                  : destinationGeo.status === 'checking'
-                    ? ''
-                    : ' is-error'
+          {showDestination && (
+            <div
+              className={`itinerary-row${
+                destinationGeoEnabled &&
+                (destinationGeo.status === 'error' ||
+                  destinationGeo.status === 'short')
+                  ? ' is-invalid'
+                  : ''
               }`}
+            >
+              <label htmlFor="destino">
+                {destinationRequired
+                  ? t('reserve.destination')
+                  : t('reserve.destinationOptional')}
+              </label>
+              <input
+                id="destino"
+                name="destino"
+                type="text"
+                placeholder={t('reserve.destinationPlaceholder')}
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                aria-invalid={
+                  destinationGeoEnabled &&
+                  (destinationGeo.status === 'error' ||
+                    destinationGeo.status === 'short')
+                }
+                aria-describedby="destino-geo"
+                required={destinationRequired}
+              />
+              {destinationGeoEnabled && geocodeMessage(destinationGeo) ? (
+                <p
+                  id="destino-geo"
+                  className={`form-note itinerary-geo${
+                    destinationGeo.status === 'ok'
+                      ? ' is-ok'
+                      : destinationGeo.status === 'checking'
+                        ? ''
+                        : ' is-error'
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {geocodeMessage(destinationGeo)}
+                </p>
+              ) : null}
+            </div>
+          )}
+
+          {showAirport && (
+            <div className="itinerary-row">
+              <label htmlFor="aeroporto">{t('reserve.airportOptional')}</label>
+              <select
+                id="aeroporto"
+                value={airport}
+                onChange={(e) => setAirport(e.target.value as AirportCode | '')}
+              >
+                <option value="">{t('reserve.airportNone')}</option>
+                {AIRPORTS.map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {showHours && (
+            <div className="itinerary-row">
+              <label htmlFor="horas">{t('reserve.hours')}</label>
+              <input
+                id="horas"
+                type="number"
+                min={1}
+                step={0.5}
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          {showNotes && (
+            <div className="itinerary-row">
+              <label htmlFor="notas">{t('reserve.notes')}</label>
+              <textarea
+                id="notas"
+                name="notas"
+                rows={3}
+                placeholder={t('reserve.notesPlaceholder')}
+                value={serviceNotes}
+                onChange={(e) => setServiceNotes(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          <div className="itinerary-row">
+            <label htmlFor="veiculo">{t('reserve.vehicle')}</label>
+            <select
+              id="veiculo"
+              value={vehicleId}
+              onChange={(e) => setVehicleId(e.target.value)}
+            >
+              <option value="">
+                {vehicles.length
+                  ? t('reserve.vehicle')
+                  : t('reserve.vehicleEmpty')}
+              </option>
+              {vehicles.map((vehicle) => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {localizedName(vehicle.name_i18n, locale)}
+                  {vehicle.is_armored ? ' · blindado' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {mayMeasureDistance(serviceType) && (
+            <p
+              className={`form-note itinerary-distance${
+                distance.status === 'error' ? ' is-error' : ''
+              }${distance.status === 'ready' ? ' is-ok' : ''}`}
               role="status"
               aria-live="polite"
             >
-              {geocodeMessage(destinationGeo)}
+              <strong>{t('reserve.distance')}:</strong> {distanceMessage()}
             </p>
-          ) : null}
+          )}
         </div>
-      )}
 
-      {showAirport && (
-        <div className="itinerary-row">
-          <label htmlFor="aeroporto">{t('reserve.airportOptional')}</label>
-          <select
-            id="aeroporto"
-            value={airport}
-            onChange={(e) => setAirport(e.target.value as AirportCode | '')}
-          >
-            <option value="">{t('reserve.airportNone')}</option>
-            {AIRPORTS.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+        <div className="itinerary-schedule">
+          <SlotAgenda
+            key={agendaKey}
+            organizationId={tenant.organizationId}
+            selectedStart={selectedSlot?.slot_start ?? null}
+            onSelect={setSelectedSlot}
+            mode="book"
+          />
+          {selectedSlot && (
+            <p className="agenda-selected">
+              {t('agenda.selected')}:{' '}
+              {new Date(selectedSlot.slot_start).toLocaleString(locale)} (
+              {formatSlotLabel(selectedSlot.slot_start, locale)})
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
-      {showHours && (
+      <div className="itinerary-contact">
         <div className="itinerary-row">
-          <label htmlFor="horas">{t('reserve.hours')}</label>
+          <label htmlFor="nome">{t('reserve.name')}</label>
           <input
-            id="horas"
-            type="number"
-            min={1}
-            step={0.5}
-            value={hours}
-            onChange={(e) => setHours(e.target.value)}
+            id="nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+            minLength={3}
+            pattern="\S+(\s+\S+)+"
+            title={t('reserve.nameInvalid')}
             required
           />
         </div>
-      )}
-
-      {showNotes && (
         <div className="itinerary-row">
-          <label htmlFor="notas">{t('reserve.notes')}</label>
-          <textarea
-            id="notas"
-            name="notas"
-            rows={3}
-            placeholder={t('reserve.notesPlaceholder')}
-            value={serviceNotes}
-            onChange={(e) => setServiceNotes(e.target.value)}
+          <label htmlFor="telefone">{t('reserve.phone')}</label>
+          <input
+            id="telefone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder={t('reserve.phonePlaceholder')}
+            value={phone}
+            onChange={(e) => setPhone(formatBrazilPhoneInput(e.target.value))}
+            pattern="\(\d{2}\)\s?\d{4,5}-?\d{4}"
+            title={t('reserve.phoneInvalid')}
             required
           />
         </div>
-      )}
-
-      <div className="itinerary-row">
-        <label htmlFor="veiculo">{t('reserve.vehicle')}</label>
-        <select
-          id="veiculo"
-          value={vehicleId}
-          onChange={(e) => setVehicleId(e.target.value)}
-        >
-          <option value="">
-            {vehicles.length ? t('reserve.vehicle') : t('reserve.vehicleEmpty')}
-          </option>
-          {vehicles.map((vehicle) => (
-            <option key={vehicle.id} value={vehicle.id}>
-              {localizedName(vehicle.name_i18n, locale)}
-              {vehicle.is_armored ? ' · blindado' : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {mayMeasureDistance(serviceType) && (
-        <p
-          className={`form-note itinerary-distance${
-            distance.status === 'error' ? ' is-error' : ''
-          }${distance.status === 'ready' ? ' is-ok' : ''}`}
-          role="status"
-          aria-live="polite"
-        >
-          <strong>{t('reserve.distance')}:</strong> {distanceMessage()}
-        </p>
-      )}
-
-      <SlotAgenda
-        key={agendaKey}
-        organizationId={tenant.organizationId}
-        selectedStart={selectedSlot?.slot_start ?? null}
-        onSelect={setSelectedSlot}
-        mode="book"
-      />
-      {selectedSlot && (
-        <p className="agenda-selected">
-          {t('agenda.selected')}:{' '}
-          {new Date(selectedSlot.slot_start).toLocaleString(locale)} (
-          {formatSlotLabel(selectedSlot.slot_start, locale)})
-        </p>
-      )}
-
-      <div className="itinerary-row">
-        <label htmlFor="nome">{t('reserve.name')}</label>
-        <input
-          id="nome"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-          minLength={3}
-          pattern="\S+(\s+\S+)+"
-          title={t('reserve.nameInvalid')}
-          required
-        />
-      </div>
-      <div className="itinerary-row">
-        <label htmlFor="telefone">{t('reserve.phone')}</label>
-        <input
-          id="telefone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder={t('reserve.phonePlaceholder')}
-          value={phone}
-          onChange={(e) => setPhone(formatBrazilPhoneInput(e.target.value))}
-          pattern="\(\d{2}\)\s?\d{4,5}-?\d{4}"
-          title={t('reserve.phoneInvalid')}
-          required
-        />
-      </div>
-      <div className="itinerary-row">
-        <label htmlFor="email">{t('reserve.email')}</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
-          title={t('reserve.emailInvalid')}
-          required
-        />
+        <div className="itinerary-row">
+          <label htmlFor="email">{t('reserve.email')}</label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
+            title={t('reserve.emailInvalid')}
+            required
+          />
+        </div>
       </div>
 
       <p className="form-note">{t('reserve.priceWhatsappHint')}</p>
@@ -690,19 +727,12 @@ export function ReservationForm() {
             tenant.loading ||
             !selectedSlot ||
             !addressesOkForSubmit() ||
-            !distanceOkForSubmit()
+            !distanceOkForSubmit() ||
+            Boolean(successCode)
           }
         >
           {submitting ? '…' : t('reserve.submit')}
         </button>
-        <a
-          className="btn-ghost"
-          href={`https://wa.me/${waDigits}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          WhatsApp
-        </a>
       </div>
       <p className="form-note">{t('reserve.holdHint')}</p>
       <p
@@ -712,6 +742,40 @@ export function ReservationForm() {
       >
         {feedback}
       </p>
+
+      {successCode
+        ? createPortal(
+            <div className="reserve-success-modal" role="presentation">
+              <div className="reserve-success-modal__backdrop" aria-hidden="true" />
+              <div
+                className="reserve-success-modal__panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="reserve-success-title"
+              >
+                <h2 id="reserve-success-title">
+                  {t('reserve.successTitle')}
+                </h2>
+                <p>{t('reserve.successBody')}</p>
+                <p className="reserve-success-modal__code">
+                  <span>{t('reserve.successCodeLabel')}</span>
+                  <strong className="service-code">{successCode}</strong>
+                </p>
+                <p className="reserve-success-modal__hint">
+                  {t('reserve.successHint')}
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={resetFormAfterSuccess}
+                >
+                  {t('reserve.successDismiss')}
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </form>
   )
 }

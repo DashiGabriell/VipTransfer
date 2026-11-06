@@ -74,7 +74,12 @@
     "addressInvalid": "We could not find that address. Include district and city (e.g. São Paulo).",
     "addressFixBeforeSubmit": "Fix the highlighted addresses before submitting.",
     "holdHint": "On submit, the slot is held for 60 minutes until JMD confirms. Fare is finalized on WhatsApp.",
-    "submit": "Request on WhatsApp",
+    "submit": "Send request",
+    "successTitle": "Request sent",
+    "successBody": "We received your request and opened WhatsApp so JMD can assist you.",
+    "successCodeLabel": "Request code",
+    "successHint": "Keep this code — it identifies your booking on WhatsApp and with our team.",
+    "successDismiss": "Got it",
     "services": {
       "ponto_a_b": "Point A → point B",
       "a_disposicao": "On demand (by time)",

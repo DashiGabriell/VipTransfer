@@ -344,6 +344,14 @@
       gap: 0;
       margin-top: 0.5rem;
       max-width: 40rem;
+      width: 100%;
+    }
+    /* Wrappers are transparent on mobile so the stacked layout stays identical. */
+    .itinerary-board,
+    .itinerary-trip,
+    .itinerary-schedule,
+    .itinerary-contact {
+      display: contents;
     }
     .itinerary-row {
       display: grid;
@@ -547,6 +555,80 @@
       .folio-mark { letter-spacing: 0.28em; }
       .folio-mark__logo { height: 3rem; }
       .folio-meta { letter-spacing: 0.12em; }
+
+      .itinerary {
+        max-width: none;
+        gap: 0.85rem;
+      }
+      .itinerary-board {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(17.5rem, 0.95fr);
+        gap: 0 1.25rem;
+        align-items: start;
+      }
+      .itinerary-trip {
+        display: grid;
+        gap: 0;
+        min-width: 0;
+      }
+      .itinerary-schedule {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        min-width: 0;
+        align-self: stretch;
+      }
+      .itinerary-schedule .agenda-panel {
+        margin-top: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .itinerary-schedule .agenda-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        max-height: none;
+        flex: 1 1 auto;
+        min-height: 12rem;
+      }
+      .itinerary-schedule .agenda-selected {
+        margin-top: 0;
+      }
+      .itinerary-contact {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        min-width: 0;
+      }
+      .itinerary-contact .itinerary-row {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 0.3rem;
+        border-bottom: 1px solid var(--ink);
+      }
+      .itinerary-contact .itinerary-row:not(:last-child) {
+        border-right: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+      }
+      .itinerary-trip .itinerary-row,
+      .itinerary-contact .itinerary-row {
+        padding: 0.72rem 0.85rem;
+      }
+      .itinerary-distance {
+        margin: 0.45rem 0 0;
+        padding: 0 0.15rem;
+      }
+      .itinerary-actions {
+        margin-top: 0.35rem;
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .itinerary-board {
+        grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 1fr);
+        gap: 0 1.6rem;
+      }
+      .itinerary-schedule .agenda-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
     }
 
     /* ?????? Sections ?????? */
@@ -1279,4 +1361,79 @@
 .lead-capture button[type='submit']:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.reserve-success-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.reserve-success-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #152033 55%, transparent);
+  pointer-events: none;
+}
+
+.reserve-success-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 26rem);
+  background: var(--paper, #f7f2ea);
+  color: var(--ink, #152033);
+  border: 1px solid color-mix(in srgb, var(--ink, #152033) 12%, transparent);
+  border-radius: 14px;
+  padding: 1.4rem 1.35rem 1.25rem;
+  box-shadow: 0 18px 48px color-mix(in srgb, #152033 28%, transparent);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.reserve-success-modal__panel h2 {
+  margin: 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.reserve-success-modal__panel > p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--muted-soft, #5c554c);
+}
+
+.reserve-success-modal__code {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink, #152033) 5%, transparent);
+}
+
+.reserve-success-modal__code span {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-soft, #5c554c);
+}
+
+.reserve-success-modal__code strong {
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+}
+
+.reserve-success-modal__hint {
+  font-size: 0.82rem !important;
+}
+
+.reserve-success-modal__panel .btn-primary {
+  width: 100%;
+  margin-top: 0.25rem;
+  justify-self: stretch;
 }

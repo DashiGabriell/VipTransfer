@@ -74,7 +74,12 @@
     "addressInvalid": "Não encontramos esse endereço. Inclua bairro e cidade (ex.: São Paulo).",
     "addressFixBeforeSubmit": "Corrija os endereços destacados antes de enviar.",
     "holdHint": "Ao enviar, o horário fica reservado por 60 minutos até a confirmação da JMD. O valor fecha no WhatsApp.",
-    "submit": "Solicitar no WhatsApp",
+    "submit": "Enviar solicitação",
+    "successTitle": "Solicitação enviada",
+    "successBody": "Recebemos sua solicitação e abrimos o WhatsApp para o atendimento da JMD.",
+    "successCodeLabel": "Código da solicitação",
+    "successHint": "Guarde este código — ele identifica sua reserva no WhatsApp e no atendimento.",
+    "successDismiss": "Entendi",
     "services": {
       "ponto_a_b": "Ponto A → ponto B",
       "a_disposicao": "À disposição (por tempo)",

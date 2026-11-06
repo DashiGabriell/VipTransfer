@@ -36,7 +36,9 @@ export function buildWhatsAppUrl(
 
   const lines = en
     ? [
-        `Hello, I'd like to request a transfer with JMD.`,
+        code
+          ? `Hello, I'd like to request a transfer with JMD (request ${code}).`
+          : `Hello, I'd like to request a transfer with JMD.`,
         ...(code ? [`Request ID: ${code}`] : []),
         `Name: ${summary.name}`,
         `Phone: ${summary.phone}`,
@@ -58,8 +60,10 @@ export function buildWhatsAppUrl(
         `Please confirm availability and the fare on WhatsApp.`,
       ]
     : [
-        `Olá, gostaria de solicitar um transfer com a JMD.`,
-        ...(code ? [`Código: ${code}`] : []),
+        code
+          ? `Olá, gostaria de solicitar um transfer com a JMD (código ${code}).`
+          : `Olá, gostaria de solicitar um transfer com a JMD.`,
+        ...(code ? [`Código da solicitação: ${code}`] : []),
         `Nome: ${summary.name}`,
         `Telefone: ${summary.phone}`,
         `E-mail: ${summary.email}`,

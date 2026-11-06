@@ -333,7 +333,7 @@ export function LandingPage() {
                   loading="lazy"
                   decoding="async"
                 />
-                <span>SP e Grande SP</span>
+                <span>{t('landing.coverageSp')}</span>
               </div>
               <div className="coverage-cell">
                 <img
@@ -344,7 +344,7 @@ export function LandingPage() {
                   loading="lazy"
                   decoding="async"
                 />
-                <span>Aeroporto GRU</span>
+                <span>{t('landing.coverageGru')}</span>
               </div>
               <div className="coverage-cell">
                 <img
@@ -355,7 +355,7 @@ export function LandingPage() {
                   loading="lazy"
                   decoding="async"
                 />
-                <span>Aeroporto CGH</span>
+                <span>{t('landing.coverageCgh')}</span>
               </div>
               <div className="coverage-cell">
                 <img
@@ -366,7 +366,18 @@ export function LandingPage() {
                   loading="lazy"
                   decoding="async"
                 />
-                <span>Aeroporto VCP</span>
+                <span>{t('landing.coverageVcp')}</span>
+              </div>
+              <div className="coverage-cell">
+                <img
+                  src="/city-tour.jpg"
+                  alt=""
+                  width={480}
+                  height={640}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span>{t('landing.coverageCityTour')}</span>
               </div>
             </div>
           </div>

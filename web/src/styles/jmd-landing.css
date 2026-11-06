@@ -725,7 +725,10 @@
       gap: 0.75rem;
     }
     @media (min-width: 700px) {
-      .coverage { grid-template-columns: repeat(4, 1fr); }
+      .coverage { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 980px) {
+      .coverage { grid-template-columns: repeat(5, 1fr); }
     }
     .coverage-cell {
       position: relative;

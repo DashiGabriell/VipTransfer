@@ -2,6 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import type { DaySlot } from '../../domain/agenda'
+import {
+  formatReservationMoney,
+  hasOverridePrice,
+} from '../../domain/reservationPrice'
 import type { Reservation } from '../../types/database'
 import { RouteNavPicker, ViewRouteButton } from './RouteNavPicker'
 
@@ -16,14 +20,6 @@ type Props = {
 
 function localeFromLang(lang: string): string {
   return lang.startsWith('en') ? 'en-US' : 'pt-BR'
-}
-
-function formatMoney(price: number | null | undefined) {
-  if (price == null) return 'WhatsApp'
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(price)
 }
 
 export function AgendaSlotModal({
@@ -184,8 +180,20 @@ export function AgendaSlotModal({
                   </dd>
                 </div>
                 <div>
-                  <dt>{t('admin.detailPrice')}</dt>
-                  <dd>{formatMoney(r.estimated_price)}</dd>
+                  <dt>{t('admin.price.suggestedLabel')}</dt>
+                  <dd>
+                    {r.estimated_price != null
+                      ? formatReservationMoney(r.estimated_price, locale)
+                      : t('admin.price.suggestedWhatsapp')}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('admin.price.realLabel')}</dt>
+                  <dd>
+                    {hasOverridePrice(r)
+                      ? formatReservationMoney(r.override_price, locale)
+                      : t('admin.price.realMissing')}
+                  </dd>
                 </div>
                 {r.service_notes ? (
                   <div>

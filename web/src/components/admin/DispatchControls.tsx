@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { hasOverridePrice } from '../../domain/reservationPrice'
 import { buildDriverDemandWhatsAppUrl } from '../../domain/whatsapp'
 import { driverOffersPageUrl } from '../../lib/siteUrl'
 import {
   assignReservationToDriver,
   completeReservationJob,
   dispatchLabel,
+  setReservationOverridePrice,
 } from '../../services/coreV2'
 import type {
   Driver,
@@ -23,6 +25,15 @@ type Props = {
   onError: (msg: string) => void
 }
 
+function mapPriceError(code: string, t: (k: string) => string): string {
+  if (code.includes('PRICE_REQUIRED')) return t('admin.price.requiredToComplete')
+  if (code.includes('PRICE_INVALID')) return t('admin.price.invalid')
+  if (code.includes('PRICE_TOO_HIGH')) return t('admin.price.tooHigh')
+  if (code.includes('ALREADY_LIQUIDATED')) return t('admin.price.alreadyLiquidated')
+  if (code.includes('RESERVATION_CLOSED')) return t('admin.price.reservationClosed')
+  return code || t('admin.price.saveError')
+}
+
 export function DispatchControls({
   reservation,
   drivers,
@@ -34,8 +45,23 @@ export function DispatchControls({
   const { t, i18n } = useTranslation()
   const [driverId, setDriverId] = useState('')
   const [busy, setBusy] = useState(false)
+  const [priceDraft, setPriceDraft] = useState(() =>
+    hasOverridePrice(reservation)
+      ? String(reservation.override_price)
+      : reservation.estimated_price != null
+        ? String(reservation.estimated_price)
+        : '',
+  )
+  const [savingPrice, setSavingPrice] = useState(false)
   const locale = i18n.language.startsWith('en') ? 'en' : 'pt'
   const waLocale = locale === 'en' ? 'en' : 'pt-BR'
+  const priceReady = hasOverridePrice(reservation)
+
+  useEffect(() => {
+    if (hasOverridePrice(reservation)) {
+      setPriceDraft(String(reservation.override_price))
+    }
+  }, [reservation.id, reservation.override_price])
 
   const label = dispatchLabel(assignments, reservation.id)
   const eligible = useMemo(() => {
@@ -79,6 +105,7 @@ export function DispatchControls({
       },
     )
     const url = buildDriverDemandWhatsAppUrl(driver.phone, {
+      serviceCode: reservation.service_code,
       driverFirstName: driver.full_name.split(/\s+/)[0] ?? driver.full_name,
       origin: reservation.origin_address,
       destination: reservation.destination_address,
@@ -124,24 +151,87 @@ export function DispatchControls({
     }
   }
 
+  async function onSavePrice(e?: FormEvent) {
+    e?.preventDefault()
+    const n = Number(String(priceDraft).replace(',', '.'))
+    if (!Number.isFinite(n) || n <= 0) {
+      onError(t('admin.price.invalid'))
+      return
+    }
+    setSavingPrice(true)
+    onError('')
+    try {
+      await setReservationOverridePrice(reservation.id, n)
+      onChanged()
+    } catch (err) {
+      onError(
+        mapPriceError(err instanceof Error ? err.message : '', t),
+      )
+    } finally {
+      setSavingPrice(false)
+    }
+  }
+
   async function onComplete() {
+    if (!priceReady) {
+      onError(t('admin.price.requiredToComplete'))
+      return
+    }
     setBusy(true)
     onError('')
     try {
       await completeReservationJob(reservation.id)
       onChanged()
     } catch (err) {
-      onError(err instanceof Error ? err.message : t('admin.dispatch.completeError'))
+      const msg = err instanceof Error ? err.message : ''
+      onError(
+        msg.includes('PRICE_REQUIRED')
+          ? t('admin.price.requiredToComplete')
+          : msg || t('admin.dispatch.completeError'),
+      )
     } finally {
       setBusy(false)
     }
   }
+
+  const canEditPrice =
+    reservation.status === 'confirmado' || reservation.status === 'concluido'
 
   return (
     <div className="admin-dispatch">
       <span className="admin-dispatch__badge">
         {t(`admin.dispatch.status.${label}`)}
       </span>
+
+      {canEditPrice ? (
+        <form className="admin-dispatch__price" onSubmit={(ev) => void onSavePrice(ev)}>
+          <label className="admin-dispatch__price-field">
+            <span>{t('admin.price.realLabel')}</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              step="0.01"
+              value={priceDraft}
+              disabled={savingPrice || busy}
+              onChange={(e) => setPriceDraft(e.target.value)}
+              placeholder={t('admin.price.placeholder')}
+            />
+          </label>
+          <button
+            type="submit"
+            className="admin-res-actions__confirm"
+            disabled={savingPrice || busy}
+          >
+            {savingPrice ? '…' : t('admin.price.save')}
+          </button>
+          {!priceReady && reservation.status === 'confirmado' ? (
+            <p className="admin-dispatch__price-hint">
+              {t('admin.price.requiredHint')}
+            </p>
+          ) : null}
+        </form>
+      ) : null}
 
       {label === 'sem_motorista' && reservation.status === 'confirmado' ? (
         <div className="admin-dispatch__row">
@@ -176,7 +266,8 @@ export function DispatchControls({
         <button
           type="button"
           className="admin-res-actions__confirm"
-          disabled={busy}
+          disabled={busy || !priceReady}
+          title={!priceReady ? t('admin.price.requiredToComplete') : undefined}
           onClick={() => void onComplete()}
         >
           {t('admin.dispatch.complete')}

@@ -7,6 +7,7 @@ import type {
   FinancialEntry,
   JobAssignment,
   Lead,
+  Reservation,
   VehicleBodyType,
 } from '../types/database'
 
@@ -170,6 +171,7 @@ export type DriverAssignmentRow = JobAssignment & {
     service_type: string
     status: string
     estimated_price: number | null
+    override_price: number | null
     customer_name: string
   } | null
 }
@@ -182,7 +184,7 @@ export async function listAssignmentsForDriver(
   const { data, error } = await client
     .from('job_assignments')
     .select(
-      '*, reservation:reservations(slot_start, origin_address, destination_address, service_type, status, estimated_price, customer_name)',
+      '*, reservation:reservations(slot_start, origin_address, destination_address, service_type, status, estimated_price, override_price, customer_name)',
     )
     .eq('organization_id', organizationId)
     .eq('driver_id', driverId)
@@ -224,19 +226,35 @@ export async function completeReservationJob(
   return data as FinancialEntry
 }
 
+export async function setReservationOverridePrice(
+  reservationId: string,
+  overridePrice: number,
+): Promise<Reservation> {
+  const client = assertClient()
+  const { data, error } = await client.rpc('set_reservation_override_price', {
+    p_reservation_id: reservationId,
+    p_override_price: overridePrice,
+  })
+  if (error) throw error
+  return data as Reservation
+}
+
 export async function listFinancialEntries(
   organizationId: string,
 ): Promise<FinanceLedgerEntry[]> {
   const client = assertClient()
   const { data, error } = await client
     .from('financial_entries')
-    .select('*, reservation:reservations(customer_name)')
+    .select('*, reservation:reservations(customer_name, service_code)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
   if (error) throw error
 
   type Row = FinancialEntry & {
-    reservation?: { customer_name?: string | null } | null
+    reservation?: {
+      customer_name?: string | null
+      service_code?: string | null
+    } | null
   }
 
   return ((data ?? []) as Row[]).map((row) => {
@@ -244,6 +262,7 @@ export async function listFinancialEntries(
     return {
       ...(entry as FinancialEntry),
       customer_name: reservation?.customer_name?.trim() || '—',
+      service_code: reservation?.service_code?.trim() || null,
     }
   })
 }

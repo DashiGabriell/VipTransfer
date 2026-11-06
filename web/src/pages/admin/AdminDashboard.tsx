@@ -31,6 +31,7 @@ import {
   ViewRouteButton,
 } from '../../components/admin/RouteNavPicker'
 import { LanguageToggle } from '../../components/LanguageToggle'
+import { hasOverridePrice } from '../../domain/reservationPrice'
 import {
   cancelReservation,
   canAdmin,
@@ -493,6 +494,8 @@ export function AdminDashboard() {
                                 onClick={() => setAgendaDetailId(r.id)}
                               >
                                 <div className="font-medium">
+                                  <span className="service-code">{r.service_code}</span>
+                                  {' · '}
                                   {r.customer_name} ·{' '}
                                   {t(`admin.status.${r.status}`)}
                                 </div>
@@ -643,10 +646,14 @@ export function AdminDashboard() {
   )
 }
 
-function reservationEstimate(price: number | null | undefined) {
-  // Cliente não vê preço; no admin, null = combinado no WhatsApp
-  if (price == null) return 'WhatsApp'
-  return `R$ ${Number(price).toFixed(2)}`
+function reservationPriceLabel(
+  reservation: Pick<Reservation, 'override_price' | 'estimated_price'>,
+) {
+  if (hasOverridePrice(reservation)) {
+    return `R$ ${Number(reservation.override_price).toFixed(2)}`
+  }
+  if (reservation.estimated_price == null) return 'WhatsApp'
+  return `~ R$ ${Number(reservation.estimated_price).toFixed(2)}`
 }
 
 function ReservationActions(props: {
@@ -797,6 +804,7 @@ function ReservationsPanel(props: {
             )}
 
             <div className="admin-res-card__customer">
+              <span className="service-code">{r.service_code}</span>
               <strong>{r.customer_name}</strong>
               <span>{r.customer_phone}</span>
             </div>
@@ -810,7 +818,7 @@ function ReservationsPanel(props: {
             </div>
 
             <div className="admin-res-card__meta">
-              <span>{reservationEstimate(r.estimated_price)}</span>
+              <span>{reservationPriceLabel(r)}</span>
             </div>
 
             <div
@@ -842,6 +850,7 @@ function ReservationsPanel(props: {
         <table className="admin-res-table min-w-full text-left text-sm">
           <thead>
             <tr>
+              <th>{t('admin.serviceCode')}</th>
               <th>Slot</th>
               <th>
                 {i18n.language.startsWith('en') ? 'Customer' : 'Cliente'}
@@ -860,6 +869,9 @@ function ReservationsPanel(props: {
                 style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
                 onClick={() => setDetailReservation(r)}
               >
+                <td className="whitespace-nowrap">
+                  <span className="service-code">{r.service_code}</span>
+                </td>
                 <td className="whitespace-nowrap">
                   {new Date(r.slot_start).toLocaleString(locale)}
                   {r.hold_expires_at && r.status === 'hold' && (
@@ -894,7 +906,7 @@ function ReservationsPanel(props: {
                 </td>
                 <td>{t(`admin.status.${r.status}`)}</td>
                 <td className="whitespace-nowrap">
-                  {reservationEstimate(r.estimated_price)}
+                  {reservationPriceLabel(r)}
                 </td>
                 <td onClick={(e) => e.stopPropagation()}>
                   <ReservationActions
@@ -914,7 +926,7 @@ function ReservationsPanel(props: {
             ))}
             {!props.reservations.length && (
               <tr>
-                <td colSpan={6} className="admin-res-table__empty">
+                <td colSpan={7} className="admin-res-table__empty">
                   {emptyLabel}
                 </td>
               </tr>

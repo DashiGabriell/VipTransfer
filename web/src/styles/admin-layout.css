@@ -860,6 +860,21 @@
   color: #9a6b1f;
 }
 
+.service-code {
+  display: inline-block;
+  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Menlo, monospace;
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--admin-bronze, #b08d57) 85%, #152033);
+  background: color-mix(in srgb, var(--admin-bronze, #b08d57) 14%, #fff);
+  border: 1px solid color-mix(in srgb, var(--admin-bronze, #b08d57) 32%, #d8cfc0);
+  border-radius: 0.4rem;
+  padding: 0.12rem 0.45rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
 .admin-res-card__customer {
   display: grid;
   gap: 0.1rem;
@@ -874,7 +889,12 @@
   overflow-wrap: anywhere;
 }
 
-.admin-res-card__customer span {
+.admin-res-card__customer > .service-code {
+  margin-bottom: 0.15rem;
+  justify-self: start;
+}
+
+.admin-res-card__customer span:not(.service-code) {
   font-size: 0.78rem;
   color: var(--admin-muted);
   overflow-wrap: anywhere;
@@ -2199,6 +2219,81 @@
   background: #fff;
   font: inherit;
   font-size: 0.8rem;
+}
+
+.admin-dispatch__price {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: end;
+}
+
+.admin-dispatch__price-field {
+  display: grid;
+  gap: 0.2rem;
+  flex: 1 1 8rem;
+  min-width: 7rem;
+}
+
+.admin-dispatch__price-field span {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #5c554c);
+}
+
+.admin-dispatch__price-field input {
+  min-height: 2.15rem;
+  width: 100%;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 0.45rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--admin-ink, #152033);
+}
+
+.admin-dispatch__price-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.72rem;
+  color: #8b2e2e;
+}
+
+.agenda-slot-modal__price-edit {
+  grid-column: 1 / -1;
+}
+
+.agenda-slot-modal__price-edit form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.agenda-slot-modal__price-edit label {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 10rem;
+}
+
+.agenda-slot-modal__price-edit label span {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #5c554c);
+}
+
+.agenda-slot-modal__price-edit input {
+  min-height: 2.25rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  border-radius: 0.5rem;
+  background: #fff;
+  font: inherit;
+  color: var(--admin-ink, #152033);
 }
 
 /* Driver portal */

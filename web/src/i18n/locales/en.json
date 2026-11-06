@@ -174,6 +174,7 @@
     "freightConciergeReference": "Internal reference (R$)",
     "freightConciergeHint": "Customers never see this value on the public form.",
     "reservationDetailTitle": "Reservation detail",
+    "serviceCode": "Code",
     "navPerfil": "Profile",
     "bootstrapTitle": "Owner bootstrap",
     "bootstrapLead": "No members in org {{slug}}. The first authenticated user can claim the owner role.",
@@ -443,6 +444,22 @@
         "cancelado": "Cancelled",
         "concluido": "Completed"
       }
+    },
+    "price": {
+      "suggestedLabel": "Suggested price",
+      "suggestedWhatsapp": "Agreed on WhatsApp",
+      "realLabel": "Real price",
+      "realField": "Negotiated real price (R$)",
+      "realMissing": "Not set yet",
+      "placeholder": "E.g. 450.00",
+      "save": "Save price",
+      "saveError": "Failed to save price.",
+      "invalid": "Enter a real price greater than zero.",
+      "tooHigh": "Price exceeds the allowed limit.",
+      "requiredHint": "Set and save the real price before completing the job.",
+      "requiredToComplete": "Save the negotiated real price before completing.",
+      "alreadyLiquidated": "Cannot change the price of an already settled entry.",
+      "reservationClosed": "This reservation no longer accepts price changes."
     },
     "finance": {
       "commissionTitle": "Platform commission",

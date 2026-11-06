@@ -231,9 +231,11 @@ export function ClientDetailPanel({
                       </span>
                     </td>
                     <td data-label={t('admin.clients.colPrice')}>
-                      {r.estimated_price != null
-                        ? `R$ ${Number(r.estimated_price).toFixed(2)}`
-                        : 'WhatsApp'}
+                      {r.override_price != null && Number(r.override_price) > 0
+                        ? `R$ ${Number(r.override_price).toFixed(2)}`
+                        : r.estimated_price != null
+                          ? `~ R$ ${Number(r.estimated_price).toFixed(2)}`
+                          : 'WhatsApp'}
                     </td>
                   </tr>
                 ))}

@@ -442,9 +442,12 @@ export function DriverDetailPanel({
                         )}
                       </td>
                       <td data-label={t('admin.clients.colPrice')}>
-                        {res?.estimated_price != null
-                          ? `R$ ${Number(res.estimated_price).toFixed(2)}`
-                          : '—'}
+                        {res?.override_price != null &&
+                        Number(res.override_price) > 0
+                          ? `R$ ${Number(res.override_price).toFixed(2)}`
+                          : res?.estimated_price != null
+                            ? `~ R$ ${Number(res.estimated_price).toFixed(2)}`
+                            : '—'}
                       </td>
                     </tr>
                   )

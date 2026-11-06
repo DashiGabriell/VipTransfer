@@ -1,6 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  formatReservationMoney,
+  hasOverridePrice,
+} from '../../domain/reservationPrice'
+import { setReservationOverridePrice } from '../../services/coreV2'
 import type {
   Driver,
   JobAssignment,
@@ -27,14 +32,6 @@ function localeFromLang(lang: string): string {
   return lang.startsWith('en') ? 'en-US' : 'pt-BR'
 }
 
-function formatMoney(price: number | null | undefined) {
-  if (price == null) return 'WhatsApp'
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(price)
-}
-
 export function ReservationDetailModal({
   reservation: r,
   busyId,
@@ -53,7 +50,20 @@ export function ReservationDetailModal({
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
   const [routeOpen, setRouteOpen] = useState(false)
+  const [priceDraft, setPriceDraft] = useState(() =>
+    hasOverridePrice(r)
+      ? String(r.override_price)
+      : r.estimated_price != null
+        ? String(r.estimated_price)
+        : '',
+  )
+  const [savingPrice, setSavingPrice] = useState(false)
   const busy = busyId === r.id
+  const canEditPrice =
+    r.status !== 'cancelado' &&
+    r.status !== 'hold_expirado' &&
+    r.status !== 'confirmado' &&
+    r.status !== 'concluido'
 
   const category = categories.find((c) => c.id === r.vehicle_category_id)
   const categoryLabel = category
@@ -61,6 +71,12 @@ export function ReservationDetailModal({
       category.name_i18n.pt ||
       category.code
     : '—'
+
+  useEffect(() => {
+    if (hasOverridePrice(r)) {
+      setPriceDraft(String(r.override_price))
+    }
+  }, [r.id, r.override_price])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -82,6 +98,31 @@ export function ReservationDetailModal({
     }
   }, [onClose, routeOpen])
 
+  async function onSavePrice(e: FormEvent) {
+    e.preventDefault()
+    const n = Number(String(priceDraft).replace(',', '.'))
+    if (!Number.isFinite(n) || n <= 0) {
+      onError(t('admin.price.invalid'))
+      return
+    }
+    setSavingPrice(true)
+    onError('')
+    try {
+      await setReservationOverridePrice(r.id, n)
+      onDispatchChanged()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('PRICE_INVALID')) onError(t('admin.price.invalid'))
+      else if (msg.includes('ALREADY_LIQUIDATED'))
+        onError(t('admin.price.alreadyLiquidated'))
+      else if (msg.includes('RESERVATION_CLOSED'))
+        onError(t('admin.price.reservationClosed'))
+      else onError(msg || t('admin.price.saveError'))
+    } finally {
+      setSavingPrice(false)
+    }
+  }
+
   return createPortal(
     <div className="agenda-slot-modal" role="presentation">
       <button
@@ -102,6 +143,8 @@ export function ReservationDetailModal({
               {t('admin.reservationDetailTitle')}
             </h2>
             <p className="agenda-slot-modal__meta">
+              <span className="service-code">{r.service_code}</span>
+              {' · '}
               {new Date(r.slot_start).toLocaleString(locale)} ·{' '}
               {t(`admin.status.${r.status}`)}
             </p>
@@ -125,8 +168,14 @@ export function ReservationDetailModal({
           </button>
         </header>
 
-        <div className="agenda-slot-modal__card" style={{ margin: 0 }}>
+        <div className="agenda-slot-modal__card agenda-slot-modal__body">
           <dl className="agenda-slot-modal__fields">
+            <div>
+              <dt>{t('admin.serviceCode')}</dt>
+              <dd>
+                <span className="service-code">{r.service_code}</span>
+              </dd>
+            </div>
             <div>
               <dt>{t('reserve.name')}</dt>
               <dd>{r.customer_name}</dd>
@@ -182,9 +231,47 @@ export function ReservationDetailModal({
               </div>
             ) : null}
             <div>
-              <dt>{t('admin.colPrice', { defaultValue: 'Referência' })}</dt>
-              <dd>{formatMoney(r.estimated_price)}</dd>
+              <dt>{t('admin.price.suggestedLabel')}</dt>
+              <dd>
+                {r.estimated_price != null
+                  ? formatReservationMoney(r.estimated_price, locale)
+                  : t('admin.price.suggestedWhatsapp')}
+              </dd>
             </div>
+            <div>
+              <dt>{t('admin.price.realLabel')}</dt>
+              <dd>
+                {hasOverridePrice(r)
+                  ? formatReservationMoney(r.override_price, locale)
+                  : t('admin.price.realMissing')}
+              </dd>
+            </div>
+            {canEditPrice ? (
+              <div className="agenda-slot-modal__price-edit">
+                <form onSubmit={(ev) => void onSavePrice(ev)}>
+                  <label>
+                    <span>{t('admin.price.realField')}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0.01"
+                      step="0.01"
+                      value={priceDraft}
+                      disabled={savingPrice || busy}
+                      onChange={(e) => setPriceDraft(e.target.value)}
+                      placeholder={t('admin.price.placeholder')}
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="agenda-slot-modal__btn is-primary"
+                    disabled={savingPrice || busy}
+                  >
+                    {savingPrice ? '…' : t('admin.price.save')}
+                  </button>
+                </form>
+              </div>
+            ) : null}
             {r.service_notes ? (
               <div>
                 <dt>{t('admin.drivers.notes')}</dt>

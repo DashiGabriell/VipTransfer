@@ -177,6 +177,7 @@ export type FinancialEntry = {
 /** Lançamento do extrato com nome do cliente (via reservation). */
 export type FinanceLedgerEntry = FinancialEntry & {
   customer_name: string
+  service_code: string | null
 }
 
 export type Lead = {
@@ -199,6 +200,7 @@ export type DriverJobDetail = {
   refuse_reason: string | null
   service: {
     reservation_id: string
+    service_code: string
     customer_first_name: string
     origin_address: string
     destination_address: string
@@ -244,6 +246,8 @@ export type Reservation = {
   id: string
   organization_id: string
   status: ReservationStatus
+  /** Código público estável (ex.: JAN26-0001). */
+  service_code: string
   customer_name: string
   customer_phone: string
   customer_email: string
@@ -258,8 +262,10 @@ export type Reservation = {
   slot_end: string
   hours_requested: number | null
   estimated_km: number | null
-  /** Internal/legacy only — never shown to the customer. */
+  /** Valor sugerido (tabela/estimativa) — referência interna. */
   estimated_price: number | null
+  /** Preço real negociado com o cliente — obrigatório para concluir. */
+  override_price: number | null
   /** Concierge details or extra notes. */
   service_notes: string | null
   hold_expires_at: string | null
@@ -378,6 +384,19 @@ export type Database = {
       expire_reservation_holds: {
         Args: Record<string, never>
         Returns: number
+      }
+      set_reservation_override_price: {
+        Args: {
+          p_reservation_id: string
+          p_override_price: number
+        }
+        Returns: Reservation
+      }
+      complete_reservation_job: {
+        Args: {
+          p_reservation_id: string
+        }
+        Returns: FinancialEntry
       }
     }
   }

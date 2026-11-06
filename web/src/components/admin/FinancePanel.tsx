@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import {
   listFinancialEntries,
   liquidateFinancialEntry,
   readCommissionPercent,
   setOrgCommissionPercent,
+  uploadSettlementProof,
 } from '../../services/coreV2'
 import type { FinancialEntry } from '../../types/database'
 import { publicSiteOrigin } from '../../lib/siteUrl'
+
+const PROOF_ACCEPT = '.pdf,image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp'
 
 type Props = {
   organizationId: string
@@ -144,6 +148,14 @@ export function FinancePanel({
   const [percent, setPercent] = useState(String(readCommissionPercent(orgSettings)))
   const [savingPct, setSavingPct] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [settleEntry, setSettleEntry] = useState<FinancialEntry | null>(null)
+  const [viewProofsEntry, setViewProofsEntry] = useState<FinancialEntry | null>(
+    null,
+  )
+  const [clientProof, setClientProof] = useState<File | null>(null)
+  const [driverProof, setDriverProof] = useState<File | null>(null)
+  const [settleError, setSettleError] = useState<string | null>(null)
+  const [exportNote, setExportNote] = useState<string | null>(null)
   const [preset, setPreset] = useState<PeriodPreset>('30d')
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date()
@@ -246,25 +258,83 @@ export function FinancePanel({
     }
   }
 
-  async function onLiquidate(id: string) {
-    setBusyId(id)
+  function openSettleModal(entry: FinancialEntry) {
+    setSettleEntry(entry)
+    setClientProof(null)
+    setDriverProof(null)
+    setSettleError(null)
+    onError('')
+  }
+
+  function closeSettleModal() {
+    if (busyId) return
+    setSettleEntry(null)
+    setClientProof(null)
+    setDriverProof(null)
+    setSettleError(null)
+  }
+
+  function mapProofError(err: unknown): string {
+    const code = err instanceof Error ? err.message : ''
+    if (code === 'PROOF_TOO_LARGE') return t('admin.finance.proofTooLarge')
+    if (code === 'PROOF_TYPE_INVALID') return t('admin.finance.proofTypeInvalid')
+    if (code.includes('PROOFS_REQUIRED')) return t('admin.finance.proofRequired')
+    return err instanceof Error && err.message
+      ? err.message
+      : t('admin.finance.liquidateError')
+  }
+
+  async function onConfirmLiquidate(e: FormEvent) {
+    e.preventDefault()
+    if (!settleEntry) return
+    if (!clientProof || !driverProof) {
+      setSettleError(t('admin.finance.proofRequired'))
+      return
+    }
+
+    setBusyId(settleEntry.id)
+    setSettleError(null)
     onError('')
     try {
-      const updated = await liquidateFinancialEntry(id)
-      setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
+      const [clientUrl, driverUrl] = await Promise.all([
+        uploadSettlementProof({
+          organization_id: organizationId,
+          entry_id: settleEntry.id,
+          kind: 'client_to_platform',
+          file: clientProof,
+        }),
+        uploadSettlementProof({
+          organization_id: organizationId,
+          entry_id: settleEntry.id,
+          kind: 'platform_to_driver',
+          file: driverProof,
+        }),
+      ])
+      const updated = await liquidateFinancialEntry(settleEntry.id, {
+        client_to_platform_proof_url: clientUrl,
+        platform_to_driver_proof_url: driverUrl,
+      })
+      setEntries((prev) => prev.map((row) => (row.id === updated.id ? updated : row)))
+      setSettleEntry(null)
+      setClientProof(null)
+      setDriverProof(null)
     } catch (err) {
-      onError(err instanceof Error ? err.message : t('admin.finance.liquidateError'))
+      const msg = mapProofError(err)
+      setSettleError(msg)
+      onError(msg)
     } finally {
       setBusyId(null)
     }
   }
 
+  function hasProofs(entry: FinancialEntry) {
+    return Boolean(
+      entry.client_to_platform_proof_url || entry.platform_to_driver_proof_url,
+    )
+  }
+
   function exportReport() {
-    const win = window.open('', '_blank', 'noopener,noreferrer')
-    if (!win) {
-      onError(t('admin.finance.reportPopupBlocked'))
-      return
-    }
+    setExportNote(null)
     const periodLabel = `${fromDate} → ${toDate}`
     const rowsHtml = filtered
       .map(
@@ -279,7 +349,7 @@ export function FinancePanel({
       )
       .join('')
 
-    win.document.write(`<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="${locale}">
 <head>
   <meta charset="utf-8" />
@@ -360,13 +430,38 @@ export function FinancePanel({
       <span>${t('admin.finance.reportFooter')}</span>
     </footer>
     <p class="no-print" style="margin-top:16px">
-      <button onclick="window.print()">${t('admin.finance.printReport')}</button>
+      <button type="button" onclick="window.print()">${t('admin.finance.printReport')}</button>
     </p>
   </div>
   <script>window.addEventListener('load', () => setTimeout(() => window.print(), 250))</script>
 </body>
-</html>`)
-    win.document.close()
+</html>`
+
+    // Blob URL evita o falso "popup bloqueado" de window.open(..., 'noopener')
+    // (com noopener o browser devolve null mesmo com a aba aberta).
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const win = window.open(url, '_blank')
+    if (win) {
+      try {
+        win.opener = null
+      } catch {
+        /* ignore cross-context */
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      return
+    }
+
+    // Sem popup: baixa o HTML para abrir/imprimir localmente.
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `relatorio-financeiro-${fromDate}_${toDate}.html`
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    setExportNote(t('admin.finance.reportDownloaded'))
   }
 
   return (
@@ -544,18 +639,28 @@ export function FinancePanel({
                       {t(`admin.finance.status.${e.status}`)}
                     </td>
                     <td data-label={t('admin.finance.colActions')}>
-                      {e.status !== 'liquidado' ? (
-                        <button
-                          type="button"
-                          className="admin-clients__btn is-ghost"
-                          disabled={busyId === e.id}
-                          onClick={() => void onLiquidate(e.id)}
-                        >
-                          {t('admin.finance.liquidate')}
-                        </button>
-                      ) : (
-                        '—'
-                      )}
+                      <div className="admin-finance__actions">
+                        {e.status !== 'liquidado' ? (
+                          <button
+                            type="button"
+                            className="admin-clients__btn is-ghost"
+                            disabled={busyId === e.id}
+                            onClick={() => openSettleModal(e)}
+                          >
+                            {t('admin.finance.liquidate')}
+                          </button>
+                        ) : null}
+                        {e.status === 'liquidado' && hasProofs(e) ? (
+                          <button
+                            type="button"
+                            className="admin-clients__btn is-ghost"
+                            onClick={() => setViewProofsEntry(e)}
+                          >
+                            {t('admin.finance.viewProofs')}
+                          </button>
+                        ) : null}
+                        {e.status === 'liquidado' && !hasProofs(e) ? '—' : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -564,6 +669,232 @@ export function FinancePanel({
           </div>
         ) : null}
       </div>
+
+      {settleEntry
+        ? createPortal(
+            <div className="admin-form-modal" role="presentation">
+              <button
+                type="button"
+                className="admin-form-modal__backdrop"
+                aria-label={t('admin.finance.cancelLiquidate')}
+                onClick={closeSettleModal}
+              />
+              <form
+                className="admin-form-modal__panel admin-clients__form"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="finance-settle-title"
+                onSubmit={(ev) => void onConfirmLiquidate(ev)}
+              >
+                <header className="admin-form-modal__head">
+                  <div>
+                    <h2 id="finance-settle-title">
+                      {t('admin.finance.liquidateModalTitle')}
+                    </h2>
+                    <p>{t('admin.finance.liquidateModalLead')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-form-modal__close"
+                    onClick={closeSettleModal}
+                    disabled={busyId === settleEntry.id}
+                  >
+                    ×
+                  </button>
+                </header>
+
+                <div className="admin-finance__settle-summary">
+                  <article>
+                    <span>{t('admin.finance.colGross')}</span>
+                    <strong>
+                      {money(Number(settleEntry.gross_amount), locale)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>{t('admin.finance.colCommission')}</span>
+                    <strong>
+                      {money(Number(settleEntry.commission_amount), locale)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>{t('admin.finance.colDriver')}</span>
+                    <strong>
+                      {money(Number(settleEntry.driver_amount), locale)}
+                    </strong>
+                  </article>
+                </div>
+
+                <div className="admin-finance__proof-fields">
+                  <label className="admin-finance__proof-field">
+                    <span>{t('admin.finance.proofClientToPlatform')}</span>
+                    <input
+                      type="file"
+                      accept={PROOF_ACCEPT}
+                      required
+                      disabled={busyId === settleEntry.id}
+                      onChange={(ev) => {
+                        setClientProof(ev.target.files?.[0] ?? null)
+                        setSettleError(null)
+                      }}
+                    />
+                    <p className="admin-finance__proof-hint">
+                      {t('admin.finance.proofHint')}
+                    </p>
+                    {clientProof ? (
+                      <p className="admin-finance__proof-name">
+                        {t('admin.finance.selectedFile', {
+                          name: clientProof.name,
+                        })}
+                      </p>
+                    ) : null}
+                  </label>
+
+                  <label className="admin-finance__proof-field">
+                    <span>{t('admin.finance.proofPlatformToDriver')}</span>
+                    <input
+                      type="file"
+                      accept={PROOF_ACCEPT}
+                      required
+                      disabled={busyId === settleEntry.id}
+                      onChange={(ev) => {
+                        setDriverProof(ev.target.files?.[0] ?? null)
+                        setSettleError(null)
+                      }}
+                    />
+                    <p className="admin-finance__proof-hint">
+                      {t('admin.finance.proofHint')}
+                    </p>
+                    {driverProof ? (
+                      <p className="admin-finance__proof-name">
+                        {t('admin.finance.selectedFile', {
+                          name: driverProof.name,
+                        })}
+                      </p>
+                    ) : null}
+                  </label>
+                </div>
+
+                {settleError ? (
+                  <p className="text-sm" style={{ color: '#8b2e2e' }}>
+                    {settleError}
+                  </p>
+                ) : null}
+
+                <div className="admin-clients__form-actions">
+                  <button
+                    type="button"
+                    className="admin-clients__btn is-ghost"
+                    onClick={closeSettleModal}
+                    disabled={busyId === settleEntry.id}
+                  >
+                    {t('admin.finance.cancelLiquidate')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="admin-clients__btn is-primary"
+                    disabled={
+                      busyId === settleEntry.id || !clientProof || !driverProof
+                    }
+                  >
+                    {busyId === settleEntry.id
+                      ? '…'
+                      : t('admin.finance.confirmLiquidate')}
+                  </button>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {viewProofsEntry
+        ? createPortal(
+            <div className="admin-form-modal" role="presentation">
+              <button
+                type="button"
+                className="admin-form-modal__backdrop"
+                aria-label={t('admin.finance.cancelLiquidate')}
+                onClick={() => setViewProofsEntry(null)}
+              />
+              <div
+                className="admin-form-modal__panel admin-clients__form"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="finance-proofs-title"
+              >
+                <header className="admin-form-modal__head">
+                  <div>
+                    <h2 id="finance-proofs-title">
+                      {t('admin.finance.proofsModalTitle')}
+                    </h2>
+                    <p>
+                      {new Date(viewProofsEntry.created_at).toLocaleString(
+                        locale,
+                      )}{' '}
+                      · {money(Number(viewProofsEntry.gross_amount), locale)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-form-modal__close"
+                    onClick={() => setViewProofsEntry(null)}
+                  >
+                    ×
+                  </button>
+                </header>
+
+                <div className="admin-finance__proof-links">
+                  {viewProofsEntry.client_to_platform_proof_url ? (
+                    <div>
+                      <strong>
+                        {t('admin.finance.proofClientToPlatform')}
+                      </strong>
+                      <p>
+                        <a
+                          href={viewProofsEntry.client_to_platform_proof_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {t('admin.finance.openProof')}
+                        </a>
+                      </p>
+                    </div>
+                  ) : null}
+                  {viewProofsEntry.platform_to_driver_proof_url ? (
+                    <div>
+                      <strong>
+                        {t('admin.finance.proofPlatformToDriver')}
+                      </strong>
+                      <p>
+                        <a
+                          href={viewProofsEntry.platform_to_driver_proof_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {t('admin.finance.openProof')}
+                        </a>
+                      </p>
+                    </div>
+                  ) : null}
+                  {!hasProofs(viewProofsEntry) ? (
+                    <p>{t('admin.finance.noProofs')}</p>
+                  ) : null}
+                </div>
+
+                <div className="admin-clients__form-actions">
+                  <button
+                    type="button"
+                    className="admin-clients__btn is-ghost"
+                    onClick={() => setViewProofsEntry(null)}
+                  >
+                    {t('admin.finance.cancelLiquidate')}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </section>
   )
 }

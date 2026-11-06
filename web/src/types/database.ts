@@ -166,6 +166,10 @@ export type FinancialEntry = {
   status: FinancialEntryStatus
   notes: string | null
   liquidated_at: string | null
+  /** Comprovante cliente → plataforma (PDF/imagem). */
+  client_to_platform_proof_url: string | null
+  /** Comprovante plataforma → motorista (PDF/imagem). */
+  platform_to_driver_proof_url: string | null
   created_at: string
   updated_at: string
 }

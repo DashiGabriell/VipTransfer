@@ -236,12 +236,88 @@ export async function listFinancialEntries(
   return (data ?? []) as FinancialEntry[]
 }
 
+const SETTLEMENT_PROOF_MAX_BYTES = 8 * 1024 * 1024
+const SETTLEMENT_PROOF_BUCKET = 'settlement-proofs'
+const SETTLEMENT_PROOF_MIME = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+])
+
+export type SettlementProofKind = 'client_to_platform' | 'platform_to_driver'
+
+export async function uploadSettlementProof(input: {
+  organization_id: string
+  entry_id: string
+  kind: SettlementProofKind
+  file: File
+}): Promise<string> {
+  const client = assertClient()
+  if (input.file.size > SETTLEMENT_PROOF_MAX_BYTES) {
+    throw new Error('PROOF_TOO_LARGE')
+  }
+
+  const mime = (input.file.type || '').toLowerCase()
+  if (mime && !SETTLEMENT_PROOF_MIME.has(mime)) {
+    throw new Error('PROOF_TYPE_INVALID')
+  }
+
+  const extRaw = (input.file.name.split('.').pop() || '').toLowerCase()
+  const fromName = ['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(extRaw)
+    ? extRaw
+    : null
+  const fromMime =
+    mime === 'application/pdf'
+      ? 'pdf'
+      : mime.includes('png')
+        ? 'png'
+        : mime.includes('webp')
+          ? 'webp'
+          : mime.includes('jpeg') || mime.includes('jpg')
+            ? 'jpg'
+            : null
+  const safeExt = fromName || fromMime || 'bin'
+  if (safeExt === 'bin') {
+    throw new Error('PROOF_TYPE_INVALID')
+  }
+
+  const path = `${input.organization_id}/${input.entry_id}/${input.kind}-${crypto.randomUUID()}.${safeExt}`
+  const contentType =
+    mime && SETTLEMENT_PROOF_MIME.has(mime)
+      ? mime
+      : safeExt === 'pdf'
+        ? 'application/pdf'
+        : `image/${safeExt === 'jpg' ? 'jpeg' : safeExt}`
+
+  const { error: uploadError } = await client.storage
+    .from(SETTLEMENT_PROOF_BUCKET)
+    .upload(path, input.file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType,
+    })
+  if (uploadError) throw uploadError
+
+  const { data: pub } = client.storage
+    .from(SETTLEMENT_PROOF_BUCKET)
+    .getPublicUrl(path)
+  return pub.publicUrl
+}
+
 export async function liquidateFinancialEntry(
   entryId: string,
+  proofs: {
+    client_to_platform_proof_url: string
+    platform_to_driver_proof_url: string
+  },
 ): Promise<FinancialEntry> {
   const client = assertClient()
   const { data, error } = await client.rpc('liquidate_financial_entry', {
     p_entry_id: entryId,
+    p_client_to_platform_proof_url: proofs.client_to_platform_proof_url,
+    p_platform_to_driver_proof_url: proofs.platform_to_driver_proof_url,
   })
   if (error) throw error
   return data as FinancialEntry

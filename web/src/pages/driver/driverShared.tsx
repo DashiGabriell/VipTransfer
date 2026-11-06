@@ -9,7 +9,10 @@ export type DriverAppContextValue = {
   driver: Driver | null
   assignments: JobAssignment[]
   details: Record<string, DriverJobDetail>
+  /** True only on the first data load of the driver shell. */
   loading: boolean
+  /** True during background refresh; keep previous UI visible. */
+  refreshing: boolean
   error: string | null
   setError: (msg: string | null) => void
   offeredCount: number

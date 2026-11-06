@@ -37,50 +37,75 @@ export function DriverLayout() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const loadErrorRef = useRef(t('driver.loadError'))
+  loadErrorRef.current = t('driver.loadError')
 
   const [driver, setDriver] = useState<Driver | null>(null)
   const [assignments, setAssignments] = useState<JobAssignment[]>([])
   const [details, setDetails] = useState<Record<string, DriverJobDetail>>({})
-  const [loading, setLoading] = useState(true)
+  const [bootstrapping, setBootstrapping] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestSeq = useRef(0)
 
   const orgId = tenant.organizationId
+  const userId = user?.id ?? null
 
-  const refresh = useCallback(async () => {
-    if (!orgId || !user) return
-    setLoading(true)
-    setError(null)
-    try {
-      const me = await getMyDriverProfile(orgId)
-      setDriver(me)
-      if (!me) {
-        setAssignments([])
-        setDetails({})
-        return
+  const refresh = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!orgId || !userId) return
+      const silent = opts?.silent === true
+      const seq = ++requestSeq.current
+
+      if (silent) setRefreshing(true)
+      else setBootstrapping(true)
+      setError(null)
+
+      try {
+        const me = await getMyDriverProfile(orgId)
+        if (seq !== requestSeq.current) return
+        setDriver(me)
+        if (!me) {
+          setAssignments([])
+          setDetails({})
+          return
+        }
+        const rows = await listMyDriverAssignments(orgId)
+        if (seq !== requestSeq.current) return
+        setAssignments(rows)
+        const map: Record<string, DriverJobDetail> = {}
+        await Promise.all(
+          rows.map(async (row) => {
+            try {
+              map[row.id] = await getDriverJobDetail(row.id)
+            } catch {
+              /* skip detail errors per row */
+            }
+          }),
+        )
+        if (seq !== requestSeq.current) return
+        setDetails(map)
+      } catch (err) {
+        if (seq !== requestSeq.current) return
+        setError(
+          err instanceof Error ? err.message : loadErrorRef.current,
+        )
+      } finally {
+        if (seq !== requestSeq.current) return
+        setBootstrapping(false)
+        setRefreshing(false)
       }
-      const rows = await listMyDriverAssignments(orgId)
-      setAssignments(rows)
-      const map: Record<string, DriverJobDetail> = {}
-      await Promise.all(
-        rows.map(async (row) => {
-          try {
-            map[row.id] = await getDriverJobDetail(row.id)
-          } catch {
-            /* skip detail errors per row */
-          }
-        }),
-      )
-      setDetails(map)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('driver.loadError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [orgId, user, t])
+    },
+    [orgId, userId],
+  )
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    if (!orgId || !userId) {
+      setBootstrapping(false)
+      return
+    }
+    void refresh({ silent: false })
+  }, [orgId, userId, refresh])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -96,26 +121,33 @@ export function DriverLayout() {
     [assignments],
   )
 
+  const silentRefresh = useCallback(
+    () => refresh({ silent: true }),
+    [refresh],
+  )
+
   const ctx = useMemo(
     () => ({
       driver,
       assignments,
       details,
-      loading,
+      loading: bootstrapping,
+      refreshing,
       error,
       setError,
       offeredCount,
-      refresh,
+      refresh: silentRefresh,
       locale,
     }),
     [
       driver,
       assignments,
       details,
-      loading,
+      bootstrapping,
+      refreshing,
       error,
       offeredCount,
-      refresh,
+      silentRefresh,
       locale,
     ],
   )

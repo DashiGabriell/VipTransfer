@@ -21,14 +21,11 @@ export default function App() {
             <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
             <Route path="/motorista" element={<DriverLayout />}>
               <Route index element={<Navigate to="ofertas" replace />} />
-              <Route
-                path="ofertas"
-                element={<DriverJobsPage mode="ofertas" />}
-              />
-              <Route
-                path="aceitas"
-                element={<DriverJobsPage mode="aceitas" />}
-              />
+              {/* Shared shell so ofertas ↔ aceitas does not remount/refetch */}
+              <Route element={<DriverJobsPage />}>
+                <Route path="ofertas" />
+                <Route path="aceitas" />
+              </Route>
               <Route path="perfil" element={<DriverProfilePage />} />
             </Route>
             <Route path="/admin" element={<AdminPage />}>

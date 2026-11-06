@@ -331,6 +331,7 @@ export function ReservationForm() {
       const slotLabel = new Date(selectedSlot.slot_start).toLocaleString(locale)
 
       const url = buildWhatsAppUrl(waDigits, {
+        serviceCode: reservation.service_code,
         name: trimmedName,
         phone: trimmedPhone,
         email: trimmedEmail,
@@ -351,8 +352,8 @@ export function ReservationForm() {
 
       setFeedback(
         locale === 'en'
-          ? `Request held until ${holdLabel}. Fare will be confirmed on WhatsApp.`
-          : `Solicitação em hold até ${holdLabel}. O valor será combinado no WhatsApp.`,
+          ? `Request ${reservation.service_code} held until ${holdLabel}. Fare will be confirmed on WhatsApp.`
+          : `Solicitação ${reservation.service_code} em hold até ${holdLabel}. O valor será combinado no WhatsApp.`,
       )
       setSelectedSlot(null)
       setStops([])

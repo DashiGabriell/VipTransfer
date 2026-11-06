@@ -303,6 +303,13 @@
   font-size: 0.9rem;
 }
 
+.driver-app__refreshing {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--da-muted);
+}
+
 /* —— Job cards —— */
 .driver-app__list {
   list-style: none;
@@ -310,6 +317,24 @@
   padding: 0;
   display: grid;
   gap: 0.85rem;
+}
+
+.driver-job__code {
+  margin: 0 0 0.25rem;
+}
+
+.driver-job__code .service-code {
+  display: inline-block;
+  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Menlo, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--da-bronze-deep);
+  background: color-mix(in srgb, var(--da-bronze) 16%, #fff);
+  border: 1px solid color-mix(in srgb, var(--da-bronze) 32%, transparent);
+  border-radius: 0.4rem;
+  padding: 0.12rem 0.45rem;
+  line-height: 1.35;
 }
 
 .driver-job {

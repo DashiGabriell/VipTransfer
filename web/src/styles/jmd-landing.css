@@ -65,7 +65,7 @@
     }
     .skip:focus { left: 1rem; top: 1rem; }
 
-    /* â€”â€” Nav â€”â€” */
+    /* ?????? Nav ?????? */
     .site-nav {
       position: fixed;
       inset: 0 0 auto 0;
@@ -213,7 +213,7 @@
       .nav-toggle { display: none; }
     }
 
-    /* â€”â€” Hero folio â€”â€” */
+    /* ?????? Hero folio ?????? */
     .hero {
       min-height: 100svh;
       padding: 5.5rem clamp(1rem, 3vw, 2rem) 2.5rem;
@@ -549,7 +549,7 @@
       .folio-meta { letter-spacing: 0.12em; }
     }
 
-    /* â€”â€” Sections â€”â€” */
+    /* ?????? Sections ?????? */
     .section {
       padding: clamp(4.5rem, 10vw, 7.5rem) clamp(1.35rem, 5vw, 4rem);
     }
@@ -649,13 +649,73 @@
       .schedule-item:nth-child(even) .schedule-copy { order: 3; }
     }
 
-    /* Fleet dossier */
-    .fleet-grid {
-      display: grid;
-      gap: 1.25rem;
+    /* Fleet dossier ? hairline parade */
+    .fleet-parade {
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
     }
-    @media (min-width: 800px) {
-      .fleet-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .fleet-parade-viewport {
+      overflow: hidden;
+      padding: 0.35rem 0 0.75rem;
+      mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 5%,
+        #000 95%,
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 5%,
+        #000 95%,
+        transparent 100%
+      );
+    }
+    .fleet-parade-track {
+      display: flex;
+      gap: 1.25rem;
+      width: max-content;
+      padding-inline: clamp(1rem, 4vw, 2.5rem);
+      animation: fleet-desfile 56s linear infinite;
+    }
+    .fleet-parade:hover .fleet-parade-track,
+    .fleet-parade:focus-within .fleet-parade-track {
+      animation-play-state: paused;
+    }
+    @keyframes fleet-desfile {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(-50%, 0, 0); }
+    }
+    .fleet-parade--static .fleet-parade-viewport {
+      overflow-x: auto;
+      mask-image: none;
+      -webkit-mask-image: none;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 0.25rem;
+    }
+    .fleet-parade--static .fleet-parade-track {
+      animation: none;
+    }
+    .fleet-parade--static .fleet-sheet--slide {
+      scroll-snap-align: start;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fleet-parade-viewport {
+        overflow-x: auto;
+        mask-image: none;
+        -webkit-mask-image: none;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 0.25rem;
+      }
+      .fleet-parade-track {
+        animation: none;
+      }
+      .fleet-sheet--slide {
+        scroll-snap-align: start;
+      }
     }
     .fleet-sheet {
       background: var(--paper-warm);
@@ -663,8 +723,18 @@
       border: 1px solid var(--paper-line);
       padding: 1.5rem;
       display: grid;
-      gap: 1.25rem;
+      gap: 1.1rem;
       transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+    }
+    .fleet-sheet--slide {
+      flex: 0 0 min(19.5rem, 78vw);
+      width: min(19.5rem, 78vw);
+    }
+    @media (min-width: 900px) {
+      .fleet-sheet--slide {
+        flex-basis: 22rem;
+        width: 22rem;
+      }
     }
     .fleet-sheet:hover {
       transform: translateY(-4px);
@@ -672,17 +742,17 @@
     }
     .fleet-sheet h3 {
       font-family: var(--font-display);
-      font-size: 1.55rem;
+      font-size: 1.45rem;
       font-weight: 500;
       margin: 0 0 0.35rem;
     }
     .fleet-sheet .spec {
       margin: 0;
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: 0.9rem;
     }
     .fleet-sheet .visual {
-      height: 12rem;
+      height: 11.5rem;
       display: grid;
       place-items: center;
       background:
@@ -691,28 +761,42 @@
       border-bottom: 1px solid var(--paper-line);
       overflow: hidden;
     }
-    .fleet-sheet .visual img {
-      max-height: 100%;
-      width: auto;
+    .fleet-sheet .visual--fleet {
+      background: var(--paper);
+      padding: 0.35rem 0.5rem 0.15rem;
+    }
+    .fleet-sheet .visual--fleet img {
+      width: 100%;
+      height: 100%;
+      max-height: 11rem;
       object-fit: contain;
-      mix-blend-mode: multiply;
+      object-position: center bottom;
     }
     .fleet-foot {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      padding-top: 0.5rem;
+      padding-top: 0.35rem;
       border-top: 1px solid var(--paper-line);
       font-size: 0.78rem;
       color: var(--muted);
     }
-    .fleet-foot strong {
+    .fleet-consult {
+      appearance: none;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
       color: var(--ink);
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       font-size: 0.75rem;
+      font-family: var(--font-sans);
+    }
+    .fleet-consult:hover {
+      color: var(--bronze-deep);
     }
     .fleet-sheet:focus-within {
       outline: 2px solid var(--bronze);
@@ -993,7 +1077,7 @@
       }
     }
 
-    /* —— PWA install —— */
+    /* ?? PWA install ?? */
     .install-app-wrap {
       display: grid;
       gap: 0.45rem;
@@ -1099,7 +1183,7 @@
       .nav-install { display: grid; }
     }
 
-/* Landing lead capture (additive � does not replace reservation form) */
+/* Landing lead capture (additive ? does not replace reservation form) */
 .lead-capture {
   max-width: 40rem;
   margin: 0 auto;

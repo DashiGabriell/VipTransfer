@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   RouteNavPicker,
@@ -14,14 +14,17 @@ import {
 
 type Mode = 'ofertas' | 'aceitas'
 
-export function DriverJobsPage({ mode }: { mode: Mode }) {
+export function DriverJobsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const mode: Mode = pathname.includes('/aceitas') ? 'aceitas' : 'ofertas'
   const {
     driver,
     assignments,
     details,
     loading,
+    refreshing,
     error,
     setError,
     refresh,
@@ -70,7 +73,8 @@ export function DriverJobsPage({ mode }: { mode: Mode }) {
 
   return (
     <>
-      <div className="driver-app__greeting">
+      <Outlet />
+      <div className="driver-app__greeting" data-mode={mode}>
         <h1>
           {mode === 'ofertas'
             ? t('driver.tabOffersTitle')
@@ -95,6 +99,11 @@ export function DriverJobsPage({ mode }: { mode: Mode }) {
 
       {error ? <p className="driver-app__alert">{error}</p> : null}
       {loading ? <p className="driver-app__loading">…</p> : null}
+      {!loading && refreshing ? (
+        <p className="driver-app__refreshing" aria-live="polite">
+          {t('driver.refreshing')}
+        </p>
+      ) : null}
 
       {!loading && !driver ? (
         <div className="driver-app__empty">
@@ -144,6 +153,11 @@ export function DriverJobsPage({ mode }: { mode: Mode }) {
                 <li key={a.id} className="driver-job">
                   <div className="driver-job__head">
                     <div>
+                      {svc?.service_code ? (
+                        <p className="driver-job__code">
+                          <span className="service-code">{svc.service_code}</span>
+                        </p>
+                      ) : null}
                       <p className="driver-job__when">
                         {when.toLocaleString(locale, {
                           weekday: 'short',

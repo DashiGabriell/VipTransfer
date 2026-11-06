@@ -1,4 +1,6 @@
 export type WhatsAppReservationSummary = {
+  /** Código público do serviço (ex.: JAN26-0001). */
+  serviceCode?: string | null
   name: string
   phone: string
   email: string
@@ -30,9 +32,12 @@ export function buildWhatsAppUrl(
     ? stops.map((s, i) => `Stop ${i + 1}: ${s}`)
     : stops.map((s, i) => `Parada ${i + 1}: ${s}`)
 
+  const code = (summary.serviceCode ?? '').trim().toUpperCase()
+
   const lines = en
     ? [
         `Hello, I'd like to request a transfer with JMD.`,
+        ...(code ? [`Request ID: ${code}`] : []),
         `Name: ${summary.name}`,
         `Phone: ${summary.phone}`,
         `Email: ${summary.email}`,
@@ -54,6 +59,7 @@ export function buildWhatsAppUrl(
       ]
     : [
         `Olá, gostaria de solicitar um transfer com a JMD.`,
+        ...(code ? [`Código: ${code}`] : []),
         `Nome: ${summary.name}`,
         `Telefone: ${summary.phone}`,
         `E-mail: ${summary.email}`,
@@ -88,6 +94,8 @@ export function toWhatsAppDigits(phone: string): string | null {
 }
 
 export type DriverDemandWhatsAppSummary = {
+  /** Código público do serviço (ex.: JAN26-0001). */
+  serviceCode?: string | null
   driverFirstName: string
   origin: string
   destination: string
@@ -117,6 +125,7 @@ export function buildDriverDemandWhatsAppUrl(
   const vehicle = (summary.vehicleLabel ?? '').trim()
   const en = summary.locale === 'en'
   const first = summary.driverFirstName.trim() || (en ? 'driver' : 'motorista')
+  const code = (summary.serviceCode ?? '').trim().toUpperCase()
 
   const stopLines = en
     ? stops.map((s, i) => `Stop ${i + 1}: ${s}`)
@@ -125,6 +134,7 @@ export function buildDriverDemandWhatsAppUrl(
   const lines = en
     ? [
         `Hi, ${first}! JMD sent you a new job offer.`,
+        ...(code ? [`Job ID: ${code}`] : []),
         `When: ${summary.slotLabel}`,
         `Service: ${summary.serviceLabel}`,
         ...(vehicle ? [`Vehicle: ${vehicle}`] : []),
@@ -144,6 +154,7 @@ export function buildDriverDemandWhatsAppUrl(
       ]
     : [
         `Olá, ${first}! A JMD enviou uma nova demanda para você.`,
+        ...(code ? [`Código: ${code}`] : []),
         `Quando: ${summary.slotLabel}`,
         `Serviço: ${summary.serviceLabel}`,
         ...(vehicle ? [`Veículo: ${vehicle}`] : []),

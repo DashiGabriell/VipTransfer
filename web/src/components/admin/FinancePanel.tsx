@@ -388,7 +388,11 @@ export function FinancePanel({
       setEntries((prev) =>
         prev.map((row) =>
           row.id === updated.id
-            ? { ...updated, customer_name: row.customer_name }
+            ? {
+                ...updated,
+                customer_name: row.customer_name,
+                service_code: row.service_code,
+              }
             : row,
         ),
       )
@@ -418,6 +422,7 @@ export function FinancePanel({
         (e) => `
       <tr>
         <td>${new Date(e.created_at).toLocaleString(locale)}</td>
+        <td>${e.service_code ?? '—'}</td>
         <td>${e.customer_name}</td>
         <td>${money(Number(e.gross_amount), locale)}</td>
         <td>${money(Number(e.commission_amount), locale)}</td>
@@ -492,6 +497,7 @@ export function FinancePanel({
         <thead>
           <tr>
             <th>${t('admin.finance.colDate')}</th>
+            <th>${t('admin.serviceCode')}</th>
             <th>${t('admin.finance.colCustomer')}</th>
             <th>${t('admin.finance.colGross')}</th>
             <th>${t('admin.finance.colCommission')}</th>
@@ -500,7 +506,7 @@ export function FinancePanel({
           </tr>
         </thead>
         <tbody>
-          ${rowsHtml || `<tr><td colspan="6">${t('admin.finance.empty')}</td></tr>`}
+          ${rowsHtml || `<tr><td colspan="7">${t('admin.finance.empty')}</td></tr>`}
         </tbody>
       </table>
     </main>
@@ -698,6 +704,7 @@ export function FinancePanel({
               <thead>
                 <tr>
                   <th scope="col">{t('admin.finance.colDate')}</th>
+                  <th scope="col">{t('admin.serviceCode')}</th>
                   <th scope="col">{t('admin.finance.colCustomer')}</th>
                   <th scope="col">{t('admin.finance.colGross')}</th>
                   <th scope="col">{t('admin.finance.colCommission')}</th>
@@ -711,6 +718,11 @@ export function FinancePanel({
                   <tr key={e.id}>
                     <td data-label={t('admin.finance.colDate')}>
                       {new Date(e.created_at).toLocaleString(locale)}
+                    </td>
+                    <td data-label={t('admin.serviceCode')}>
+                      <span className="service-code">
+                        {e.service_code ?? '—'}
+                      </span>
                     </td>
                     <td data-label={t('admin.finance.colCustomer')}>
                       {e.customer_name}

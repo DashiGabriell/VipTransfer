@@ -4,13 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { InstallAppButton } from '../components/InstallAppButton'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { LeadCaptureForm } from '../components/LeadCaptureForm'
+import { FleetParade } from '../components/landing/FleetParade'
 import { ReservationForm } from '../components/ReservationForm'
 import { useTenant } from '../context/TenantContext'
-
-const SUV_IMG =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuDrKGgjZHah1JBC78jwkS7p2FbsNNb962egrS7p5EOpJmfSOI-CERaeSDnAI9Pk7WQ137r9CVqfANyogx3sFmwmUWILJxYoMcV1G0gg0P_bAAAYKfEjydPorDCG6XllFTxuMlp6q3DBqsyWbUrnCifV99T1A8132qKv-dq1vUElw1GqQk8DkFGLbpSI3ZqyacK3Uay0c8WkodpQ9sf3mleXyxk6UkWMu2A5Q_Lx1FdvUbyRKO8z0j09RPlbkCssD-qudPkopceJx7YK'
-const SEDAN_IMG =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuCsWDS3QL7XeJOe7fxRn2tQRWPOjiBrOfaGoNKZKCkHTBk8_U-9hv7PIsK55WzuDXGtVaIF5laoWGQ392NB7fOUsAdQ8lrhhHHTLAQs54XylAhnkBAS9RUdIU4sLj3XduboMvNdQidGC0vLY9Ko76Gglkj2hp8SwPOhQGGwqy_lB40yhW58y7Bm_ykLZBLviNZvRj3JOMwsXW9pVnUfk0VzvwfDQuJ45A3rWKP2jHbp7dqtP2LarUArByS0N--tbL5cMnLOE9SNzAL-'
 
 export function LandingPage() {
   const { t } = useTranslation()
@@ -266,48 +262,9 @@ export function LandingPage() {
               <h2>{t('landing.fleetTitle')}</h2>
               <p>{t('landing.fleetLead')}</p>
             </div>
-            <div className="fleet-grid">
-              <article className="fleet-sheet">
-                <div>
-                  <h3>{t('landing.suvTitle')}</h3>
-                  <p className="spec">{t('landing.suvSpec')}</p>
-                </div>
-                <div className="visual">
-                  <img
-                    src={SUV_IMG}
-                    alt=""
-                    width={640}
-                    height={360}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div className="fleet-foot">
-                  <span>{t('landing.suvFoot')}</span>
-                  <strong>{t('landing.consult')}</strong>
-                </div>
-              </article>
-              <article className="fleet-sheet">
-                <div>
-                  <h3>{t('landing.sedanTitle')}</h3>
-                  <p className="spec">{t('landing.sedanSpec')}</p>
-                </div>
-                <div className="visual">
-                  <img
-                    src={SEDAN_IMG}
-                    alt=""
-                    width={640}
-                    height={360}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div className="fleet-foot">
-                  <span>{t('landing.sedanFoot')}</span>
-                  <strong>{t('landing.consult')}</strong>
-                </div>
-              </article>
-            </div>
+          </div>
+          <FleetParade onConsult={scrollToQuote} />
+          <div className="section-inner">
             <div className="cta-band">
               <p>{t('landing.fleetCta')}</p>
               <button className="btn-primary" type="button" onClick={scrollToQuote}>

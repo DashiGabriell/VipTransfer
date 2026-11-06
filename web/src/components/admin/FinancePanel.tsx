@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -12,6 +19,70 @@ import type { FinancialEntry } from '../../types/database'
 import { publicSiteOrigin } from '../../lib/siteUrl'
 
 const PROOF_ACCEPT = '.pdf,image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp'
+
+function ProofFilePicker({
+  label,
+  file,
+  disabled,
+  onChange,
+}: {
+  label: string
+  file: File | null
+  disabled?: boolean
+  onChange: (next: File | null) => void
+}) {
+  const { t } = useTranslation()
+  const inputId = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <div className={`admin-finance__proof-field${file ? ' has-file' : ''}`}>
+      <span className="admin-finance__proof-label">{label}</span>
+      <input
+        ref={inputRef}
+        id={inputId}
+        className="admin-finance__proof-input"
+        type="file"
+        accept={PROOF_ACCEPT}
+        disabled={disabled}
+        onChange={(ev) => {
+          onChange(ev.target.files?.[0] ?? null)
+        }}
+      />
+      <div className="admin-finance__proof-box">
+        <p className="admin-finance__proof-name">
+          {file
+            ? t('admin.finance.selectedFile', { name: file.name })
+            : t('admin.finance.emptyFile')}
+        </p>
+        <p className="admin-finance__proof-hint">{t('admin.finance.proofHint')}</p>
+        <div className="admin-finance__proof-actions">
+          <button
+            type="button"
+            className="admin-clients__btn is-primary admin-finance__proof-pick"
+            disabled={disabled}
+            onClick={() => inputRef.current?.click()}
+          >
+            {file ? t('admin.finance.changeFile') : t('admin.finance.chooseFile')}
+          </button>
+          {file ? (
+            <button
+              type="button"
+              className="admin-clients__btn is-ghost"
+              disabled={disabled}
+              onClick={() => {
+                onChange(null)
+                if (inputRef.current) inputRef.current.value = ''
+              }}
+            >
+              {t('admin.finance.removeFile')}
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 type Props = {
   organizationId: string
@@ -517,6 +588,12 @@ export function FinancePanel({
         </div>
       </div>
 
+      {exportNote ? (
+        <p className="admin-finance__export-note" role="status">
+          {exportNote}
+        </p>
+      ) : null}
+
       <div className="admin-finance__kpis">
         <article>
           <span>{t('admin.finance.kpiGross')}</span>
@@ -725,53 +802,24 @@ export function FinancePanel({
                 </div>
 
                 <div className="admin-finance__proof-fields">
-                  <label className="admin-finance__proof-field">
-                    <span>{t('admin.finance.proofClientToPlatform')}</span>
-                    <input
-                      type="file"
-                      accept={PROOF_ACCEPT}
-                      required
-                      disabled={busyId === settleEntry.id}
-                      onChange={(ev) => {
-                        setClientProof(ev.target.files?.[0] ?? null)
-                        setSettleError(null)
-                      }}
-                    />
-                    <p className="admin-finance__proof-hint">
-                      {t('admin.finance.proofHint')}
-                    </p>
-                    {clientProof ? (
-                      <p className="admin-finance__proof-name">
-                        {t('admin.finance.selectedFile', {
-                          name: clientProof.name,
-                        })}
-                      </p>
-                    ) : null}
-                  </label>
-
-                  <label className="admin-finance__proof-field">
-                    <span>{t('admin.finance.proofPlatformToDriver')}</span>
-                    <input
-                      type="file"
-                      accept={PROOF_ACCEPT}
-                      required
-                      disabled={busyId === settleEntry.id}
-                      onChange={(ev) => {
-                        setDriverProof(ev.target.files?.[0] ?? null)
-                        setSettleError(null)
-                      }}
-                    />
-                    <p className="admin-finance__proof-hint">
-                      {t('admin.finance.proofHint')}
-                    </p>
-                    {driverProof ? (
-                      <p className="admin-finance__proof-name">
-                        {t('admin.finance.selectedFile', {
-                          name: driverProof.name,
-                        })}
-                      </p>
-                    ) : null}
-                  </label>
+                  <ProofFilePicker
+                    label={t('admin.finance.proofClientToPlatform')}
+                    file={clientProof}
+                    disabled={busyId === settleEntry.id}
+                    onChange={(next) => {
+                      setClientProof(next)
+                      setSettleError(null)
+                    }}
+                  />
+                  <ProofFilePicker
+                    label={t('admin.finance.proofPlatformToDriver')}
+                    file={driverProof}
+                    disabled={busyId === settleEntry.id}
+                    onChange={(next) => {
+                      setDriverProof(next)
+                      setSettleError(null)
+                    }}
+                  />
                 </div>
 
                 {settleError ? (

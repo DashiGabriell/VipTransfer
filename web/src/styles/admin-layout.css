@@ -2591,6 +2591,17 @@
   display: grid;
   gap: 1rem;
 }
+.admin-finance__export-note {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--admin-bronze, #b08d57) 35%, #d8cfc0);
+  background: #fffcf7;
+  color: #5c554c;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .admin-finance__filters {
   display: flex;
   flex-wrap: wrap;
@@ -2732,20 +2743,41 @@
 
 .admin-finance__proof-field {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
-.admin-finance__proof-field > span:first-child {
+.admin-finance__proof-label {
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--admin-muted, #5c554c);
 }
 
-.admin-finance__proof-field input[type='file'] {
-  width: 100%;
-  font-size: 0.85rem;
-  color: var(--admin-ink, #152033);
+.admin-finance__proof-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-finance__proof-box {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  border: 1.5px dashed var(--admin-border, #d8cfc0);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--admin-paper, #fffdf8) 88%, #b08d57 12%);
+}
+
+.admin-finance__proof-field.has-file .admin-finance__proof-box {
+  border-style: solid;
+  border-color: color-mix(in srgb, #b08d57 55%, #d8cfc0);
+  background: var(--admin-paper, #fffdf8);
 }
 
 .admin-finance__proof-hint {
@@ -2756,8 +2788,36 @@
 
 .admin-finance__proof-name {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--admin-ink, #152033);
+  word-break: break-word;
+}
+
+.admin-finance__proof-field:not(.has-file) .admin-finance__proof-name {
+  font-weight: 500;
+  color: var(--admin-muted, #5c554c);
+}
+
+.admin-finance__proof-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-finance__proof-pick {
+  min-width: 9.5rem;
+}
+
+.admin-form-modal .admin-finance__proof-pick.admin-clients__btn.is-primary {
+  background: #152033;
+  color: #fffdf8;
+  border-color: #152033;
+}
+
+.admin-form-modal .admin-finance__proof-pick.admin-clients__btn.is-primary:hover:not(:disabled) {
+  background: #1f2d45;
 }
 
 .admin-finance__settle-summary {

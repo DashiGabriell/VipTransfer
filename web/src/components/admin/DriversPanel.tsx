@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -51,6 +52,7 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [loading, setLoading] = useState(true)
   const [showInactive, setShowInactive] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -115,6 +117,27 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
     setAvailability(emptyAvailability())
     setNotes('')
     setDocumentsNotes('')
+    setFormOpen(false)
+  }
+
+  function openCreate() {
+    onError('')
+    setEditingId(null)
+    setFullName('')
+    setPhone('')
+    setEmail('')
+    setCategoryId('')
+    setBrand('')
+    setModel('')
+    setYear('')
+    setColor('')
+    setPlate('')
+    setBodyType('sedan')
+    setSkills([])
+    setAvailability(emptyAvailability())
+    setNotes('')
+    setDocumentsNotes('')
+    setFormOpen(true)
   }
 
   function startEdit(driver: Driver) {
@@ -136,9 +159,7 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
     )
     setNotes(driver.notes ?? '')
     setDocumentsNotes(driver.documents_notes ?? '')
-    requestAnimationFrame(() => {
-      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
+    setFormOpen(true)
   }
 
   function toggleSkill(skill: string) {
@@ -281,20 +302,43 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
   }
 
   return (
-    <section className="admin-clients">
+    <section className="admin-clients admin-clients--list-only">
+      {formOpen
+        ? createPortal(
+            <div className="admin-form-modal" role="presentation">
+              <button
+                type="button"
+                className="admin-form-modal__backdrop"
+                aria-label={t('admin.closeModal')}
+                onClick={resetForm}
+              />
       <form
         ref={formRef}
         onSubmit={onSubmit}
-        className={`admin-clients__form rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5${isEditing ? ' is-editing' : ''}`}
+        className={`admin-form-modal__panel admin-clients__form${isEditing ? ' is-editing' : ''}`}
+        role="dialog"
+        aria-modal="true"
       >
-        <h2 className="mb-1 font-semibold text-primary">
-          {isEditing ? t('admin.drivers.editTitle') : t('admin.drivers.createTitle')}
-        </h2>
-        <p className="mb-4 text-sm text-text-secondary-light">
-          {isEditing ? t('admin.drivers.editLead') : t('admin.drivers.createLead')}
-        </p>
+        <header className="admin-form-modal__head">
+          <div>
+            <h2>
+              {isEditing ? t('admin.drivers.editTitle') : t('admin.drivers.createTitle')}
+            </h2>
+            <p>
+              {isEditing ? t('admin.drivers.editLead') : t('admin.drivers.createLead')}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="admin-form-modal__close"
+            onClick={resetForm}
+            aria-label={t('admin.closeModal')}
+          >
+            ×
+          </button>
+        </header>
 
-        <div className="admin-clients__grid">
+        <div className="admin-clients__grid admin-clients__grid--horizontal">
           <label className="admin-clients__field">
             <span>{t('reserve.name')}</span>
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
@@ -536,11 +580,9 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
         </div>
 
         <div className="admin-clients__form-actions">
-          {isEditing ? (
-            <button type="button" className="admin-clients__btn is-ghost" onClick={resetForm}>
-              {t('admin.clients.cancelEdit')}
-            </button>
-          ) : null}
+          <button type="button" className="admin-clients__btn is-ghost" onClick={resetForm}>
+            {t('admin.clients.cancelEdit')}
+          </button>
           <button type="submit" className="admin-clients__btn is-primary" disabled={saving}>
             {saving
               ? t('admin.clients.saving')
@@ -550,6 +592,10 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
           </button>
         </div>
       </form>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className="admin-clients__list-panel rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5">
         <div className="admin-clients__toolbar">
@@ -559,14 +605,23 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
               {t('admin.drivers.listLead', { count: drivers.length })}
             </p>
           </div>
-          <label className="admin-clients__switch">
-            <input
-              type="checkbox"
-              checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-            />
-            <span>{t('admin.clients.showInactive')}</span>
-          </label>
+          <div className="admin-clients__toolbar-actions">
+            <button
+              type="button"
+              className="admin-clients__btn is-primary"
+              onClick={openCreate}
+            >
+              {t('admin.drivers.createTitle')}
+            </button>
+            <label className="admin-clients__switch">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+              />
+              <span>{t('admin.clients.showInactive')}</span>
+            </label>
+          </div>
         </div>
 
         {loading ? <p className="text-sm text-text-secondary-light">…</p> : null}

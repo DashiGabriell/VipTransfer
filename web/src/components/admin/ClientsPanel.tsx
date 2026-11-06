@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -29,6 +30,7 @@ export function ClientsPanel({ organizationId, onError }: Props) {
   const [query, setQuery] = useState('')
   const [showInactive, setShowInactive] = useState(false)
 
+  const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
@@ -82,6 +84,17 @@ export function ClientsPanel({ organizationId, onError }: Props) {
     setPhone('')
     setEmail('')
     setNotes('')
+    setFormOpen(false)
+  }
+
+  function openCreate() {
+    onError('')
+    setEditingId(null)
+    setFullName('')
+    setPhone('')
+    setEmail('')
+    setNotes('')
+    setFormOpen(true)
   }
 
   function startEdit(customer: Customer) {
@@ -91,9 +104,7 @@ export function ClientsPanel({ organizationId, onError }: Props) {
     setPhone(customer.phone)
     setEmail(customer.email)
     setNotes(customer.notes ?? '')
-    requestAnimationFrame(() => {
-      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
+    setFormOpen(true)
   }
 
   async function onSubmit(e: FormEvent) {
@@ -179,93 +190,120 @@ export function ClientsPanel({ organizationId, onError }: Props) {
   }
 
   return (
-    <section className="admin-clients">
-      <form
-        ref={formRef}
-        onSubmit={onSubmit}
-        className={`admin-clients__form rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5${isEditing ? ' is-editing' : ''}`}
-      >
-        <h2 className="mb-1 font-semibold text-primary">
-          {isEditing
-            ? t('admin.clients.editTitle')
-            : t('admin.clients.createTitle')}
-        </h2>
-        <p className="mb-4 text-sm text-text-secondary-light">
-          {isEditing
-            ? t('admin.clients.editLead')
-            : t('admin.clients.createLead')}
-        </p>
+    <section className="admin-clients admin-clients--list-only">
+      {formOpen
+        ? createPortal(
+            <div className="admin-form-modal" role="presentation">
+              <button
+                type="button"
+                className="admin-form-modal__backdrop"
+                aria-label={t('admin.closeModal')}
+                onClick={resetForm}
+              />
+              <form
+                ref={formRef}
+                onSubmit={onSubmit}
+                className={`admin-form-modal__panel admin-clients__form${isEditing ? ' is-editing' : ''}`}
+                role="dialog"
+                aria-modal="true"
+              >
+                <header className="admin-form-modal__head">
+                  <div>
+                    <h2>
+                      {isEditing
+                        ? t('admin.clients.editTitle')
+                        : t('admin.clients.createTitle')}
+                    </h2>
+                    <p>
+                      {isEditing
+                        ? t('admin.clients.editLead')
+                        : t('admin.clients.createLead')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-form-modal__close"
+                    onClick={resetForm}
+                    aria-label={t('admin.closeModal')}
+                  >
+                    ×
+                  </button>
+                </header>
 
-        <div className="admin-clients__grid">
-          <label className="admin-clients__field">
-            <span>{t('reserve.name')}</span>
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              autoComplete="name"
-            />
-          </label>
+                <div className="admin-clients__grid admin-clients__grid--horizontal">
+                  <label className="admin-clients__field">
+                    <span>{t('reserve.name')}</span>
+                    <input
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      autoComplete="name"
+                    />
+                  </label>
 
-          <label className="admin-clients__field">
-            <span>{t('reserve.phone')}</span>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(formatBrazilPhoneInput(e.target.value))}
-              placeholder={t('reserve.phonePlaceholder')}
-              required
-              inputMode="tel"
-              autoComplete="tel"
-            />
-          </label>
+                  <label className="admin-clients__field">
+                    <span>{t('reserve.phone')}</span>
+                    <input
+                      value={phone}
+                      onChange={(e) =>
+                        setPhone(formatBrazilPhoneInput(e.target.value))
+                      }
+                      placeholder={t('reserve.phonePlaceholder')}
+                      required
+                      inputMode="tel"
+                      autoComplete="tel"
+                    />
+                  </label>
 
-          <label className="admin-clients__field">
-            <span>{t('reserve.email')}</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </label>
+                  <label className="admin-clients__field">
+                    <span>{t('reserve.email')}</span>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                  </label>
 
-          <label className="admin-clients__field admin-clients__field--full">
-            <span>{t('admin.clients.notes')}</span>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              maxLength={2000}
-              placeholder={t('admin.clients.notesPlaceholder')}
-            />
-          </label>
-        </div>
+                  <label className="admin-clients__field admin-clients__field--full">
+                    <span>{t('admin.clients.notes')}</span>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={2}
+                      maxLength={2000}
+                      placeholder={t('admin.clients.notesPlaceholder')}
+                    />
+                  </label>
+                </div>
 
-        <div className="admin-clients__form-actions">
-          {isEditing ? (
-            <button
-              type="button"
-              className="admin-clients__btn is-ghost"
-              onClick={resetForm}
-              disabled={saving}
-            >
-              {t('admin.clients.cancelEdit')}
-            </button>
-          ) : null}
-          <button
-            type="submit"
-            className="admin-clients__btn is-primary"
-            disabled={saving}
-          >
-            {saving
-              ? t('admin.clients.saving')
-              : isEditing
-                ? t('admin.clients.saveChanges')
-                : t('admin.clients.saveCreate')}
-          </button>
-        </div>
-      </form>
+                <div className="admin-clients__form-actions">
+                  <button
+                    type="button"
+                    className="admin-clients__btn is-ghost"
+                    onClick={resetForm}
+                    disabled={saving}
+                  >
+                    {t('admin.clients.cancelEdit')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="admin-clients__btn is-primary"
+                    disabled={saving}
+                  >
+                    {saving
+                      ? t('admin.clients.saving')
+                      : isEditing
+                        ? t('admin.clients.saveChanges')
+                        : t('admin.clients.saveCreate')}
+                  </button>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className="admin-clients__list-panel rounded-2xl border border-border-light bg-surface-light p-4 sm:p-5">
         <div className="admin-clients__toolbar">
@@ -277,14 +315,23 @@ export function ClientsPanel({ organizationId, onError }: Props) {
               {t('admin.clients.listLead', { count: filtered.length })}
             </p>
           </div>
-          <label className="admin-clients__switch">
-            <input
-              type="checkbox"
-              checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-            />
-            <span>{t('admin.clients.showInactive')}</span>
-          </label>
+          <div className="admin-clients__toolbar-actions">
+            <button
+              type="button"
+              className="admin-clients__btn is-primary"
+              onClick={openCreate}
+            >
+              {t('admin.clients.createTitle')}
+            </button>
+            <label className="admin-clients__switch">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+              />
+              <span>{t('admin.clients.showInactive')}</span>
+            </label>
+          </div>
         </div>
 
         <label className="admin-clients__search">

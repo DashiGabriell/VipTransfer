@@ -168,6 +168,7 @@ export async function listFleetVehiclesAdmin(
 export async function createFleetVehicle(input: {
   organization_id: string
   vehicle_category_id: string
+  driver_id: string
   brand: string
   model: string
   year: number
@@ -182,6 +183,7 @@ export async function createFleetVehicle(input: {
     .insert({
       organization_id: input.organization_id,
       vehicle_category_id: input.vehicle_category_id,
+      driver_id: input.driver_id,
       brand: input.brand.trim(),
       model: input.model.trim(),
       year: input.year,
@@ -238,6 +240,7 @@ export async function uploadFleetVehiclePhoto(input: {
 export async function updateFleetVehicle(input: {
   id: string
   vehicle_category_id: string
+  driver_id: string
   brand: string
   model: string
   year: number
@@ -251,6 +254,7 @@ export async function updateFleetVehicle(input: {
     .from('fleet_vehicles')
     .update({
       vehicle_category_id: input.vehicle_category_id,
+      driver_id: input.driver_id,
       brand: input.brand.trim(),
       model: input.model.trim(),
       year: input.year,
@@ -285,6 +289,25 @@ export async function setFleetVehicleActive(input: {
   return data as FleetVehicle
 }
 
+export async function fleetVehicleHasTripHistory(
+  vehicleId: string,
+): Promise<boolean> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase.rpc('fleet_vehicle_has_trip_history', {
+    p_vehicle_id: vehicleId,
+  })
+  if (error) throw error
+  return Boolean(data)
+}
+
+export async function deleteFleetVehicle(vehicleId: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { error } = await supabase.rpc('delete_fleet_vehicle', {
+    p_vehicle_id: vehicleId,
+  })
+  if (error) throw error
+}
+
 export async function upsertFreightRule(input: {
   id?: string
   organization_id: string
@@ -296,7 +319,19 @@ export async function upsertFreightRule(input: {
 }): Promise<FreightRule> {
   if (!supabase) throw new Error('Supabase não configurado')
 
-  if (input.id) {
+  let ruleId = input.id
+  if (!ruleId && input.service_type) {
+    const { data: existing } = await supabase
+      .from('freight_rules')
+      .select('id')
+      .eq('organization_id', input.organization_id)
+      .is('vehicle_category_id', null)
+      .eq('service_type', input.service_type)
+      .maybeSingle()
+    ruleId = existing?.id
+  }
+
+  if (ruleId) {
     const { data, error } = await supabase
       .from('freight_rules')
       .update({
@@ -307,7 +342,7 @@ export async function upsertFreightRule(input: {
         service_type: input.service_type ?? null,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', input.id)
+      .eq('id', ruleId)
       .select('*')
       .single()
     if (error) throw error

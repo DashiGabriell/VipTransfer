@@ -11,17 +11,20 @@ import {
 } from '../../domain/fleet'
 import {
   createFleetVehicle,
+  deleteFleetVehicle,
+  fleetVehicleHasTripHistory,
   setFleetVehicleActive,
   setStandardCategoryActive,
   updateFleetVehicle,
   uploadFleetVehiclePhoto,
 } from '../../services/admin'
-import type { FleetVehicle, VehicleCategory } from '../../types/database'
+import type { Driver, FleetVehicle, VehicleCategory } from '../../types/database'
 
 type Props = {
   organizationId: string
   categories: VehicleCategory[]
   fleetVehicles: FleetVehicle[]
+  drivers: Driver[]
   onChanged: () => void
   onError: (msg: string) => void
 }
@@ -59,6 +62,7 @@ export function FleetPanel(props: Props) {
   const [togglingCode, setTogglingCode] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [categoryId, setCategoryId] = useState('')
+  const [driverId, setDriverId] = useState('')
   const [brand, setBrand] = useState('')
   const [model, setModel] = useState('')
   const [year, setYear] = useState('')
@@ -73,10 +77,20 @@ export function FleetPanel(props: Props) {
 
   const modelOptions = useMemo(() => modelsForBrand(brand), [brand])
   const isEditing = Boolean(editingId)
+  const activeDrivers = useMemo(
+    () => props.drivers.filter((d) => d.active),
+    [props.drivers],
+  )
+  const driverById = useMemo(() => {
+    const map = new Map<string, Driver>()
+    for (const d of props.drivers) map.set(d.id, d)
+    return map
+  }, [props.drivers])
 
   function resetForm() {
     setEditingId(null)
     setCategoryId('')
+    setDriverId('')
     setBrand('')
     setModel('')
     setYear('')
@@ -99,6 +113,7 @@ export function FleetPanel(props: Props) {
     props.onError('')
     setEditingId(vehicle.id)
     setCategoryId(vehicle.vehicle_category_id)
+    setDriverId(vehicle.driver_id ?? '')
     setBrand(vehicle.brand)
     setModel(vehicle.model)
     setYear(String(vehicle.year))
@@ -143,6 +158,10 @@ export function FleetPanel(props: Props) {
       props.onError(t('admin.fleet.categoryRequired'))
       return
     }
+    if (!driverId) {
+      props.onError(t('admin.fleet.driverRequired'))
+      return
+    }
     if (!brand || !model || !color || !year) {
       props.onError(t('admin.fleet.fieldsRequired'))
       return
@@ -160,6 +179,7 @@ export function FleetPanel(props: Props) {
     try {
       const payload = {
         vehicle_category_id: categoryId,
+        driver_id: driverId,
         brand,
         model,
         year: yearNum,
@@ -210,6 +230,43 @@ export function FleetPanel(props: Props) {
       props.onError(
         err instanceof Error ? err.message : t('admin.fleet.toggleVehicleError'),
       )
+    } finally {
+      setBusyVehicleId(null)
+    }
+  }
+
+  async function onRemoveVehicle(vehicle: FleetVehicle) {
+    setBusyVehicleId(vehicle.id)
+    props.onError('')
+    try {
+      const hasHistory = await fleetVehicleHasTripHistory(vehicle.id)
+      if (hasHistory) {
+        window.alert(t('admin.fleet.removeBlockedHistory'))
+        if (vehicle.active) {
+          await setFleetVehicleActive({ id: vehicle.id, active: false })
+          props.onChanged()
+        }
+        return
+      }
+      if (!window.confirm(t('admin.fleet.removeConfirm'))) return
+      await deleteFleetVehicle(vehicle.id)
+      if (editingId === vehicle.id) resetForm()
+      props.onChanged()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (/VEHICLE_HAS_HISTORY/i.test(msg)) {
+        window.alert(t('admin.fleet.removeBlockedHistory'))
+        if (vehicle.active) {
+          try {
+            await setFleetVehicleActive({ id: vehicle.id, active: false })
+            props.onChanged()
+          } catch {
+            /* ignore */
+          }
+        }
+      } else {
+        props.onError(msg || t('admin.fleet.removeError'))
+      }
     } finally {
       setBusyVehicleId(null)
     }
@@ -275,6 +332,31 @@ export function FleetPanel(props: Props) {
         ) : null}
 
         <div className="admin-fleet__grid">
+          <label className="admin-fleet__field">
+            <span>{t('admin.fleet.driver')}</span>
+            <select
+              value={driverId}
+              onChange={(e) => setDriverId(e.target.value)}
+              required
+              disabled={!activeDrivers.length && !isEditing}
+            >
+              <option value="">{t('admin.fleet.driverPlaceholder')}</option>
+              {activeDrivers.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.full_name}
+                </option>
+              ))}
+              {isEditing &&
+              driverId &&
+              !activeDrivers.some((d) => d.id === driverId) &&
+              driverById.get(driverId) ? (
+                <option value={driverId}>
+                  {driverById.get(driverId)!.full_name}
+                </option>
+              ) : null}
+            </select>
+          </label>
+
           <label className="admin-fleet__field">
             <span>{t('admin.fleet.category')}</span>
             <select
@@ -503,6 +585,12 @@ export function FleetPanel(props: Props) {
                     {v.plate ? ` · ${v.plate}` : ''}
                   </p>
                   <p className="admin-fleet__vehicle-cat">{catLabel}</p>
+                  <p className="admin-fleet__vehicle-cat">
+                    {t('admin.fleet.driver')}:{' '}
+                    {v.driver_id
+                      ? driverById.get(v.driver_id)?.full_name ?? '—'
+                      : '—'}
+                  </p>
                 </div>
                 <div className="admin-fleet__vehicle-actions">
                   <span
@@ -531,6 +619,14 @@ export function FleetPanel(props: Props) {
                     {v.active
                       ? t('admin.fleet.deactivate')
                       : t('admin.fleet.activate')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyVehicleId === v.id || saving}
+                    onClick={() => void onRemoveVehicle(v)}
+                    className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 disabled:opacity-50"
+                  >
+                    {t('admin.fleet.remove')}
                   </button>
                 </div>
               </li>

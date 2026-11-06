@@ -66,6 +66,7 @@ export type FleetVehicle = {
   id: string
   organization_id: string
   vehicle_category_id: string
+  driver_id: string | null
   brand: string
   model: string
   year: number

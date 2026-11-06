@@ -2310,3 +2310,299 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* Clickable reservation rows/cards */
+.admin-res-card.is-clickable,
+.admin-res-table tr.is-clickable {
+  cursor: pointer;
+}
+.admin-res-table tr.is-clickable:hover {
+  background: color-mix(in srgb, var(--admin-bronze, #b08d57) 8%, transparent);
+}
+
+/* Horizontal create/edit modal (clients / drivers) */
+.admin-clients--list-only {
+  grid-template-columns: 1fr !important;
+}
+.admin-clients__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+.admin-form-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.admin-form-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, #0e1624 55%, transparent);
+  cursor: pointer;
+}
+.admin-form-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(960px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  padding: 1.15rem 1.25rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #fffdf8;
+  box-shadow: 0 24px 48px color-mix(in srgb, #0e1624 28%, transparent);
+}
+.admin-form-modal__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+.admin-form-modal__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--admin-ink, #152033);
+}
+.admin-form-modal__head p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-form-modal__close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--admin-muted, #5c554c);
+}
+@media (min-width: 800px) {
+  .admin-clients__grid--horizontal {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Freight by service type */
+.admin-freight {
+  display: grid;
+  gap: 1rem;
+}
+.admin-freight__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.admin-freight__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--admin-ink, #152033);
+}
+.admin-freight__head p {
+  margin: 0.35rem 0 0;
+  max-width: 42rem;
+  font-size: 0.88rem;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-freight__cards {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 960px) {
+  .admin-freight__cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.admin-freight__card {
+  padding: 1rem 1.05rem;
+  border-radius: 1rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #fffdf8;
+}
+.admin-freight__card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.admin-freight__card > p {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-freight__fields {
+  display: grid;
+  gap: 0.65rem;
+}
+.admin-freight__fields label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-freight__fields input {
+  min-height: 2.4rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  font: inherit;
+  font-size: 0.92rem;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--admin-ink, #152033);
+}
+.admin-freight__airports {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--admin-line, #d8cfc0);
+}
+.admin-freight__airports h4 {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-freight__hint {
+  margin: 0.75rem 0 0 !important;
+  font-size: 0.78rem !important;
+}
+
+/* Finance dashboard */
+.admin-finance {
+  display: grid;
+  gap: 1rem;
+}
+.admin-finance__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.admin-finance__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.admin-finance__presets button {
+  appearance: none;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.admin-finance__presets button.is-active {
+  background: #152033;
+  border-color: #152033;
+  color: #f2ebe0;
+}
+.admin-finance__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: flex-end;
+}
+.admin-finance__dates label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-finance__dates input {
+  min-height: 2.35rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+}
+.admin-finance__kpis {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 900px) {
+  .admin-finance__kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.admin-finance__kpis article {
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #fffdf8;
+}
+.admin-finance__kpis span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #5c554c);
+}
+.admin-finance__kpis strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.15rem;
+}
+.admin-finance__charts {
+  display: grid;
+  gap: 0.85rem;
+}
+@media (min-width: 900px) {
+  .admin-finance__charts {
+    grid-template-columns: 1.4fr 1fr;
+  }
+}
+.admin-finance__chart-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #fffdf8;
+}
+.admin-finance__chart-card h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+}
+.admin-finance__chart {
+  width: 100%;
+  height: auto;
+}
+.admin-finance__donut-wrap {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.admin-finance__donut {
+  width: 7rem;
+  height: 7rem;
+  flex-shrink: 0;
+}
+.admin-finance__donut-wrap ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+.admin-finance__donut-wrap li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.admin-finance__donut-wrap li span {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+}

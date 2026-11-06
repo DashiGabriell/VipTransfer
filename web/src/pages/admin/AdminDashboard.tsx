@@ -25,6 +25,7 @@ import { DriversPanel } from '../../components/admin/DriversPanel'
 import { FinancePanel } from '../../components/admin/FinancePanel'
 import { FleetPanel } from '../../components/admin/FleetPanel'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
+import { ReservationDetailModal } from '../../components/admin/ReservationDetailModal'
 import {
   RouteNavPicker,
   ViewRouteButton,
@@ -57,6 +58,7 @@ import type {
   OrgRole,
   Reservation,
   ReservationStatus,
+  ServiceType,
   VehicleCategory,
 } from '../../types/database'
 import { SlotAgenda } from '../../components/SlotAgenda'
@@ -109,7 +111,7 @@ export function AdminDashboard() {
   const [membership, setMembership] = useState<Membership | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | 'all'>(
-    'hold',
+    'all',
   )
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [categories, setCategories] = useState<VehicleCategory[]>([])
@@ -560,6 +562,7 @@ export function AdminDashboard() {
                   organizationId={orgId!}
                   categories={categories}
                   fleetVehicles={fleetVehicles}
+                  drivers={drivers}
                   onChanged={() => void refreshCatalogAdmin()}
                   onError={setError}
                 />
@@ -608,6 +611,7 @@ export function AdminDashboard() {
                 <FinancePanel
                   organizationId={orgId}
                   orgSettings={tenant.catalog?.organization.settings}
+                  orgName={tenant.catalog?.organization.name ?? 'JMD Transfer'}
                   onError={setError}
                   onSettingsChanged={() => undefined}
                 />
@@ -723,6 +727,8 @@ function ReservationsPanel(props: {
   const [routeReservation, setRouteReservation] = useState<Reservation | null>(
     null,
   )
+  const [detailReservation, setDetailReservation] =
+    useState<Reservation | null>(null)
 
   return (
     <section className="admin-res space-y-4">
@@ -755,8 +761,17 @@ function ReservationsPanel(props: {
         {props.reservations.map((r, index) => (
           <li
             key={r.id}
-            className="admin-res-card admin-row-enter"
+            className="admin-res-card admin-row-enter is-clickable"
             style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+            role="button"
+            tabIndex={0}
+            onClick={() => setDetailReservation(r)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setDetailReservation(r)
+              }
+            }}
           >
             <div className="admin-res-card__top">
               <time dateTime={r.slot_start} className="admin-res-card__slot">
@@ -798,18 +813,24 @@ function ReservationsPanel(props: {
               <span>{reservationEstimate(r.estimated_price)}</span>
             </div>
 
-            <ReservationActions
-              reservation={r}
-              busyId={props.busyId}
-              onConfirm={props.onConfirm}
-              onCancel={props.onCancel}
-              onViewRoute={setRouteReservation}
-              drivers={props.drivers}
-              assignments={props.assignments}
-              categories={props.categories}
-              onDispatchChanged={props.onDispatchChanged}
-              onError={props.onError}
-            />
+            <div
+              className="admin-res-card__actions"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              <ReservationActions
+                reservation={r}
+                busyId={props.busyId}
+                onConfirm={props.onConfirm}
+                onCancel={props.onCancel}
+                onViewRoute={setRouteReservation}
+                drivers={props.drivers}
+                assignments={props.assignments}
+                categories={props.categories}
+                onDispatchChanged={props.onDispatchChanged}
+                onError={props.onError}
+              />
+            </div>
           </li>
         ))}
         {!props.reservations.length && (
@@ -835,8 +856,9 @@ function ReservationsPanel(props: {
             {props.reservations.map((r, index) => (
               <tr
                 key={r.id}
-                className="admin-row-enter"
+                className="admin-row-enter is-clickable"
                 style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+                onClick={() => setDetailReservation(r)}
               >
                 <td className="whitespace-nowrap">
                   {new Date(r.slot_start).toLocaleString(locale)}
@@ -874,7 +896,7 @@ function ReservationsPanel(props: {
                 <td className="whitespace-nowrap">
                   {reservationEstimate(r.estimated_price)}
                 </td>
-                <td>
+                <td onClick={(e) => e.stopPropagation()}>
                   <ReservationActions
                     reservation={r}
                     busyId={props.busyId}
@@ -911,7 +933,49 @@ function ReservationsPanel(props: {
           onClose={() => setRouteReservation(null)}
         />
       )}
+
+      {detailReservation
+        ? (() => {
+            const live =
+              props.reservations.find((x) => x.id === detailReservation.id) ??
+              detailReservation
+            return (
+              <ReservationDetailModal
+                reservation={live}
+                busyId={props.busyId}
+                drivers={props.drivers}
+                assignments={props.assignments}
+                categories={props.categories}
+                onClose={() => setDetailReservation(null)}
+                onConfirm={(id) => {
+                  props.onConfirm(id)
+                  setDetailReservation(null)
+                }}
+                onCancel={(id) => {
+                  props.onCancel(id)
+                  setDetailReservation(null)
+                }}
+                onDispatchChanged={props.onDispatchChanged}
+                onError={props.onError}
+              />
+            )
+          })()
+        : null}
     </section>
+  )
+}
+
+function ruleForService(
+  rules: FreightRule[],
+  serviceType: ServiceType,
+): FreightRule | undefined {
+  return (
+    rules.find(
+      (r) => r.vehicle_category_id == null && r.service_type === serviceType,
+    ) ??
+    rules.find(
+      (r) => r.vehicle_category_id == null && r.service_type == null,
+    )
   )
 }
 
@@ -923,12 +987,22 @@ function FreightPanel(props: {
   onError: (msg: string) => void
 }) {
   const { t } = useTranslation()
-  const base = props.rules.find(
-    (r) => r.vehicle_category_id == null && r.service_type == null,
+  const ponto = ruleForService(props.rules, 'ponto_a_b')
+  const disposicao = ruleForService(props.rules, 'a_disposicao')
+  const concierge = ruleForService(props.rules, 'concierge')
+
+  const [pontoKm, setPontoKm] = useState(String(ponto?.price_per_km ?? 8))
+  const [pontoMin, setPontoMin] = useState(String(ponto?.minimum_fare ?? 120))
+  const [dispHour, setDispHour] = useState(
+    String(disposicao?.price_per_hour ?? 180),
   )
-  const [pricePerKm, setPricePerKm] = useState(String(base?.price_per_km ?? 8))
-  const [minimum, setMinimum] = useState(String(base?.minimum_fare ?? 120))
-  const [hourly, setHourly] = useState(String(base?.price_per_hour ?? 180))
+  const [dispKm, setDispKm] = useState(String(disposicao?.price_per_km ?? 0))
+  const [dispMin, setDispMin] = useState(
+    String(disposicao?.minimum_fare ?? 0),
+  )
+  const [conciergeNote, setConciergeNote] = useState(
+    String(concierge?.minimum_fare ?? 0),
+  )
   const [fees, setFees] = useState<Record<AirportCode, string>>({
     GRU: String(
       props.airportFees.find((f) => f.airport === 'GRU')?.flat_fee ?? 40,
@@ -946,102 +1020,175 @@ function FreightPanel(props: {
     e.preventDefault()
     setSaving(true)
     try {
-      await upsertFreightRule({
-        id: base?.id,
-        organization_id: props.organizationId,
-        price_per_km: Number(pricePerKm),
-        minimum_fare: Number(minimum),
-        price_per_hour: Number(hourly),
-      })
-      await Promise.all(
-        (['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) =>
+      await Promise.all([
+        upsertFreightRule({
+          id:
+            ponto?.service_type === 'ponto_a_b' ? ponto.id : undefined,
+          organization_id: props.organizationId,
+          service_type: 'ponto_a_b',
+          price_per_km: Number(pontoKm),
+          minimum_fare: Number(pontoMin),
+          price_per_hour: 0,
+        }),
+        upsertFreightRule({
+          id:
+            disposicao?.service_type === 'a_disposicao'
+              ? disposicao.id
+              : undefined,
+          organization_id: props.organizationId,
+          service_type: 'a_disposicao',
+          price_per_km: Number(dispKm),
+          minimum_fare: Number(dispMin),
+          price_per_hour: Number(dispHour),
+        }),
+        upsertFreightRule({
+          id:
+            concierge?.service_type === 'concierge'
+              ? concierge.id
+              : undefined,
+          organization_id: props.organizationId,
+          service_type: 'concierge',
+          price_per_km: 0,
+          minimum_fare: Number(conciergeNote) || 0,
+          price_per_hour: 0,
+        }),
+        ...(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) =>
           updateAirportFee({
             organization_id: props.organizationId,
             airport,
             flat_fee: Number(fees[airport] || 0),
           }),
         ),
-      )
+      ])
       props.onChanged()
     } catch (err) {
-      props.onError(err instanceof Error ? err.message : 'Falha ao salvar transfer')
+      props.onError(
+        err instanceof Error ? err.message : t('admin.freightSaveError'),
+      )
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <form
-      onSubmit={onSave}
-      className="w-full max-w-4xl space-y-5 rounded-2xl border border-border-light bg-surface-light p-5"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 max-w-2xl">
-          <h2 className="font-semibold text-primary">{t('admin.freightTitle')}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-text-secondary-light">
-            {t('admin.freightLead')}
-          </p>
+    <form onSubmit={onSave} className="admin-freight">
+      <header className="admin-freight__head">
+        <div>
+          <h2>{t('admin.freightTitle')}</h2>
+          <p>{t('admin.freightLeadByService')}</p>
         </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm text-text-primary-dark disabled:opacity-60"
-        >
+        <button type="submit" className="admin-clients__btn is-primary" disabled={saving}>
           {saving ? '…' : t('admin.freightSave')}
         </button>
-      </div>
+      </header>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="block text-sm">
-          {t('admin.freightPricePerKm')}
-          <input
-            className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-            type="number"
-            step="0.01"
-            value={pricePerKm}
-            onChange={(e) => setPricePerKm(e.target.value)}
-            required
-          />
-        </label>
-        <label className="block text-sm">
-          {t('admin.freightMinimum')}
-          <input
-            className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-            type="number"
-            step="0.01"
-            value={minimum}
-            onChange={(e) => setMinimum(e.target.value)}
-            required
-          />
-        </label>
-        <label className="block text-sm">
-          {t('admin.freightPricePerHour')}
-          <input
-            className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-            type="number"
-            step="0.01"
-            value={hourly}
-            onChange={(e) => setHourly(e.target.value)}
-            required
-          />
-        </label>
-      </div>
+      <div className="admin-freight__cards">
+        <section className="admin-freight__card">
+          <h3>{t('reserve.services.ponto_a_b')}</h3>
+          <p>{t('admin.freightPontoLead')}</p>
+          <div className="admin-freight__fields">
+            <label>
+              <span>{t('admin.freightPricePerKm')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={pontoKm}
+                onChange={(e) => setPontoKm(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              <span>{t('admin.freightMinimum')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={pontoMin}
+                onChange={(e) => setPontoMin(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+          <div className="admin-freight__airports">
+            <h4>{t('admin.freightAirportFeesTitle')}</h4>
+            <div className="admin-freight__fields">
+              {(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) => (
+                <label key={airport}>
+                  <span>{t('admin.freightAirportFee', { airport })}</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={fees[airport]}
+                    onChange={(e) =>
+                      setFees((prev) => ({
+                        ...prev,
+                        [airport]: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+        </section>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        {(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) => (
-          <label key={airport} className="block text-sm">
-            {t('admin.freightAirportFee', { airport })}
-            <input
-              className="mt-1 w-full rounded-lg border border-border-light px-3 py-2"
-              type="number"
-              step="0.01"
-              value={fees[airport]}
-              onChange={(e) =>
-                setFees((prev) => ({ ...prev, [airport]: e.target.value }))
-              }
-            />
-          </label>
-        ))}
+        <section className="admin-freight__card">
+          <h3>{t('reserve.services.a_disposicao')}</h3>
+          <p>{t('admin.freightDisposicaoLead')}</p>
+          <div className="admin-freight__fields">
+            <label>
+              <span>{t('admin.freightPricePerHour')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={dispHour}
+                onChange={(e) => setDispHour(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              <span>{t('admin.freightPricePerKmOptional')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={dispKm}
+                onChange={(e) => setDispKm(e.target.value)}
+              />
+            </label>
+            <label>
+              <span>{t('admin.freightMinimumOptional')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={dispMin}
+                onChange={(e) => setDispMin(e.target.value)}
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="admin-freight__card">
+          <h3>{t('reserve.services.concierge')}</h3>
+          <p>{t('admin.freightConciergeLead')}</p>
+          <div className="admin-freight__fields">
+            <label>
+              <span>{t('admin.freightConciergeReference')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={conciergeNote}
+                onChange={(e) => setConciergeNote(e.target.value)}
+              />
+            </label>
+          </div>
+          <p className="admin-freight__hint">{t('admin.freightConciergeHint')}</p>
+        </section>
       </div>
     </form>
   )

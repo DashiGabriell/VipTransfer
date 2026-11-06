@@ -142,7 +142,8 @@ export async function geocodePlace(
   const url = new URL(PHOTON_SEARCH)
   url.searchParams.set('q', query)
   url.searchParams.set('limit', '1')
-  url.searchParams.set('lang', 'pt')
+  // Photon só aceita: default | de | en | fr (lang=pt responde 400).
+  url.searchParams.set('lang', 'default')
   url.searchParams.set('lat', '-23.5505')
   url.searchParams.set('lon', '-46.6333')
 

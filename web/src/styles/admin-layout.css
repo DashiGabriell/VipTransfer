@@ -2254,6 +2254,42 @@
   color: var(--admin-ink, #152033);
 }
 
+.admin-dispatch__money {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.15rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 0.45rem;
+  background: #fff;
+}
+
+.admin-dispatch__money > span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--admin-muted, #5c554c);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.admin-dispatch__money input {
+  border: 0 !important;
+  outline: none;
+  min-height: 2.05rem;
+  padding: 0.25rem 0 !important;
+  background: transparent;
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--admin-ink, #152033);
+}
+
+.agenda-slot-modal__price-edit .admin-dispatch__money {
+  border-color: var(--admin-line, #d8cfc0);
+}
+
 .admin-dispatch__price-hint {
   flex: 1 1 100%;
   margin: 0;

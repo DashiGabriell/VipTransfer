@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { hasOverridePrice } from '../../domain/reservationPrice'
+import {
+  formatMoneyDraft,
+  hasOverridePrice,
+  initialMoneyDraft,
+  parseMoneyDraft,
+  sanitizeMoneyTyping,
+} from '../../domain/reservationPrice'
 import { buildDriverDemandWhatsAppUrl } from '../../domain/whatsapp'
 import { driverOffersPageUrl } from '../../lib/siteUrl'
 import {
@@ -46,11 +52,7 @@ export function DispatchControls({
   const [driverId, setDriverId] = useState('')
   const [busy, setBusy] = useState(false)
   const [priceDraft, setPriceDraft] = useState(() =>
-    hasOverridePrice(reservation)
-      ? String(reservation.override_price)
-      : reservation.estimated_price != null
-        ? String(reservation.estimated_price)
-        : '',
+    initialMoneyDraft(reservation),
   )
   const [savingPrice, setSavingPrice] = useState(false)
   const locale = i18n.language.startsWith('en') ? 'en' : 'pt'
@@ -58,10 +60,8 @@ export function DispatchControls({
   const priceReady = hasOverridePrice(reservation)
 
   useEffect(() => {
-    if (hasOverridePrice(reservation)) {
-      setPriceDraft(String(reservation.override_price))
-    }
-  }, [reservation.id, reservation.override_price])
+    setPriceDraft(initialMoneyDraft(reservation))
+  }, [reservation.id, reservation.override_price, reservation.estimated_price])
 
   const label = dispatchLabel(assignments, reservation.id)
   const eligible = useMemo(() => {
@@ -153,11 +153,12 @@ export function DispatchControls({
 
   async function onSavePrice(e?: FormEvent) {
     e?.preventDefault()
-    const n = Number(String(priceDraft).replace(',', '.'))
-    if (!Number.isFinite(n) || n <= 0) {
+    const n = parseMoneyDraft(priceDraft)
+    if (n == null || n <= 0) {
       onError(t('admin.price.invalid'))
       return
     }
+    setPriceDraft(formatMoneyDraft(n))
     setSavingPrice(true)
     onError('')
     try {
@@ -207,16 +208,25 @@ export function DispatchControls({
         <form className="admin-dispatch__price" onSubmit={(ev) => void onSavePrice(ev)}>
           <label className="admin-dispatch__price-field">
             <span>{t('admin.price.realLabel')}</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0.01"
-              step="0.01"
-              value={priceDraft}
-              disabled={savingPrice || busy}
-              onChange={(e) => setPriceDraft(e.target.value)}
-              placeholder={t('admin.price.placeholder')}
-            />
+            <div className="admin-dispatch__money">
+              <span aria-hidden="true">R$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                value={priceDraft}
+                disabled={savingPrice || busy}
+                onChange={(e) =>
+                  setPriceDraft(sanitizeMoneyTyping(e.target.value))
+                }
+                onBlur={() => {
+                  const n = parseMoneyDraft(priceDraft)
+                  if (n != null && n > 0) setPriceDraft(formatMoneyDraft(n))
+                }}
+                placeholder={t('admin.price.placeholder')}
+                aria-label={t('admin.price.realLabel')}
+              />
+            </div>
           </label>
           <button
             type="submit"

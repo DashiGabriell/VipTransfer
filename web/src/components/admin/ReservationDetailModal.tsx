@@ -2,8 +2,12 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  formatMoneyDraft,
   formatReservationMoney,
   hasOverridePrice,
+  initialMoneyDraft,
+  parseMoneyDraft,
+  sanitizeMoneyTyping,
 } from '../../domain/reservationPrice'
 import { setReservationOverridePrice } from '../../services/coreV2'
 import type {
@@ -50,13 +54,7 @@ export function ReservationDetailModal({
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
   const [routeOpen, setRouteOpen] = useState(false)
-  const [priceDraft, setPriceDraft] = useState(() =>
-    hasOverridePrice(r)
-      ? String(r.override_price)
-      : r.estimated_price != null
-        ? String(r.estimated_price)
-        : '',
-  )
+  const [priceDraft, setPriceDraft] = useState(() => initialMoneyDraft(r))
   const [savingPrice, setSavingPrice] = useState(false)
   const busy = busyId === r.id
   const canEditPrice =
@@ -73,10 +71,8 @@ export function ReservationDetailModal({
     : '—'
 
   useEffect(() => {
-    if (hasOverridePrice(r)) {
-      setPriceDraft(String(r.override_price))
-    }
-  }, [r.id, r.override_price])
+    setPriceDraft(initialMoneyDraft(r))
+  }, [r.id, r.override_price, r.estimated_price])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -100,11 +96,12 @@ export function ReservationDetailModal({
 
   async function onSavePrice(e: FormEvent) {
     e.preventDefault()
-    const n = Number(String(priceDraft).replace(',', '.'))
-    if (!Number.isFinite(n) || n <= 0) {
+    const n = parseMoneyDraft(priceDraft)
+    if (n == null || n <= 0) {
       onError(t('admin.price.invalid'))
       return
     }
+    setPriceDraft(formatMoneyDraft(n))
     setSavingPrice(true)
     onError('')
     try {
@@ -251,16 +248,25 @@ export function ReservationDetailModal({
                 <form onSubmit={(ev) => void onSavePrice(ev)}>
                   <label>
                     <span>{t('admin.price.realField')}</span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      min="0.01"
-                      step="0.01"
-                      value={priceDraft}
-                      disabled={savingPrice || busy}
-                      onChange={(e) => setPriceDraft(e.target.value)}
-                      placeholder={t('admin.price.placeholder')}
-                    />
+                    <div className="admin-dispatch__money">
+                      <span aria-hidden="true">R$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        value={priceDraft}
+                        disabled={savingPrice || busy}
+                        onChange={(e) =>
+                          setPriceDraft(sanitizeMoneyTyping(e.target.value))
+                        }
+                        onBlur={() => {
+                          const n = parseMoneyDraft(priceDraft)
+                          if (n != null && n > 0)
+                            setPriceDraft(formatMoneyDraft(n))
+                        }}
+                        placeholder={t('admin.price.placeholder')}
+                      />
+                    </div>
                   </label>
                   <button
                     type="submit"

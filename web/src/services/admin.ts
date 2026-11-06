@@ -384,11 +384,15 @@ export async function updateAirportFee(input: {
   flat_fee: number
 }): Promise<void> {
   if (!supabase) throw new Error('Supabase não configurado')
-  const { error } = await supabase
-    .from('airport_fees')
-    .update({ flat_fee: input.flat_fee, updated_at: new Date().toISOString() })
-    .eq('organization_id', input.organization_id)
-    .eq('airport', input.airport)
+  const { error } = await supabase.from('airport_fees').upsert(
+    {
+      organization_id: input.organization_id,
+      airport: input.airport,
+      flat_fee: input.flat_fee,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'organization_id,airport' },
+  )
   if (error) throw error
 }
 

@@ -1027,10 +1027,32 @@ function FreightPanel(props: {
     ),
   })
   const [saving, setSaving] = useState(false)
+  const [savedOk, setSavedOk] = useState(false)
+
+  useEffect(() => {
+    setPontoKm(String(ponto?.price_per_km ?? 8))
+    setPontoMin(String(ponto?.minimum_fare ?? 120))
+    setDispHour(String(disposicao?.price_per_hour ?? 180))
+    setDispKm(String(disposicao?.price_per_km ?? 0))
+    setDispMin(String(disposicao?.minimum_fare ?? 0))
+    setConciergeNote(String(concierge?.minimum_fare ?? 0))
+    setFees({
+      GRU: String(
+        props.airportFees.find((f) => f.airport === 'GRU')?.flat_fee ?? 40,
+      ),
+      CGH: String(
+        props.airportFees.find((f) => f.airport === 'CGH')?.flat_fee ?? 40,
+      ),
+      VCP: String(
+        props.airportFees.find((f) => f.airport === 'VCP')?.flat_fee ?? 40,
+      ),
+    })
+  }, [ponto, disposicao, concierge, props.airportFees])
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
     setSaving(true)
+    setSavedOk(false)
     try {
       await Promise.all([
         upsertFreightRule({
@@ -1072,6 +1094,7 @@ function FreightPanel(props: {
           }),
         ),
       ])
+      setSavedOk(true)
       props.onChanged()
     } catch (err) {
       props.onError(
@@ -1082,6 +1105,8 @@ function FreightPanel(props: {
     }
   }
 
+  const saveLabel = saving ? '…' : t('admin.freightSave')
+
   return (
     <form onSubmit={onSave} className="admin-freight">
       <header className="admin-freight__head">
@@ -1089,8 +1114,12 @@ function FreightPanel(props: {
           <h2>{t('admin.freightTitle')}</h2>
           <p>{t('admin.freightLeadByService')}</p>
         </div>
-        <button type="submit" className="admin-clients__btn is-primary" disabled={saving}>
-          {saving ? '…' : t('admin.freightSave')}
+        <button
+          type="submit"
+          className="admin-clients__btn is-primary admin-freight__save"
+          disabled={saving}
+        >
+          {saveLabel}
         </button>
       </header>
 
@@ -1106,7 +1135,10 @@ function FreightPanel(props: {
                 step="0.01"
                 min="0"
                 value={pontoKm}
-                onChange={(e) => setPontoKm(e.target.value)}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setPontoKm(e.target.value)
+                }}
                 required
               />
             </label>
@@ -1117,7 +1149,10 @@ function FreightPanel(props: {
                 step="0.01"
                 min="0"
                 value={pontoMin}
-                onChange={(e) => setPontoMin(e.target.value)}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setPontoMin(e.target.value)
+                }}
                 required
               />
             </label>
@@ -1133,12 +1168,13 @@ function FreightPanel(props: {
                     step="0.01"
                     min="0"
                     value={fees[airport]}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setSavedOk(false)
                       setFees((prev) => ({
                         ...prev,
                         [airport]: e.target.value,
                       }))
-                    }
+                    }}
                   />
                 </label>
               ))}
@@ -1157,7 +1193,10 @@ function FreightPanel(props: {
                 step="0.01"
                 min="0"
                 value={dispHour}
-                onChange={(e) => setDispHour(e.target.value)}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setDispHour(e.target.value)
+                }}
                 required
               />
             </label>
@@ -1168,7 +1207,10 @@ function FreightPanel(props: {
                 step="0.01"
                 min="0"
                 value={dispKm}
-                onChange={(e) => setDispKm(e.target.value)}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setDispKm(e.target.value)
+                }}
               />
             </label>
             <label>
@@ -1178,7 +1220,10 @@ function FreightPanel(props: {
                 step="0.01"
                 min="0"
                 value={dispMin}
-                onChange={(e) => setDispMin(e.target.value)}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setDispMin(e.target.value)
+                }}
               />
             </label>
           </div>
@@ -1195,13 +1240,22 @@ function FreightPanel(props: {
                 step="0.01"
                 min="0"
                 value={conciergeNote}
-                onChange={(e) => setConciergeNote(e.target.value)}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setConciergeNote(e.target.value)
+                }}
               />
             </label>
           </div>
           <p className="admin-freight__hint">{t('admin.freightConciergeHint')}</p>
         </section>
       </div>
+
+      {savedOk ? (
+        <p className="admin-freight__saved" role="status">
+          {t('admin.freightSaved')}
+        </p>
+      ) : null}
     </form>
   )
 }

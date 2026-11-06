@@ -174,6 +174,11 @@ export type FinancialEntry = {
   updated_at: string
 }
 
+/** Lançamento do extrato com nome do cliente (via reservation). */
+export type FinanceLedgerEntry = FinancialEntry & {
+  customer_name: string
+}
+
 export type Lead = {
   id: string
   organization_id: string

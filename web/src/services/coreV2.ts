@@ -3,6 +3,7 @@ import type {
   Driver,
   DriverAvailabilitySlot,
   DriverJobDetail,
+  FinanceLedgerEntry,
   FinancialEntry,
   JobAssignment,
   Lead,
@@ -225,15 +226,26 @@ export async function completeReservationJob(
 
 export async function listFinancialEntries(
   organizationId: string,
-): Promise<FinancialEntry[]> {
+): Promise<FinanceLedgerEntry[]> {
   const client = assertClient()
   const { data, error } = await client
     .from('financial_entries')
-    .select('*')
+    .select('*, reservation:reservations(customer_name)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []) as FinancialEntry[]
+
+  type Row = FinancialEntry & {
+    reservation?: { customer_name?: string | null } | null
+  }
+
+  return ((data ?? []) as Row[]).map((row) => {
+    const { reservation, ...entry } = row
+    return {
+      ...(entry as FinancialEntry),
+      customer_name: reservation?.customer_name?.trim() || '—',
+    }
+  })
 }
 
 const SETTLEMENT_PROOF_MAX_BYTES = 8 * 1024 * 1024

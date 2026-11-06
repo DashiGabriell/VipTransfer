@@ -15,7 +15,7 @@ import {
   setOrgCommissionPercent,
   uploadSettlementProof,
 } from '../../services/coreV2'
-import type { FinancialEntry } from '../../types/database'
+import type { FinanceLedgerEntry } from '../../types/database'
 import { publicSiteOrigin } from '../../lib/siteUrl'
 
 const PROOF_ACCEPT = '.pdf,image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp'
@@ -214,13 +214,13 @@ export function FinancePanel({
 }: Props) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language.startsWith('en') ? 'en-US' : 'pt-BR'
-  const [entries, setEntries] = useState<FinancialEntry[]>([])
+  const [entries, setEntries] = useState<FinanceLedgerEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [percent, setPercent] = useState(String(readCommissionPercent(orgSettings)))
   const [savingPct, setSavingPct] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [settleEntry, setSettleEntry] = useState<FinancialEntry | null>(null)
-  const [viewProofsEntry, setViewProofsEntry] = useState<FinancialEntry | null>(
+  const [settleEntry, setSettleEntry] = useState<FinanceLedgerEntry | null>(null)
+  const [viewProofsEntry, setViewProofsEntry] = useState<FinanceLedgerEntry | null>(
     null,
   )
   const [clientProof, setClientProof] = useState<File | null>(null)
@@ -329,7 +329,7 @@ export function FinancePanel({
     }
   }
 
-  function openSettleModal(entry: FinancialEntry) {
+  function openSettleModal(entry: FinanceLedgerEntry) {
     setSettleEntry(entry)
     setClientProof(null)
     setDriverProof(null)
@@ -385,7 +385,13 @@ export function FinancePanel({
         client_to_platform_proof_url: clientUrl,
         platform_to_driver_proof_url: driverUrl,
       })
-      setEntries((prev) => prev.map((row) => (row.id === updated.id ? updated : row)))
+      setEntries((prev) =>
+        prev.map((row) =>
+          row.id === updated.id
+            ? { ...updated, customer_name: row.customer_name }
+            : row,
+        ),
+      )
       setSettleEntry(null)
       setClientProof(null)
       setDriverProof(null)
@@ -398,7 +404,7 @@ export function FinancePanel({
     }
   }
 
-  function hasProofs(entry: FinancialEntry) {
+  function hasProofs(entry: FinanceLedgerEntry) {
     return Boolean(
       entry.client_to_platform_proof_url || entry.platform_to_driver_proof_url,
     )
@@ -412,6 +418,7 @@ export function FinancePanel({
         (e) => `
       <tr>
         <td>${new Date(e.created_at).toLocaleString(locale)}</td>
+        <td>${e.customer_name}</td>
         <td>${money(Number(e.gross_amount), locale)}</td>
         <td>${money(Number(e.commission_amount), locale)}</td>
         <td>${money(Number(e.driver_amount), locale)}</td>
@@ -485,6 +492,7 @@ export function FinancePanel({
         <thead>
           <tr>
             <th>${t('admin.finance.colDate')}</th>
+            <th>${t('admin.finance.colCustomer')}</th>
             <th>${t('admin.finance.colGross')}</th>
             <th>${t('admin.finance.colCommission')}</th>
             <th>${t('admin.finance.colDriver')}</th>
@@ -492,7 +500,7 @@ export function FinancePanel({
           </tr>
         </thead>
         <tbody>
-          ${rowsHtml || `<tr><td colspan="5">${t('admin.finance.empty')}</td></tr>`}
+          ${rowsHtml || `<tr><td colspan="6">${t('admin.finance.empty')}</td></tr>`}
         </tbody>
       </table>
     </main>
@@ -690,6 +698,7 @@ export function FinancePanel({
               <thead>
                 <tr>
                   <th scope="col">{t('admin.finance.colDate')}</th>
+                  <th scope="col">{t('admin.finance.colCustomer')}</th>
                   <th scope="col">{t('admin.finance.colGross')}</th>
                   <th scope="col">{t('admin.finance.colCommission')}</th>
                   <th scope="col">{t('admin.finance.colDriver')}</th>
@@ -702,6 +711,9 @@ export function FinancePanel({
                   <tr key={e.id}>
                     <td data-label={t('admin.finance.colDate')}>
                       {new Date(e.created_at).toLocaleString(locale)}
+                    </td>
+                    <td data-label={t('admin.finance.colCustomer')}>
+                      {e.customer_name}
                     </td>
                     <td data-label={t('admin.finance.colGross')}>
                       {money(Number(e.gross_amount), locale)}

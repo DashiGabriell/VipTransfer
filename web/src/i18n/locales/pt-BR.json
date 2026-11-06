@@ -478,6 +478,7 @@
       "noProofs": "Sem comprovantes anexados.",
       "selectedFile": "{{name}}",
       "colDate": "Data",
+      "colCustomer": "Cliente",
       "colGross": "Bruto",
       "colCommission": "Plataforma",
       "colDriver": "Motorista",

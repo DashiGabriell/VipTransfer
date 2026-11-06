@@ -2454,6 +2454,16 @@
   color: var(--admin-muted);
   font-size: 0.85rem;
 }
+.admin-form-modal fieldset legend,
+.admin-form-modal .text-primary {
+  color: var(--admin-bronze) !important;
+}
+.admin-form-modal .admin-clients__switch {
+  color: var(--admin-ink);
+}
+.admin-form-modal .admin-clients__switch span {
+  color: var(--admin-ink);
+}
 
 @media (min-width: 800px) {
   .admin-clients__grid--horizontal {

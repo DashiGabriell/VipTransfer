@@ -595,18 +595,17 @@
       }
       .itinerary-contact {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 0;
         min-width: 0;
+        margin-top: 0.15rem;
       }
       .itinerary-contact .itinerary-row {
-        grid-template-columns: 1fr;
-        align-items: start;
-        gap: 0.3rem;
+        grid-template-columns: 6.5rem 1fr;
+        align-items: center;
+        gap: 0.65rem 0.85rem;
         border-bottom: 1px solid var(--ink);
-      }
-      .itinerary-contact .itinerary-row:not(:last-child) {
-        border-right: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+        border-right: 0;
       }
       .itinerary-trip .itinerary-row,
       .itinerary-contact .itinerary-row {

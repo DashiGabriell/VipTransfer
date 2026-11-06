@@ -651,6 +651,51 @@ export function ReservationForm() {
               <strong>{t('reserve.distance')}:</strong> {distanceMessage()}
             </p>
           )}
+
+          <div className="itinerary-contact">
+            <div className="itinerary-row">
+              <label htmlFor="nome">{t('reserve.name')}</label>
+              <input
+                id="nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+                minLength={3}
+                pattern="\S+(\s+\S+)+"
+                title={t('reserve.nameInvalid')}
+                required
+              />
+            </div>
+            <div className="itinerary-row">
+              <label htmlFor="telefone">{t('reserve.phone')}</label>
+              <input
+                id="telefone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder={t('reserve.phonePlaceholder')}
+                value={phone}
+                onChange={(e) => setPhone(formatBrazilPhoneInput(e.target.value))}
+                pattern="\(\d{2}\)\s?\d{4,5}-?\d{4}"
+                title={t('reserve.phoneInvalid')}
+                required
+              />
+            </div>
+            <div className="itinerary-row">
+              <label htmlFor="email">{t('reserve.email')}</label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
+                title={t('reserve.emailInvalid')}
+                required
+              />
+            </div>
+          </div>
         </div>
 
         <div className="itinerary-schedule">
@@ -668,51 +713,6 @@ export function ReservationForm() {
               {formatSlotLabel(selectedSlot.slot_start, locale)})
             </p>
           )}
-        </div>
-      </div>
-
-      <div className="itinerary-contact">
-        <div className="itinerary-row">
-          <label htmlFor="nome">{t('reserve.name')}</label>
-          <input
-            id="nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoComplete="name"
-            minLength={3}
-            pattern="\S+(\s+\S+)+"
-            title={t('reserve.nameInvalid')}
-            required
-          />
-        </div>
-        <div className="itinerary-row">
-          <label htmlFor="telefone">{t('reserve.phone')}</label>
-          <input
-            id="telefone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder={t('reserve.phonePlaceholder')}
-            value={phone}
-            onChange={(e) => setPhone(formatBrazilPhoneInput(e.target.value))}
-            pattern="\(\d{2}\)\s?\d{4,5}-?\d{4}"
-            title={t('reserve.phoneInvalid')}
-            required
-          />
-        </div>
-        <div className="itinerary-row">
-          <label htmlFor="email">{t('reserve.email')}</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
-            title={t('reserve.emailInvalid')}
-            required
-          />
         </div>
       </div>
 

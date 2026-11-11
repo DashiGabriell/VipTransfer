@@ -24,6 +24,8 @@ import { DriverDetailPanel } from '../../components/admin/DriverDetailPanel'
 import { DriversPanel } from '../../components/admin/DriversPanel'
 import { FinancePanel } from '../../components/admin/FinancePanel'
 import { FleetPanel } from '../../components/admin/FleetPanel'
+import { AdminNotificationBell } from '../../components/admin/AdminNotificationBell'
+import { NotificationsInbox } from '../../components/admin/NotificationsInbox'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
 import { ReservationDetailModal } from '../../components/admin/ReservationDetailModal'
 import {
@@ -231,6 +233,7 @@ export function AdminDashboard() {
       clientes: t('admin.navClientes'),
       motoristas: t('admin.navMotoristas'),
       financeiro: t('admin.navFinanceiro'),
+      notificacoes: t('admin.navNotificacoes'),
       perfil: t('admin.navPerfil'),
     }
     return labels[tab]
@@ -318,6 +321,7 @@ export function AdminDashboard() {
             </div>
           </div>
           <div className="admin-topbar__actions">
+            <AdminNotificationBell />
             <LanguageToggle variant="admin" />
             <button
               type="button"
@@ -385,6 +389,13 @@ export function AdminDashboard() {
                 onClick={() => setMoreOpen(false)}
               >
                 {t('admin.navFinanceiro')}
+              </Link>
+              <Link
+                className="admin-more-sheet__action"
+                to="/admin/notificacoes"
+                onClick={() => setMoreOpen(false)}
+              >
+                {t('admin.navNotificacoes')}
               </Link>
               <Link
                 className="admin-more-sheet__action"
@@ -626,6 +637,10 @@ export function AdminDashboard() {
                   onError={setError}
                   onSettingsChanged={() => undefined}
                 />
+              )}
+
+              {tab === 'notificacoes' && (
+                <NotificationsInbox onError={setError} />
               )}
 
               {tab === 'perfil' && (

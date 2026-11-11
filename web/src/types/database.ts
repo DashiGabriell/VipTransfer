@@ -439,6 +439,13 @@ export type Database = {
         }
         Returns: Reservation
       }
+      reschedule_reservation_slot: {
+        Args: {
+          p_reservation_id: string
+          p_slot_start: string
+        }
+        Returns: Reservation
+      }
       complete_reservation_job: {
         Args: {
           p_reservation_id: string

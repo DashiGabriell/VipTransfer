@@ -25,3 +25,26 @@ export function formatCurrencyBRL(value: number, locale: string): string {
     currency: 'BRL',
   }).format(value)
 }
+
+/** Valor para `<input type="datetime-local">` no fuso do browser. */
+export function toDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** Converte datetime-local do browser para ISO timestamptz. */
+export function fromDatetimeLocalValue(local: string): Date | null {
+  const trimmed = local.trim()
+  if (!trimmed) return null
+  const d = new Date(trimmed)
+  if (Number.isNaN(d.getTime())) return null
+  return d
+}
+
+export function canRescheduleReservation(
+  status: string,
+): status is 'hold' | 'hold_expirado' | 'confirmado' {
+  return status === 'hold' || status === 'hold_expirado' || status === 'confirmado'
+}

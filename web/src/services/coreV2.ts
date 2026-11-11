@@ -239,6 +239,20 @@ export async function setReservationOverridePrice(
   return data as Reservation
 }
 
+/** Remarca data/horário preservando a duração e validando capacidade. */
+export async function rescheduleReservationSlot(
+  reservationId: string,
+  slotStartIso: string,
+): Promise<Reservation> {
+  const client = assertClient()
+  const { data, error } = await client.rpc('reschedule_reservation_slot', {
+    p_reservation_id: reservationId,
+    p_slot_start: slotStartIso,
+  })
+  if (error) throw error
+  return data as Reservation
+}
+
 export async function listFinancialEntries(
   organizationId: string,
 ): Promise<FinanceLedgerEntry[]> {

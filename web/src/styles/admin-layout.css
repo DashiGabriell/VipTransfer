@@ -55,9 +55,8 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #0a0a0a;
-  border-radius: 2px;
-  padding: 0.2rem;
+  background: transparent;
+  padding: 0;
 }
 
 .admin-sidebar__logo {
@@ -300,6 +299,52 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 55vw;
+}
+
+.admin-notif-bell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 2.45rem;
+  height: 2.45rem;
+  border: 1px solid color-mix(in srgb, var(--admin-line, #d8cfc0) 90%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, #fff 88%, var(--admin-paper, #f2ebe0));
+  color: var(--admin-ink, #152033);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-notif-bell:hover {
+  border-color: color-mix(in srgb, var(--admin-bronze, #b08d57) 45%, var(--admin-line, #d8cfc0));
+  background: #fffcf7;
+  transform: translateY(-1px);
+}
+
+.admin-notif-bell__icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.admin-notif-bell__badge {
+  position: absolute;
+  top: -0.28rem;
+  right: -0.28rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: var(--admin-bronze, #b08d57);
+  color: #fffdf8;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.15rem;
+  text-align: center;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #fff 80%, var(--admin-paper, #f2ebe0));
 }
 
 .admin-topbar__actions {
@@ -2330,6 +2375,22 @@
   background: #fff;
   font: inherit;
   color: var(--admin-ink, #152033);
+}
+
+.agenda-slot-modal__schedule-edit input[type='datetime-local'] {
+  min-width: 12rem;
+}
+
+.agenda-slot-modal__schedule-hint,
+.agenda-slot-modal__schedule-warn {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--admin-muted, #5c554c);
+}
+
+.agenda-slot-modal__schedule-warn {
+  color: #8b5a2b;
 }
 
 .admin-payment {

@@ -417,6 +417,8 @@ export type NotificationEventType =
   | 'reservation_confirmed'
   | 'reservation_cancelled'
   | 'hold_expired'
+  | 'payment_paid'
+  | 'payment_failed'
 
 export type NotificationPreferences = {
   user_id: string
@@ -427,6 +429,8 @@ export type NotificationPreferences = {
   event_reservation_confirmed: boolean
   event_reservation_cancelled: boolean
   event_hold_expired: boolean
+  event_payment_paid: boolean
+  event_payment_failed: boolean
   updated_at?: string
 }
 
@@ -453,6 +457,8 @@ export const DEFAULT_NOTIFICATION_PREFS: Omit<
   event_reservation_confirmed: true,
   event_reservation_cancelled: true,
   event_hold_expired: true,
+  event_payment_paid: true,
+  event_payment_failed: true,
 }
 
 export type AvailabilityWindow = {
@@ -572,6 +578,21 @@ export async function listMyNotifications(
     .limit(limit)
   if (error) throw error
   return (data ?? []) as StaffNotification[]
+}
+
+export async function countMyUnreadNotifications(): Promise<number> {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) throw new Error('NOT_AUTHENTICATED')
+
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .is('read_at', null)
+  if (error) throw error
+  return Number(count ?? 0)
 }
 
 export async function markNotificationRead(

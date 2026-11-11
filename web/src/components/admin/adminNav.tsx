@@ -8,6 +8,7 @@ export type AdminNavId =
   | 'clientes'
   | 'motoristas'
   | 'financeiro'
+  | 'notificacoes'
   | 'perfil'
 
 export const ADMIN_NAV_IDS: AdminNavId[] = [
@@ -18,6 +19,7 @@ export const ADMIN_NAV_IDS: AdminNavId[] = [
   'clientes',
   'motoristas',
   'financeiro',
+  'notificacoes',
   'perfil',
 ]
 
@@ -33,6 +35,7 @@ export type AdminNavIconName =
   | 'users'
   | 'wheel'
   | 'wallet'
+  | 'bell'
   | 'user'
 
 export type AdminNavItem = {
@@ -49,6 +52,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'clientes', labelKey: 'admin.navClientes', icon: 'users' },
   { id: 'motoristas', labelKey: 'admin.navMotoristas', icon: 'wheel' },
   { id: 'financeiro', labelKey: 'admin.navFinanceiro', icon: 'wallet' },
+  { id: 'notificacoes', labelKey: 'admin.navNotificacoes', icon: 'bell' },
   { id: 'perfil', labelKey: 'admin.navPerfil', icon: 'user' },
 ]
 
@@ -80,6 +84,14 @@ export function AdminNavIcon({
       </svg>
     )
   }
+  if (name === 'tag') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 12l-8 8-9-9V4h7l10 8Z" />
+        <circle cx="7.5" cy="7.5" r="1.2" />
+      </svg>
+    )
+  }
   if (name === 'users') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -104,6 +116,14 @@ export function AdminNavIcon({
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="3" y="6" width="18" height="13" rx="2" />
         <path d="M3 10h18M16 14.5h2" />
+      </svg>
+    )
+  }
+  if (name === 'bell') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6.5 9.5a5.5 5.5 0 0 1 11 0c0 4.2 1.5 5.8 2 6.5H4.5c.5-.7 2-2.3 2-6.5Z" />
+        <path d="M10 18.5a2 2 0 0 0 4 0" />
       </svg>
     )
   }

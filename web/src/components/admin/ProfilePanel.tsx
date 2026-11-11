@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import type { AppLang } from '../../lib/lang'
@@ -6,15 +6,12 @@ import { writeStoredLang } from '../../lib/lang'
 import {
   getMyNotificationPreferences,
   getMyProfile,
-  listMyNotifications,
-  markAllNotificationsRead,
-  markNotificationRead,
   updateMyNotificationPreferences,
   updateMyProfile,
   type NotificationPreferences,
-  type StaffNotification,
 } from '../../services/admin'
 import { DevicePermissionsCard } from './DevicePermissionsCard'
+import { NotificationsInbox } from './NotificationsInbox'
 
 type Props = {
   onError: (msg: string) => void
@@ -33,6 +30,8 @@ const EVENT_KEYS: PrefKey[] = [
   'event_reservation_confirmed',
   'event_reservation_cancelled',
   'event_hold_expired',
+  'event_payment_paid',
+  'event_payment_failed',
 ]
 
 export function ProfilePanel({ onError }: Props) {
@@ -43,27 +42,20 @@ export function ProfilePanel({ onError }: Props) {
     i18n.language.startsWith('en') ? 'en' : 'pt-BR',
   )
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null)
-  const [notifications, setNotifications] = useState<StaffNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savingPrefs, setSavingPrefs] = useState(false)
   const [ok, setOk] = useState<string | null>(null)
   const [prefsOk, setPrefsOk] = useState<string | null>(null)
 
-  const refreshNotifications = useCallback(async () => {
-    const rows = await listMyNotifications()
-    setNotifications(rows)
-  }, [])
-
   useEffect(() => {
     let cancelled = false
     void (async () => {
       setLoading(true)
       try {
-        const [profile, notificationPrefs, inbox] = await Promise.all([
+        const [profile, notificationPrefs] = await Promise.all([
           getMyProfile(),
           getMyNotificationPreferences(),
-          listMyNotifications(),
         ])
         if (cancelled) return
         setFullName(profile?.full_name ?? user?.email ?? '')
@@ -76,7 +68,6 @@ export function ProfilePanel({ onError }: Props) {
               : 'pt-BR'
         setLocale(pref)
         setPrefs(notificationPrefs)
-        setNotifications(inbox)
       } catch (err) {
         if (!cancelled) {
           onError(err instanceof Error ? err.message : 'Profile load failed')
@@ -121,6 +112,8 @@ export function ProfilePanel({ onError }: Props) {
         event_reservation_confirmed: next.event_reservation_confirmed,
         event_reservation_cancelled: next.event_reservation_cancelled,
         event_hold_expired: next.event_hold_expired,
+        event_payment_paid: next.event_payment_paid,
+        event_payment_failed: next.event_payment_failed,
       })
       setPrefs(saved)
       setPrefsOk(t('admin.notifPrefsSaved'))
@@ -132,30 +125,8 @@ export function ProfilePanel({ onError }: Props) {
     }
   }
 
-  async function onMarkRead(id: string) {
-    try {
-      await markNotificationRead(id)
-      await refreshNotifications()
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Mark read failed')
-    }
-  }
-
-  async function onMarkAll() {
-    try {
-      await markAllNotificationsRead()
-      await refreshNotifications()
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Mark all failed')
-    }
-  }
-
   function prefLabel(key: PrefKey): string {
     return t(`admin.notif.${key}`)
-  }
-
-  function eventLabel(type: StaffNotification['event_type']): string {
-    return t(`admin.notif.event.${type}`)
   }
 
   if (loading) {
@@ -163,9 +134,6 @@ export function ProfilePanel({ onError }: Props) {
       <p className="text-sm text-text-secondary-light">{t('agenda.loading')}</p>
     )
   }
-
-  const unread = notifications.filter((n) => !n.read_at).length
-  const localeFmt = i18n.language.startsWith('en') ? 'en-US' : 'pt-BR'
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -281,83 +249,7 @@ export function ProfilePanel({ onError }: Props) {
 
       <DevicePermissionsCard onError={onError} />
 
-      <section className="admin-panel-enter space-y-4 rounded-2xl border border-border-light bg-surface-light p-5 lg:col-span-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-semibold text-primary">
-              {t('admin.notif.inboxTitle')}
-            </h2>
-            <p className="mt-1 text-sm text-text-secondary-light">
-              {t('admin.notif.inboxLead', { count: unread })}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded border border-border-light px-3 py-1.5 text-xs uppercase tracking-wide"
-              onClick={() => void refreshNotifications()}
-            >
-              {t('admin.refresh')}
-            </button>
-            <button
-              type="button"
-              className="rounded border border-border-light px-3 py-1.5 text-xs uppercase tracking-wide disabled:opacity-50"
-              disabled={unread === 0}
-              onClick={() => void onMarkAll()}
-            >
-              {t('admin.notif.markAllRead')}
-            </button>
-          </div>
-        </div>
-
-        <ul className="divide-y divide-border-light/70">
-          {notifications.map((item) => (
-            <li
-              key={item.id}
-              className={`flex flex-wrap items-start justify-between gap-3 py-3 ${
-                item.read_at ? 'opacity-70' : ''
-              }`}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  {!item.read_at && (
-                    <span
-                      className="inline-block h-2 w-2 rounded-full bg-[var(--bronze,#b08d57)]"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <strong className="text-sm text-primary">{item.title}</strong>
-                  <span className="rounded bg-background-light px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-text-secondary-light">
-                    {eventLabel(item.event_type)}
-                  </span>
-                </div>
-                {item.body && (
-                  <p className="mt-1 text-sm text-text-secondary-light">
-                    {item.body}
-                  </p>
-                )}
-                <p className="mt-1 text-[11px] text-text-secondary-light">
-                  {new Date(item.created_at).toLocaleString(localeFmt)}
-                </p>
-              </div>
-              {!item.read_at && (
-                <button
-                  type="button"
-                  className="rounded border border-border-light px-2 py-1 text-xs"
-                  onClick={() => void onMarkRead(item.id)}
-                >
-                  {t('admin.notif.markRead')}
-                </button>
-              )}
-            </li>
-          ))}
-          {!notifications.length && (
-            <li className="py-6 text-sm text-text-secondary-light">
-              {t('admin.notif.empty')}
-            </li>
-          )}
-        </ul>
-      </section>
+      <NotificationsInbox onError={onError} compact />
     </div>
   )
 }

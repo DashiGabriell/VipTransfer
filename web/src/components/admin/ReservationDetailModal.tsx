@@ -11,7 +11,15 @@ import {
   parseMoneyDraft,
   sanitizeMoneyTyping,
 } from '../../domain/reservationPrice'
-import { setReservationOverridePrice } from '../../services/coreV2'
+import {
+  canRescheduleReservation,
+  fromDatetimeLocalValue,
+  toDatetimeLocalValue,
+} from '../../domain/slots'
+import {
+  rescheduleReservationSlot,
+  setReservationOverridePrice,
+} from '../../services/coreV2'
 import type {
   Driver,
   FreightRule,
@@ -62,12 +70,22 @@ export function ReservationDetailModal({
   const [routeOpen, setRouteOpen] = useState(false)
   const [priceDraft, setPriceDraft] = useState(() => initialMoneyDraft(r))
   const [savingPrice, setSavingPrice] = useState(false)
+  const [scheduleDraft, setScheduleDraft] = useState(() =>
+    toDatetimeLocalValue(r.slot_start),
+  )
+  const [savingSchedule, setSavingSchedule] = useState(false)
   const [confirmGate, setConfirmGate] = useState<DepositConfirmGate>('ok')
   const busy = busyId === r.id
   const canEditPrice = canEditReservationPrice(r.status)
+  const canReschedule = canRescheduleReservation(r.status)
   const canConfirmReservation =
     (r.status === 'hold' || r.status === 'hold_expirado') &&
     confirmGate === 'ok'
+  const hasActiveDispatch = assignments.some(
+    (a) =>
+      a.reservation_id === r.id &&
+      (a.status === 'oferecido' || a.status === 'aceito'),
+  )
 
   const category = categories.find((c) => c.id === r.vehicle_category_id)
   const categoryLabel = category
@@ -79,6 +97,10 @@ export function ReservationDetailModal({
   useEffect(() => {
     setPriceDraft(initialMoneyDraft(r))
   }, [r.id, r.override_price, r.estimated_price])
+
+  useEffect(() => {
+    setScheduleDraft(toDatetimeLocalValue(r.slot_start))
+  }, [r.id, r.slot_start])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -123,6 +145,37 @@ export function ReservationDetailModal({
       else onError(msg || t('admin.price.saveError'))
     } finally {
       setSavingPrice(false)
+    }
+  }
+
+  async function onSaveSchedule(e: FormEvent) {
+    e.preventDefault()
+    const next = fromDatetimeLocalValue(scheduleDraft)
+    if (!next) {
+      onError(t('admin.scheduleInvalid'))
+      return
+    }
+    if (next.getTime() < Date.now() - 5 * 60_000) {
+      onError(t('admin.schedulePast'))
+      return
+    }
+    setSavingSchedule(true)
+    onError('')
+    try {
+      await rescheduleReservationSlot(r.id, next.toISOString())
+      onDispatchChanged()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('SLOT_UNAVAILABLE'))
+        onError(t('admin.scheduleUnavailable'))
+      else if (msg.includes('SLOT_IN_PAST')) onError(t('admin.schedulePast'))
+      else if (msg.includes('INVALID_STATUS'))
+        onError(t('admin.scheduleClosed'))
+      else if (msg.includes('SLOT_REQUIRED') || msg.includes('INVALID_SLOT'))
+        onError(t('admin.scheduleInvalid'))
+      else onError(msg || t('admin.scheduleError'))
+    } finally {
+      setSavingSchedule(false)
     }
   }
 
@@ -179,6 +232,47 @@ export function ReservationDetailModal({
                 <span className="service-code">{r.service_code}</span>
               </dd>
             </div>
+            <div>
+              <dt>{t('admin.scheduleLabel')}</dt>
+              <dd>{new Date(r.slot_start).toLocaleString(locale)}</dd>
+            </div>
+            {canReschedule ? (
+              <div className="agenda-slot-modal__price-edit agenda-slot-modal__schedule-edit">
+                <form onSubmit={(ev) => void onSaveSchedule(ev)}>
+                  <label>
+                    <span>{t('admin.scheduleField')}</span>
+                    <input
+                      type="datetime-local"
+                      value={scheduleDraft}
+                      disabled={savingSchedule || busy}
+                      onChange={(e) => setScheduleDraft(e.target.value)}
+                      required
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="agenda-slot-modal__btn is-primary"
+                    disabled={
+                      savingSchedule ||
+                      busy ||
+                      scheduleDraft === toDatetimeLocalValue(r.slot_start)
+                    }
+                  >
+                    {savingSchedule
+                      ? t('admin.scheduleSaving')
+                      : t('admin.scheduleSave')}
+                  </button>
+                </form>
+                <p className="agenda-slot-modal__schedule-hint">
+                  {t('admin.scheduleHint')}
+                </p>
+                {hasActiveDispatch ? (
+                  <p className="agenda-slot-modal__schedule-warn">
+                    {t('admin.scheduleDispatchHint')}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <div>
               <dt>{t('reserve.name')}</dt>
               <dd>{r.customer_name}</dd>

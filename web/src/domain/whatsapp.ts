@@ -179,3 +179,54 @@ export function buildDriverDemandWhatsAppUrl(
 
   return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join('\n'))}`
 }
+
+export type PaymentChargeWhatsAppSummary = {
+  serviceCode?: string | null
+  customerFirstName: string
+  kind: 'sinal' | 'restante'
+  amountLabel: string
+  checkoutUrl?: string | null
+  locale: 'pt-BR' | 'en'
+}
+
+/** Mensagem ao cliente com valor da cobrança e link (ou aviso stub). */
+export function buildPaymentChargeWhatsAppUrl(
+  customerPhone: string,
+  summary: PaymentChargeWhatsAppSummary,
+): string | null {
+  const digits = toWhatsAppDigits(customerPhone)
+  if (!digits) return null
+
+  const en = summary.locale === 'en'
+  const code = (summary.serviceCode ?? '').trim().toUpperCase()
+  const first =
+    summary.customerFirstName.trim() || (en ? 'there' : 'cliente')
+  const kindLabel = en
+    ? summary.kind === 'sinal'
+      ? 'deposit'
+      : 'remaining balance'
+    : summary.kind === 'sinal'
+      ? 'sinal'
+      : 'restante'
+  const url = (summary.checkoutUrl ?? '').trim()
+
+  const lines = en
+    ? [
+        `Hello, ${first}! Here is the ${kindLabel} payment for your JMD transfer.`,
+        ...(code ? [`Request: ${code}`] : []),
+        `Amount: ${summary.amountLabel}`,
+        url
+          ? `Pay here: ${url}`
+          : `We will send the Asaas payment link shortly.`,
+      ]
+    : [
+        `Olá, ${first}! Segue o pagamento do ${kindLabel} do seu transfer JMD.`,
+        ...(code ? [`Código: ${code}`] : []),
+        `Valor: ${summary.amountLabel}`,
+        url
+          ? `Pague pelo link: ${url}`
+          : `Em breve enviamos o link de pagamento Asaas.`,
+      ]
+
+  return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join('\n'))}`
+}

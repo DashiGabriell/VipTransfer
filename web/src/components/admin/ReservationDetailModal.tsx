@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import type { DepositConfirmGate } from '../../domain/paymentCharges'
 import {
+  canEditReservationPrice,
   formatMoneyDraft,
   formatReservationMoney,
   hasOverridePrice,
@@ -12,11 +14,13 @@ import {
 import { setReservationOverridePrice } from '../../services/coreV2'
 import type {
   Driver,
+  FreightRule,
   JobAssignment,
   Reservation,
   VehicleCategory,
 } from '../../types/database'
 import { DispatchControls } from './DispatchControls'
+import { ReservationPaymentPanel } from './ReservationPaymentPanel'
 import { RouteNavPicker, ViewRouteButton } from './RouteNavPicker'
 
 type Props = {
@@ -25,6 +29,7 @@ type Props = {
   drivers: Driver[]
   assignments: JobAssignment[]
   categories: VehicleCategory[]
+  freightRules: FreightRule[]
   onClose: () => void
   onConfirm: (id: string) => void
   onCancel: (id: string) => void
@@ -42,6 +47,7 @@ export function ReservationDetailModal({
   drivers,
   assignments,
   categories,
+  freightRules,
   onClose,
   onConfirm,
   onCancel,
@@ -56,12 +62,12 @@ export function ReservationDetailModal({
   const [routeOpen, setRouteOpen] = useState(false)
   const [priceDraft, setPriceDraft] = useState(() => initialMoneyDraft(r))
   const [savingPrice, setSavingPrice] = useState(false)
+  const [confirmGate, setConfirmGate] = useState<DepositConfirmGate>('ok')
   const busy = busyId === r.id
-  const canEditPrice =
-    r.status !== 'cancelado' &&
-    r.status !== 'hold_expirado' &&
-    r.status !== 'confirmado' &&
-    r.status !== 'concluido'
+  const canEditPrice = canEditReservationPrice(r.status)
+  const canConfirmReservation =
+    (r.status === 'hold' || r.status === 'hold_expirado') &&
+    confirmGate === 'ok'
 
   const category = categories.find((c) => c.id === r.vehicle_category_id)
   const categoryLabel = category
@@ -310,7 +316,7 @@ export function ReservationDetailModal({
               <button
                 type="button"
                 className="agenda-slot-modal__btn is-primary"
-                disabled={busy}
+                disabled={busy || !canConfirmReservation}
                 onClick={() => onConfirm(r.id)}
               >
                 {t('admin.confirm')}
@@ -327,6 +333,24 @@ export function ReservationDetailModal({
               </button>
             )}
           </div>
+          {(r.status === 'hold' || r.status === 'hold_expirado') &&
+          confirmGate !== 'ok' ? (
+            <p className="admin-payment__meta" style={{ marginTop: '0.5rem' }}>
+              {confirmGate === 'deposit_pending'
+                ? t('admin.payment.depositPending')
+                : t('admin.payment.depositRequired')}
+            </p>
+          ) : null}
+
+          <div style={{ marginTop: '0.85rem' }}>
+            <ReservationPaymentPanel
+              reservation={r}
+              freightRules={freightRules}
+              onChanged={onDispatchChanged}
+              onError={onError}
+              onConfirmGateChange={setConfirmGate}
+            />
+          </div>
 
           <div style={{ marginTop: '0.85rem' }}>
             <DispatchControls
@@ -334,6 +358,7 @@ export function ReservationDetailModal({
               drivers={drivers}
               assignments={assignments}
               categories={categories}
+              showPriceEdit={false}
               onChanged={onDispatchChanged}
               onError={onError}
             />

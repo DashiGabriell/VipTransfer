@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  canEditReservationPrice,
   formatMoneyDraft,
   hasOverridePrice,
   initialMoneyDraft,
@@ -27,6 +28,8 @@ type Props = {
   drivers: Driver[]
   assignments: JobAssignment[]
   categories?: VehicleCategory[]
+  /** Quando false, o preço real é editado só no detalhe da reserva. */
+  showPriceEdit?: boolean
   onChanged: () => void
   onError: (msg: string) => void
 }
@@ -45,6 +48,7 @@ export function DispatchControls({
   drivers,
   assignments,
   categories = [],
+  showPriceEdit = true,
   onChanged,
   onError,
 }: Props) {
@@ -197,7 +201,7 @@ export function DispatchControls({
   }
 
   const canEditPrice =
-    reservation.status === 'confirmado' || reservation.status === 'concluido'
+    showPriceEdit && canEditReservationPrice(reservation.status)
 
   return (
     <div className="admin-dispatch">
@@ -236,12 +240,13 @@ export function DispatchControls({
           >
             {savingPrice ? '…' : t('admin.price.save')}
           </button>
-          {!priceReady && reservation.status === 'confirmado' ? (
-            <p className="admin-dispatch__price-hint">
-              {t('admin.price.requiredHint')}
-            </p>
-          ) : null}
         </form>
+      ) : null}
+
+      {!priceReady && reservation.status === 'confirmado' ? (
+        <p className="admin-dispatch__price-hint">
+          {t('admin.price.requiredHint')}
+        </p>
       ) : null}
 
       {label === 'sem_motorista' && reservation.status === 'confirmado' ? (

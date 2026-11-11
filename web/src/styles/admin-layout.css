@@ -2332,6 +2332,123 @@
   color: var(--admin-ink, #152033);
 }
 
+.admin-payment {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  border-radius: 0.75rem;
+  background: #faf7f2;
+}
+
+.admin-payment__head h3 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--admin-ink, #152033);
+}
+
+.admin-payment__head p {
+  margin: 0.25rem 0 0;
+  font-size: 0.74rem;
+  color: var(--admin-muted, #5c554c);
+  line-height: 1.35;
+}
+
+.admin-payment__block {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--admin-line, #d8cfc0) 80%, transparent);
+}
+
+.admin-payment__block-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.admin-payment__block-top strong {
+  font-size: 0.82rem;
+  color: var(--admin-ink, #152033);
+}
+
+.admin-payment__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: #ebe4d8;
+  color: #5c554c;
+}
+
+.admin-payment__badge.is-emitida {
+  background: #f3e6c8;
+  color: #7a5a16;
+}
+
+.admin-payment__badge.is-paga {
+  background: #d8ebe0;
+  color: #1f5c3a;
+}
+
+.admin-payment__badge.is-none,
+.admin-payment__badge.is-expirada,
+.admin-payment__badge.is-cancelada,
+.admin-payment__badge.is-estornada {
+  background: #ebe4d8;
+  color: #5c554c;
+}
+
+.admin-payment__meta,
+.admin-payment__muted {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--admin-muted, #5c554c);
+  line-height: 1.4;
+}
+
+.admin-payment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.admin-payment__remaining-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-payment__remaining-form label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.admin-payment__remaining-form label span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-muted, #5c554c);
+}
+
+.admin-payment__remaining-form textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  border-radius: 0.5rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--admin-ink, #152033);
+  resize: vertical;
+}
+
 /* Driver portal */
 .driver-shell {
   min-height: 100svh;
@@ -2990,6 +3107,12 @@
 .admin-finance__settle-summary strong {
   font-size: 0.95rem;
   color: var(--admin-ink, #152033);
+}
+
+.admin-finance__commission-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--admin-muted, #5c554c);
 }
 
 .admin-finance__proof-links {

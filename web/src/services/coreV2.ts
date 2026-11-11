@@ -366,6 +366,23 @@ export async function setOrgCommissionPercent(
   if (error) throw error
 }
 
+/** Ajusta o % de comissão de um lançamento ainda não liquidado. */
+export async function setFinancialEntryCommissionPercent(
+  entryId: string,
+  percent: number,
+): Promise<FinancialEntry> {
+  const client = assertClient()
+  const { data, error } = await client.rpc(
+    'set_financial_entry_commission_percent',
+    {
+      p_entry_id: entryId,
+      p_percent: percent,
+    },
+  )
+  if (error) throw error
+  return data as FinancialEntry
+}
+
 export function readCommissionPercent(settings: unknown): number {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
     return 20

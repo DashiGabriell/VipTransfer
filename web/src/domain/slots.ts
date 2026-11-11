@@ -1,5 +1,6 @@
-const DEFAULT_SLOT_MINUTES = 30
-const DEFAULT_HOLD_MINUTES = 60
+const DEFAULT_SLOT_MINUTES = 60
+/** Hold padrão: 12 horas (alinhado a capacity_settings.hold_minutes). */
+const DEFAULT_HOLD_MINUTES = 720
 
 export function buildSlotRange(
   date: string,

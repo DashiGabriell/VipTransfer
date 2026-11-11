@@ -182,13 +182,13 @@ O texto da justificativa fica registrado na reserva / na cobrança para auditori
 
 ## 12. Ordem sugerida de implementação
 
-1. Hold de **12 horas** + regra de editabilidade do preço (só trava após confirmação).  
-2. Percentual de sinal na página **Transfer** (por tipo de serviço).  
-3. Emissão da cobrança de **sinal** (Asaas + WhatsApp) no Detalhe da reserva.  
-4. Webhook do sinal + gate de confirmação.  
-5. UI do **restante** (valor sugerido, edição, justificativa obrigatória, link WhatsApp).  
-6. Webhook do restante + amarração com conclusão / financeiro.  
-7. Cancelar / expirar / estornar (operações de suporte).
+1. Hold de **12 horas** + regra de editabilidade do preço (só trava após confirmação). ✅  
+2. Percentual de sinal na página **Transfer** (por tipo de serviço). ✅  
+3. Modelo de cobrança no banco (sinal / restante + estados). ✅ (`payment_charges`)  
+4. UI no Detalhe da reserva (stub → Asaas). ✅  
+5. Edge Functions + webhook Asaas. ✅ (`create-asaas-checkout`, `asaas-webhook`)  
+6. Gate: confirmar só com sinal pago (preço real ⇒ exige sinal). ✅  
+7. Credenciais Asaas (sandbox → produção) — secrets no Supabase / `.env.example` (aguardando chaves).
 
 ---
 

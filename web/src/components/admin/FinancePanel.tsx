@@ -12,6 +12,7 @@ import {
   listFinancialEntries,
   liquidateFinancialEntry,
   readCommissionPercent,
+  setFinancialEntryCommissionPercent,
   setOrgCommissionPercent,
   uploadSettlementProof,
 } from '../../services/coreV2'
@@ -220,6 +221,10 @@ export function FinancePanel({
   const [savingPct, setSavingPct] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [settleEntry, setSettleEntry] = useState<FinanceLedgerEntry | null>(null)
+  const [commissionEntry, setCommissionEntry] =
+    useState<FinanceLedgerEntry | null>(null)
+  const [commissionDraft, setCommissionDraft] = useState('')
+  const [commissionError, setCommissionError] = useState<string | null>(null)
   const [viewProofsEntry, setViewProofsEntry] = useState<FinanceLedgerEntry | null>(
     null,
   )
@@ -343,6 +348,79 @@ export function FinancePanel({
     setClientProof(null)
     setDriverProof(null)
     setSettleError(null)
+  }
+
+  function openCommissionModal(entry: FinanceLedgerEntry) {
+    setCommissionEntry(entry)
+    setCommissionDraft(String(Number(entry.commission_percent)))
+    setCommissionError(null)
+    onError('')
+  }
+
+  function closeCommissionModal() {
+    if (busyId) return
+    setCommissionEntry(null)
+    setCommissionDraft('')
+    setCommissionError(null)
+  }
+
+  const commissionPreview = useMemo(() => {
+    if (!commissionEntry) return null
+    const pct = Number(commissionDraft.replace(',', '.'))
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) return null
+    const gross = Number(commissionEntry.gross_amount)
+    // Mesma regra do SQL: round(gross * pct / 100, 2)
+    const commissionAmount = Math.round((gross * pct) / 100 * 100) / 100
+    const driverAmount = Math.max(
+      Math.round((gross - commissionAmount) * 100) / 100,
+      0,
+    )
+    return { pct, commissionAmount, driverAmount }
+  }, [commissionDraft, commissionEntry])
+
+  async function onSaveEntryCommission(e: FormEvent) {
+    e.preventDefault()
+    if (!commissionEntry) return
+    const pct = Number(commissionDraft.replace(',', '.'))
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      setCommissionError(t('admin.finance.percentInvalid'))
+      return
+    }
+    setBusyId(commissionEntry.id)
+    setCommissionError(null)
+    onError('')
+    try {
+      const updated = await setFinancialEntryCommissionPercent(
+        commissionEntry.id,
+        pct,
+      )
+      setEntries((prev) =>
+        prev.map((row) =>
+          row.id === updated.id
+            ? {
+                ...updated,
+                customer_name: row.customer_name,
+                service_code: row.service_code,
+              }
+            : row,
+        ),
+      )
+      setCommissionEntry(null)
+      setCommissionDraft('')
+    } catch (err) {
+      const code = err instanceof Error ? err.message : ''
+      const msg = code.includes('ALREADY_LIQUIDATED')
+        ? t('admin.finance.commissionAlreadyLiquidated')
+        : code.includes('PERCENT_INVALID')
+          ? t('admin.finance.percentInvalid')
+          : err instanceof Error && err.message
+            ? err.message
+            : t('admin.finance.saveEntryCommissionError')
+      setCommissionError(msg)
+      onError(msg)
+    } finally {
+      setBusyId(null)
+    }
   }
 
   function mapProofError(err: unknown): string {
@@ -746,6 +824,16 @@ export function FinancePanel({
                             type="button"
                             className="admin-clients__btn is-ghost"
                             disabled={busyId === e.id}
+                            onClick={() => openCommissionModal(e)}
+                          >
+                            {t('admin.finance.editCommission')}
+                          </button>
+                        ) : null}
+                        {e.status !== 'liquidado' ? (
+                          <button
+                            type="button"
+                            className="admin-clients__btn is-ghost"
+                            disabled={busyId === e.id}
                             onClick={() => openSettleModal(e)}
                           >
                             {t('admin.finance.liquidate')}
@@ -770,6 +858,121 @@ export function FinancePanel({
           </div>
         ) : null}
       </div>
+
+      {commissionEntry
+        ? createPortal(
+            <div className="admin-form-modal" role="presentation">
+              <button
+                type="button"
+                className="admin-form-modal__backdrop"
+                aria-label={t('admin.finance.cancelEntryCommission')}
+                onClick={closeCommissionModal}
+              />
+              <form
+                className="admin-form-modal__panel admin-clients__form"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="finance-commission-title"
+                onSubmit={(ev) => void onSaveEntryCommission(ev)}
+              >
+                <header className="admin-form-modal__head">
+                  <div>
+                    <h2 id="finance-commission-title">
+                      {t('admin.finance.editCommissionTitle')}
+                    </h2>
+                    <p>
+                      {t('admin.finance.editCommissionLead', {
+                        code: commissionEntry.service_code ?? '—',
+                        customer: commissionEntry.customer_name,
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-form-modal__close"
+                    onClick={closeCommissionModal}
+                    disabled={busyId === commissionEntry.id}
+                  >
+                    ×
+                  </button>
+                </header>
+
+                <div className="admin-finance__settle-summary">
+                  <article>
+                    <span>{t('admin.finance.colGross')}</span>
+                    <strong>
+                      {money(Number(commissionEntry.gross_amount), locale)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>{t('admin.finance.colCommission')}</span>
+                    <strong>
+                      {commissionPreview
+                        ? money(commissionPreview.commissionAmount, locale)
+                        : '—'}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>{t('admin.finance.colDriver')}</span>
+                    <strong>
+                      {commissionPreview
+                        ? money(commissionPreview.driverAmount, locale)
+                        : '—'}
+                    </strong>
+                  </article>
+                </div>
+
+                <label className="admin-clients__field">
+                  <span>{t('admin.finance.percent')}</span>
+                  <input
+                    value={commissionDraft}
+                    onChange={(ev) => {
+                      setCommissionDraft(ev.target.value)
+                      setCommissionError(null)
+                    }}
+                    inputMode="decimal"
+                    required
+                    disabled={busyId === commissionEntry.id}
+                  />
+                </label>
+                <p className="admin-finance__commission-hint">
+                  {t('admin.finance.editCommissionHint', {
+                    defaultPercent: String(readCommissionPercent(orgSettings)),
+                  })}
+                </p>
+
+                {commissionError ? (
+                  <p className="text-sm" style={{ color: '#8b2e2e' }} role="alert">
+                    {commissionError}
+                  </p>
+                ) : null}
+
+                <div className="admin-clients__form-actions">
+                  <button
+                    type="button"
+                    className="admin-clients__btn is-ghost"
+                    onClick={closeCommissionModal}
+                    disabled={busyId === commissionEntry.id}
+                  >
+                    {t('admin.finance.cancelEntryCommission')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="admin-clients__btn is-primary"
+                    disabled={
+                      busyId === commissionEntry.id || !commissionPreview
+                    }
+                  >
+                    {busyId === commissionEntry.id
+                      ? t('admin.clients.saving')
+                      : t('admin.finance.saveEntryCommission')}
+                  </button>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
 
       {settleEntry
         ? createPortal(

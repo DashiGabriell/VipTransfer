@@ -152,3 +152,27 @@ export function computeInternalEstimatedPrice(opts: {
   if (!(result.total > 0)) return null
   return Math.round(result.total * 100) / 100
 }
+
+const DEFAULT_DEPOSIT_PERCENT = 30
+
+/** Percentual de sinal configurado para o tipo de serviço (0–100). */
+export function depositPercentForService(
+  rules: FreightRule[],
+  serviceType: ServiceType,
+): number {
+  const rule = pickRule(rules, { serviceType, vehicleCategoryId: null })
+  const n = Number(rule?.deposit_percent)
+  if (!Number.isFinite(n)) return DEFAULT_DEPOSIT_PERCENT
+  return Math.min(100, Math.max(0, n))
+}
+
+/** Valor do sinal em R$ a partir do preço real e do percentual. */
+export function computeDepositAmount(
+  realPrice: number,
+  depositPercent: number,
+): number {
+  const price = Number(realPrice)
+  const pct = Math.min(100, Math.max(0, Number(depositPercent) || 0))
+  if (!(price > 0) || !(pct > 0)) return 0
+  return Math.round(((price * pct) / 100 + Number.EPSILON) * 100) / 100
+}

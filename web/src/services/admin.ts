@@ -314,10 +314,16 @@ export async function upsertFreightRule(input: {
   price_per_km: number
   minimum_fare: number
   price_per_hour: number
+  deposit_percent: number
   vehicle_category_id?: string | null
   service_type?: ServiceType | null
 }): Promise<FreightRule> {
   if (!supabase) throw new Error('Supabase não configurado')
+
+  const depositPercent = Math.min(
+    100,
+    Math.max(0, Number(input.deposit_percent) || 0),
+  )
 
   let ruleId = input.id
   if (!ruleId && input.service_type) {
@@ -338,6 +344,7 @@ export async function upsertFreightRule(input: {
         price_per_km: input.price_per_km,
         minimum_fare: input.minimum_fare,
         price_per_hour: input.price_per_hour,
+        deposit_percent: depositPercent,
         vehicle_category_id: input.vehicle_category_id ?? null,
         service_type: input.service_type ?? null,
         updated_at: new Date().toISOString(),
@@ -356,6 +363,7 @@ export async function upsertFreightRule(input: {
       price_per_km: input.price_per_km,
       minimum_fare: input.minimum_fare,
       price_per_hour: input.price_per_hour,
+      deposit_percent: depositPercent,
       vehicle_category_id: input.vehicle_category_id ?? null,
       service_type: input.service_type ?? null,
       active: true,

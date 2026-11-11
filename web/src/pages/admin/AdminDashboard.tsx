@@ -250,7 +250,14 @@ export function AdminDashboard() {
       await confirmReservation(id)
       await refreshReservations()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao confirmar')
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('DEPOSIT_PENDING')) {
+        setError(t('admin.payment.depositPending'))
+      } else if (msg.includes('DEPOSIT_REQUIRED')) {
+        setError(t('admin.payment.depositRequired'))
+      } else {
+        setError(msg || 'Falha ao confirmar')
+      }
     } finally {
       setBusyId(null)
     }
@@ -435,6 +442,7 @@ export function AdminDashboard() {
                   drivers={drivers}
                   assignments={assignments}
                   categories={categories}
+                  freightRules={freightRules}
                   onDispatchChanged={() => {
                     void refreshReservations()
                     void refreshDrivers()
@@ -725,6 +733,7 @@ function ReservationsPanel(props: {
   drivers: Driver[]
   assignments: JobAssignment[]
   categories: VehicleCategory[]
+  freightRules: FreightRule[]
   onDispatchChanged: () => void
   onError: (msg: string) => void
 }) {
@@ -958,6 +967,7 @@ function ReservationsPanel(props: {
                 drivers={props.drivers}
                 assignments={props.assignments}
                 categories={props.categories}
+                freightRules={props.freightRules}
                 onClose={() => setDetailReservation(null)}
                 onConfirm={(id) => {
                   props.onConfirm(id)
@@ -1005,6 +1015,9 @@ function FreightPanel(props: {
 
   const [pontoKm, setPontoKm] = useState(String(ponto?.price_per_km ?? 8))
   const [pontoMin, setPontoMin] = useState(String(ponto?.minimum_fare ?? 120))
+  const [pontoDeposit, setPontoDeposit] = useState(
+    String(ponto?.deposit_percent ?? 30),
+  )
   const [dispHour, setDispHour] = useState(
     String(disposicao?.price_per_hour ?? 180),
   )
@@ -1012,8 +1025,14 @@ function FreightPanel(props: {
   const [dispMin, setDispMin] = useState(
     String(disposicao?.minimum_fare ?? 0),
   )
+  const [dispDeposit, setDispDeposit] = useState(
+    String(disposicao?.deposit_percent ?? 30),
+  )
   const [conciergeNote, setConciergeNote] = useState(
     String(concierge?.minimum_fare ?? 0),
+  )
+  const [conciergeDeposit, setConciergeDeposit] = useState(
+    String(concierge?.deposit_percent ?? 30),
   )
   const [fees, setFees] = useState<Record<AirportCode, string>>({
     GRU: String(
@@ -1032,10 +1051,13 @@ function FreightPanel(props: {
   useEffect(() => {
     setPontoKm(String(ponto?.price_per_km ?? 8))
     setPontoMin(String(ponto?.minimum_fare ?? 120))
+    setPontoDeposit(String(ponto?.deposit_percent ?? 30))
     setDispHour(String(disposicao?.price_per_hour ?? 180))
     setDispKm(String(disposicao?.price_per_km ?? 0))
     setDispMin(String(disposicao?.minimum_fare ?? 0))
+    setDispDeposit(String(disposicao?.deposit_percent ?? 30))
     setConciergeNote(String(concierge?.minimum_fare ?? 0))
+    setConciergeDeposit(String(concierge?.deposit_percent ?? 30))
     setFees({
       GRU: String(
         props.airportFees.find((f) => f.airport === 'GRU')?.flat_fee ?? 40,
@@ -1063,6 +1085,7 @@ function FreightPanel(props: {
           price_per_km: Number(pontoKm),
           minimum_fare: Number(pontoMin),
           price_per_hour: 0,
+          deposit_percent: Number(pontoDeposit),
         }),
         upsertFreightRule({
           id:
@@ -1074,6 +1097,7 @@ function FreightPanel(props: {
           price_per_km: Number(dispKm),
           minimum_fare: Number(dispMin),
           price_per_hour: Number(dispHour),
+          deposit_percent: Number(dispDeposit),
         }),
         upsertFreightRule({
           id:
@@ -1085,6 +1109,7 @@ function FreightPanel(props: {
           price_per_km: 0,
           minimum_fare: Number(conciergeNote) || 0,
           price_per_hour: 0,
+          deposit_percent: Number(conciergeDeposit),
         }),
         ...(['GRU', 'CGH', 'VCP'] as AirportCode[]).map((airport) =>
           updateAirportFee({
@@ -1156,7 +1181,23 @@ function FreightPanel(props: {
                 required
               />
             </label>
+            <label>
+              <span>{t('admin.freightDepositPercent')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={pontoDeposit}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setPontoDeposit(e.target.value)
+                }}
+                required
+              />
+            </label>
           </div>
+          <p className="admin-freight__hint">{t('admin.freightDepositHint')}</p>
           <div className="admin-freight__airports">
             <h4>{t('admin.freightAirportFeesTitle')}</h4>
             <div className="admin-freight__fields">
@@ -1226,7 +1267,23 @@ function FreightPanel(props: {
                 }}
               />
             </label>
+            <label>
+              <span>{t('admin.freightDepositPercent')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={dispDeposit}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setDispDeposit(e.target.value)
+                }}
+                required
+              />
+            </label>
           </div>
+          <p className="admin-freight__hint">{t('admin.freightDepositHint')}</p>
         </section>
 
         <section className="admin-freight__card">
@@ -1246,7 +1303,23 @@ function FreightPanel(props: {
                 }}
               />
             </label>
+            <label>
+              <span>{t('admin.freightDepositPercent')}</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={conciergeDeposit}
+                onChange={(e) => {
+                  setSavedOk(false)
+                  setConciergeDeposit(e.target.value)
+                }}
+                required
+              />
+            </label>
           </div>
+          <p className="admin-freight__hint">{t('admin.freightDepositHint')}</p>
           <p className="admin-freight__hint">{t('admin.freightConciergeHint')}</p>
         </section>
       </div>

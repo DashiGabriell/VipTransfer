@@ -1,8 +1,13 @@
-import type { Reservation } from '../types/database'
+import type { Reservation, ReservationStatus } from '../types/database'
 
 /** Arredonda para centavos (BRL). */
 export function roundMoney(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100
+}
+
+/** Preço real editável só antes da confirmação (hold / hold expirado). */
+export function canEditReservationPrice(status: ReservationStatus): boolean {
+  return status === 'hold' || status === 'hold_expirado'
 }
 
 /** Preço real negociado, quando definido. */

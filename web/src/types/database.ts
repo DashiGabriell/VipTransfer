@@ -8,6 +8,13 @@ export type ReservationStatus =
   | 'concluido'
 export type ServiceType = 'ponto_a_b' | 'a_disposicao' | 'concierge'
 export type AirportCode = 'GRU' | 'CGH' | 'VCP'
+export type PaymentChargeKind = 'sinal' | 'restante'
+export type PaymentChargeStatus =
+  | 'emitida'
+  | 'paga'
+  | 'expirada'
+  | 'cancelada'
+  | 'estornada'
 
 export const SERVICE_TYPES: ServiceType[] = [
   'ponto_a_b',
@@ -180,6 +187,31 @@ export type FinanceLedgerEntry = FinancialEntry & {
   service_code: string | null
 }
 
+/** Cobrança Asaas do cliente (sinal ou restante) — distinto do repasse ao motorista. */
+export type PaymentCharge = {
+  id: string
+  organization_id: string
+  reservation_id: string
+  kind: PaymentChargeKind
+  status: PaymentChargeStatus
+  amount: number
+  currency: string
+  real_price_snapshot: number
+  deposit_percent: number | null
+  suggested_amount: number | null
+  adjustment_justification: string | null
+  asaas_checkout_id: string | null
+  asaas_payment_id: string | null
+  checkout_url: string | null
+  expires_at: string | null
+  paid_at: string | null
+  cancelled_at: string | null
+  created_by: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type Lead = {
   id: string
   organization_id: string
@@ -223,6 +255,8 @@ export type FreightRule = {
   price_per_km: number
   minimum_fare: number
   price_per_hour: number | null
+  /** Percentual do preço real cobrado como sinal (0–100). */
+  deposit_percent: number
   active: boolean
 }
 
@@ -352,6 +386,19 @@ export type Database = {
         Insert: CreateReservationInput & { status?: ReservationStatus }
         Update: Partial<Reservation>
       }
+      payment_charges: {
+        Row: PaymentCharge
+        Insert: Partial<PaymentCharge> &
+          Pick<
+            PaymentCharge,
+            | 'organization_id'
+            | 'reservation_id'
+            | 'kind'
+            | 'amount'
+            | 'real_price_snapshot'
+          >
+        Update: Partial<PaymentCharge>
+      }
     }
     Functions: {
       create_reservation_with_hold: {
@@ -397,6 +444,38 @@ export type Database = {
           p_reservation_id: string
         }
         Returns: FinancialEntry
+      }
+      reservation_deposit_amount: {
+        Args: {
+          p_reservation_id: string
+        }
+        Returns: number
+      }
+      emit_deposit_charge: {
+        Args: {
+          p_reservation_id: string
+        }
+        Returns: PaymentCharge
+      }
+      emit_remaining_charge: {
+        Args: {
+          p_reservation_id: string
+          p_amount: number
+          p_justification?: string | null
+        }
+        Returns: PaymentCharge
+      }
+      mark_payment_charge_paid: {
+        Args: {
+          p_charge_id: string
+        }
+        Returns: PaymentCharge
+      }
+      reservation_deposit_gate: {
+        Args: {
+          p_reservation_id: string
+        }
+        Returns: string
       }
     }
   }

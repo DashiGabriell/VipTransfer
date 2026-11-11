@@ -196,7 +196,7 @@ Arquivo principal: `web/src/pages/LandingPage.tsx`.
 | Conceito | Valor atual no código |
 |----------|------------------------|
 | Duração do slot | **60 minutos** |
-| Hold padrão | **60 minutos** (`capacity_settings.hold_minutes`) |
+| Hold padrão | **12 horas** (`capacity_settings.hold_minutes` = 720) |
 | Timezone seed JMD | `America/Sao_Paulo` |
 | Janela típica | Seg–sáb 06:00–22:00 (seed) |
 | Expiração de holds | Cron `expire-reservation-holds` a cada **5 min** → status `hold_expirado` |

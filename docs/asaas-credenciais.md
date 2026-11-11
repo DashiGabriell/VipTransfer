@@ -9,7 +9,7 @@ Não coloque API keys no front (`VITE_*` / `web/.env`). Tudo vai em **Supabase E
 | `ASAAS_API_KEY` | Chave **sandbox** (`$aact_hmlg_…`) |
 | `ASAAS_ENV` | `sandbox` |
 | `ASAAS_WEBHOOK_TOKEN` | Token aleatório (≥32 chars), **não** é URL |
-| `SITE_URL` | `https://jmdtrasnfer.vercel.app` |
+| `SITE_URL` | `https://www.jmdtransfer.com` |
 
 ### PowerShell (importante)
 
@@ -22,7 +22,7 @@ npx supabase secrets set --yes "ASAAS_API_KEY=$aact_hmlg_COLE_A_CHAVE_AQUI"
 # Certo:
 npx supabase secrets set --yes 'ASAAS_API_KEY=$aact_hmlg_COLE_A_CHAVE_AQUI'
 npx supabase secrets set --yes "ASAAS_ENV=sandbox"
-npx supabase secrets set --yes "SITE_URL=https://jmdtrasnfer.vercel.app"
+npx supabase secrets set --yes "SITE_URL=https://www.jmdtransfer.com"
 ```
 
 Ou:

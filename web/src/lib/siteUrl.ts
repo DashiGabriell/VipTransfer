@@ -1,5 +1,5 @@
 /** Production site used in WhatsApp / share links when running on localhost. */
-const DEFAULT_PUBLIC_SITE_URL = 'https://jmdtrasnfer.vercel.app'
+const DEFAULT_PUBLIC_SITE_URL = 'https://www.jmdtransfer.com'
 
 /**
  * Absolute public origin for links sent outside the current browser

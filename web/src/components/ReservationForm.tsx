@@ -15,6 +15,7 @@ import {
   isValidEmail,
   isValidFullName,
 } from '../domain/customerFields'
+import { computeInternalEstimatedPrice } from '../domain/freight'
 import { buildWhatsAppUrl } from '../domain/whatsapp'
 import {
   isGeocodeOk,
@@ -302,6 +303,19 @@ export function ReservationForm() {
       const dest = destination.trim()
       const notes = serviceNotes.trim()
       const km = distance.status === 'ready' ? distance.km : null
+      const hoursRequested =
+        serviceType === 'a_disposicao' ? Number(hours) || null : null
+      const airportCode = showAirport && airport ? airport : null
+      // Estimativa só para operação/admin — o formulário público não exibe.
+      const estimatedPrice = computeInternalEstimatedPrice({
+        serviceType,
+        km,
+        hours: hoursRequested,
+        airport: airportCode,
+        vehicleCategoryId: vehicleId || null,
+        rules: tenant.catalog?.freightRules ?? [],
+        airportFees: tenant.catalog?.airportFees ?? [],
+      })
 
       const reservation = await createReservationWithHold({
         organization_id: tenant.organizationId,
@@ -313,13 +327,12 @@ export function ReservationForm() {
         stops: cleanedStops,
         service_type: serviceType,
         vehicle_category_id: vehicleId || null,
-        airport: showAirport && airport ? airport : null,
+        airport: airportCode,
         slot_start: selectedSlot.slot_start,
         slot_end: selectedSlot.slot_end,
-        hours_requested:
-          serviceType === 'a_disposicao' ? Number(hours) || null : null,
+        hours_requested: hoursRequested,
         estimated_km: km,
-        estimated_price: null,
+        estimated_price: estimatedPrice,
         service_notes: notes || null,
         locale,
         source: 'web',

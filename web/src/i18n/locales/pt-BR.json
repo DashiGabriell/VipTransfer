@@ -445,7 +445,8 @@
     },
     "dispatch": {
       "pickDriver": "Escolher motorista…",
-      "noDrivers": "Nenhum motorista elegível",
+      "noDrivers": "Nenhum motorista ativo com perfil completo",
+      "driverOtherCategory": "{{name}} · outra categoria",
       "send": "Enviar demanda",
       "complete": "Concluir serviço",
       "assignError": "Falha ao enviar demanda.",

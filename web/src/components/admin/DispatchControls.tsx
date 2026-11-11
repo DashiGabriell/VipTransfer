@@ -65,15 +65,16 @@ export function DispatchControls({
 
   const label = dispatchLabel(assignments, reservation.id)
   const eligible = useMemo(() => {
-    return drivers.filter((d) => {
-      if (!d.active || !d.profile_complete) return false
-      if (
-        reservation.vehicle_category_id &&
-        d.vehicle_category_id !== reservation.vehicle_category_id
-      ) {
-        return false
-      }
-      return true
+    const ready = drivers.filter((d) => d.active && d.profile_complete)
+    const wanted = reservation.vehicle_category_id
+    if (!wanted) return ready
+    // Prefer matching category, but never hide other ready drivers —
+    // otherwise dispatch is blocked when the fleet categories differ.
+    return [...ready].sort((a, b) => {
+      const am = a.vehicle_category_id === wanted ? 0 : 1
+      const bm = b.vehicle_category_id === wanted ? 0 : 1
+      if (am !== bm) return am - bm
+      return a.full_name.localeCompare(b.full_name, 'pt-BR')
     })
   }, [drivers, reservation.vehicle_category_id])
 
@@ -255,11 +256,20 @@ export function DispatchControls({
                 ? t('admin.dispatch.pickDriver')
                 : t('admin.dispatch.noDrivers')}
             </option>
-            {eligible.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.full_name}
-              </option>
-            ))}
+            {eligible.map((d) => {
+              const matches =
+                !reservation.vehicle_category_id ||
+                d.vehicle_category_id === reservation.vehicle_category_id
+              return (
+                <option key={d.id} value={d.id}>
+                  {matches
+                    ? d.full_name
+                    : t('admin.dispatch.driverOtherCategory', {
+                        name: d.full_name,
+                      })}
+                </option>
+              )
+            })}
           </select>
           <button
             type="button"

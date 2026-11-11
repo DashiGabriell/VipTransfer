@@ -445,7 +445,8 @@
     },
     "dispatch": {
       "pickDriver": "Choose driver…",
-      "noDrivers": "No eligible drivers",
+      "noDrivers": "No active drivers with a complete profile",
+      "driverOtherCategory": "{{name}} · other category",
       "send": "Send job",
       "complete": "Complete job",
       "assignError": "Failed to assign job.",

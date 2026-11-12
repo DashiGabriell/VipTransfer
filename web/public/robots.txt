@@ -1,0 +1,16 @@
+# https://www.jmdtransfer.com/robots.txt
+User-agent: *
+Allow: /
+Allow: /termos
+Allow: /privacidade
+
+Disallow: /login
+Disallow: /aceitar-convite
+Disallow: /admin
+Disallow: /admin/
+Disallow: /motorista
+Disallow: /motorista/
+Disallow: /dashitecnology
+Disallow: /dashitecnology/
+
+Sitemap: https://www.jmdtransfer.com/sitemap.xml

@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { DocumentMeta } from './components/DocumentMeta'
 import { AuthProvider } from './context/AuthContext'
 import { ImpersonationProvider } from './context/ImpersonationContext'
 import { TenantProvider } from './context/TenantContext'
@@ -26,6 +27,7 @@ export default function App() {
       <TenantProvider>
         <ImpersonationProvider>
           <BrowserRouter>
+            <DocumentMeta />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/termos" element={<LegalPage />} />

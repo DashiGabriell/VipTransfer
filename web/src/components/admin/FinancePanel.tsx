@@ -536,7 +536,7 @@ export function FinancePanel({
     }
     header img { height: 42px; }
     header h1 {
-      margin: 0; font-family: "Bodoni Moda", "Times New Roman", serif;
+      margin: 0; font-family: "Libre Baskerville", "Times New Roman", serif;
       font-size: 1.45rem; font-weight: 500;
     }
     header p { margin: 4px 0 0; color: #5c554c; font-size: 0.85rem; }

@@ -8,6 +8,7 @@ import { DriverJobsPage } from './pages/driver/DriverJobsPage'
 import { DriverProfilePage } from './pages/driver/DriverProfilePage'
 import { AcceptInvitePage } from './pages/AcceptInvitePage'
 import { LandingPage } from './pages/LandingPage'
+import { LegalPage } from './pages/LegalPage'
 import { LoginPage } from './pages/LoginPage'
 
 export default function App() {
@@ -17,6 +18,8 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/termos" element={<LegalPage />} />
+            <Route path="/privacidade" element={<LegalPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
             <Route path="/motorista" element={<DriverLayout />}>

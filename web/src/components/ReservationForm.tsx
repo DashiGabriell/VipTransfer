@@ -5,7 +5,8 @@ import {
   type FormEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { useTenant } from '../context/TenantContext'
 import type { DaySlot } from '../domain/agenda'
 import { formatSlotLabel } from '../domain/agenda'
@@ -35,6 +36,7 @@ import {
 import {
   SERVICE_TYPES,
   type AirportCode,
+  type Reservation,
   type ServiceType,
 } from '../types/database'
 import { SlotAgenda } from './SlotAgenda'
@@ -42,6 +44,11 @@ import { SlotAgenda } from './SlotAgenda'
 const AIRPORTS: AirportCode[] = ['GRU', 'CGH', 'VCP']
 const MAX_STOPS = 8
 const DISTANCE_DEBOUNCE_MS = 700
+
+export type ReservationFormProps = {
+  variant?: 'public' | 'admin'
+  onCreated?: (reservation: Reservation) => void
+}
 
 function localizedName(
   name: { pt?: string; en?: string },
@@ -67,10 +74,14 @@ function mayMeasureDistance(service: ServiceType | ''): boolean {
   return service === 'ponto_a_b' || service === 'a_disposicao'
 }
 
-export function ReservationForm() {
+export function ReservationForm({
+  variant = 'public',
+  onCreated,
+}: ReservationFormProps = {}) {
   const { t, i18n } = useTranslation()
   const tenant = useTenant()
   const locale = i18n.language.startsWith('en') ? 'en' : 'pt-BR'
+  const isAdmin = variant === 'admin'
   const waDigits = tenant.whatsapp.replace(/\D/g, '') || '5511949247258'
 
   const [origin, setOrigin] = useState('')
@@ -91,6 +102,7 @@ export function ReservationForm() {
   const [feedbackError, setFeedbackError] = useState(false)
   const [agendaKey, setAgendaKey] = useState(0)
   const [successCode, setSuccessCode] = useState<string | null>(null)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   function addStop() {
     if (stops.length >= MAX_STOPS) return
@@ -291,9 +303,11 @@ export function ReservationForm() {
       return
     }
 
-    const vehicleLabel = selectedVehicle
-      ? localizedName(selectedVehicle.name_i18n, locale)
-      : '—'
+    if (!isAdmin && !acceptedTerms) {
+      setFeedbackError(true)
+      setFeedback(t('reserve.termsRequired'))
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -335,11 +349,19 @@ export function ReservationForm() {
         estimated_price: estimatedPrice,
         service_notes: notes || null,
         locale,
-        source: 'web',
+        source: isAdmin ? 'admin' : 'web',
       })
 
       void notifyReservationWebhook(reservation)
 
+      if (isAdmin) {
+        onCreated?.(reservation)
+        return
+      }
+
+      const vehicleLabel = selectedVehicle
+        ? localizedName(selectedVehicle.name_i18n, locale)
+        : '—'
       const holdLabel = reservation.hold_expires_at
         ? new Date(reservation.hold_expires_at).toLocaleString(locale)
         : ''
@@ -406,12 +428,18 @@ export function ReservationForm() {
     setDistance({ status: 'idle' })
     setFeedback(null)
     setFeedbackError(false)
+    setAcceptedTerms(false)
     setAgendaKey((k) => k + 1)
     setSuccessCode(null)
   }
 
   return (
-    <form className="itinerary" id="cotacao" onSubmit={onSubmit} noValidate>
+    <form
+      className={`itinerary${isAdmin ? ' itinerary--admin' : ''}`}
+      id={isAdmin ? 'admin-nova-reserva' : 'cotacao'}
+      onSubmit={onSubmit}
+      noValidate
+    >
       <div className="itinerary-board">
         <div className="itinerary-trip">
           <div className="itinerary-row">
@@ -729,11 +757,51 @@ export function ReservationForm() {
         </div>
       </div>
 
-      <p className="form-note">{t('reserve.priceWhatsappHint')}</p>
+      {!isAdmin && (
+        <p className="form-note">{t('reserve.priceWhatsappHint')}</p>
+      )}
+
+      {!isAdmin ? (
+        <label className="itinerary-terms">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => {
+              setAcceptedTerms(e.target.checked)
+              if (e.target.checked && feedbackError) {
+                setFeedback(null)
+                setFeedbackError(false)
+              }
+            }}
+            required
+          />
+          <span>
+            <Trans
+              i18nKey="reserve.termsAccept"
+              components={{
+                terms: (
+                  <Link
+                    to="/termos"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+                privacy: (
+                  <Link
+                    to="/privacidade"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+              }}
+            />
+          </span>
+        </label>
+      ) : null}
 
       <div className="itinerary-actions">
         <button
-          className="btn-primary"
+          className={isAdmin ? 'admin-clients__btn is-primary' : 'btn-primary'}
           type="submit"
           disabled={
             submitting ||
@@ -741,13 +809,20 @@ export function ReservationForm() {
             !selectedSlot ||
             !addressesOkForSubmit() ||
             !distanceOkForSubmit() ||
-            Boolean(successCode)
+            Boolean(successCode) ||
+            (!isAdmin && !acceptedTerms)
           }
         >
-          {submitting ? '…' : t('reserve.submit')}
+          {submitting
+            ? '…'
+            : isAdmin
+              ? t('admin.createReservationSubmit')
+              : t('reserve.submit')}
         </button>
       </div>
-      <p className="form-note">{t('reserve.holdHint')}</p>
+      <p className="form-note">
+        {isAdmin ? t('admin.createReservationHoldHint') : t('reserve.holdHint')}
+      </p>
       <p
         className={`form-status${feedback ? (feedbackError ? ' is-error' : ' is-ok') : ''}`}
         role="status"

@@ -80,10 +80,59 @@
     "successCodeLabel": "Código da solicitação",
     "successHint": "Guarde este código — ele identifica sua reserva no WhatsApp e no atendimento.",
     "successDismiss": "Entendi",
+    "termsAccept": "Li e aceito os <terms>Termos de Uso</terms> e a <privacy>Política de Privacidade</privacy>.",
+    "termsRequired": "Aceite os Termos de Uso e a Política de Privacidade para enviar a solicitação.",
     "services": {
       "ponto_a_b": "Ponto A → ponto B",
       "a_disposicao": "À disposição (por tempo)",
       "concierge": "Concierge (por serviço)"
+    }
+  },
+  "legal": {
+    "kicker": "Documentos legais",
+    "backHome": "Voltar ao início",
+    "updatedLabel": "Atualizado em",
+    "navLabel": "Documentos",
+    "contactLead": "Dúvidas sobre estes documentos:",
+    "termos": {
+      "title": "Termos de Uso",
+      "updated": "12/11/2026",
+      "lead": "Estes Termos regulam o uso do site e das solicitações de transfer da JMD Transfer. Ao enviar uma solicitação, você declara ter lido e concordado com este documento.",
+      "s1Title": "1. Objeto",
+      "s1Body": "A JMD Transfer oferece serviços de mobilidade executiva (ponto a ponto, horas à disposição e concierge), com valor combinado no atendimento. O site permite solicitar horários e iniciar o contato operacional.",
+      "s2Title": "2. Solicitação e hold",
+      "s2Body": "Ao enviar o formulário, o horário pode ficar reservado (hold) por tempo limitado até a confirmação da JMD. O hold não garante o serviço definitivo sem confirmação e alinhamento de valor pelo WhatsApp.",
+      "s3Title": "3. Preço e pagamento",
+      "s3Body": "Não exibimos preço final no formulário público. O valor é negociado e confirmado no WhatsApp. Eventuais valores de tabela são apenas referência interna da operação.",
+      "s4Title": "4. Responsabilidades do cliente",
+      "s4Body": "Informe dados verdadeiros (nome, telefone, e-mail e endereços). Compareça no horário combinado, comunique alterações com antecedência e use o código da solicitação no atendimento.",
+      "s5Title": "5. Cancelamento e alterações",
+      "s5Body": "Cancelamentos e mudanças de horário/local devem ser comunicados pelo WhatsApp. Holds não confirmados podem expirar automaticamente. Condições específicas de cancelamento podem ser alinhadas na confirmação do serviço.",
+      "s6Title": "6. Conduta e segurança",
+      "s6Body": "É vedado uso ilícito do serviço. A JMD pode recusar ou interromper atendimentos que comprometam a segurança da equipe, do veículo ou de terceiros.",
+      "s7Title": "7. Limitação",
+      "s7Body": "O site e o canal WhatsApp são meios de solicitação e atendimento. Eventos de trânsito, clima, restrições viárias ou força maior podem afetar prazos, sem prejuízo do dever de informar o cliente com transparência.",
+      "s8Title": "8. Contato",
+      "s8Body": "Para questões sobre estes Termos ou sobre uma solicitação, utilize o WhatsApp/e-mail oficiais indicados no site e informe o código da solicitação quando houver."
+    },
+    "privacidade": {
+      "title": "Política de Privacidade",
+      "updated": "12/11/2026",
+      "lead": "Esta Política explica como a JMD Transfer trata dados pessoais em conformidade com a LGPD (Lei nº 13.709/2018), no contexto do site e das solicitações de serviço.",
+      "s1Title": "1. Controladora",
+      "s1Body": "A JMD Transfer é responsável pelo tratamento dos dados coletados pelo site e pelos canais de atendimento vinculados à solicitação de transfer.",
+      "s2Title": "2. Dados coletados",
+      "s2Body": "Podemos coletar nome completo, telefone/WhatsApp, e-mail, endereços de origem/destino/paradas, preferências de serviço/veículo, data e horário solicitados, código da solicitação e mensagens enviadas no atendimento.",
+      "s3Title": "3. Finalidades",
+      "s3Body": "Os dados são usados para processar a solicitação, reservar horário (hold), confirmar o serviço, combinar valor, prestar atendimento, cumprir obrigações legais e melhorar a operação com segurança.",
+      "s4Title": "4. Bases legais",
+      "s4Body": "Tratamos dados para execução de medidas preliminares e do contrato de serviço, atendimento a solicitações do titular e cumprimento de obrigações legais/regulatórias, quando aplicável.",
+      "s5Title": "5. Compartilhamento",
+      "s5Body": "Dados podem ser compartilhados com motoristas/operadores envolvidos no atendimento e com provedores de infraestrutura (hospedagem, banco de dados, mensageria), sempre na medida necessária à prestação do serviço.",
+      "s6Title": "6. Retenção e segurança",
+      "s6Body": "Mantemos os dados pelo tempo necessário à solicitação, ao histórico operacional e a eventuais obrigações legais. Adotamos medidas técnicas e organizacionais razoáveis para proteger as informações.",
+      "s7Title": "7. Direitos do titular",
+      "s7Body": "Você pode solicitar acesso, correção, anonimização, portabilidade ou eliminação dos dados, além de informações sobre o tratamento, pelos canais oficiais do site. Responderemos conforme a LGPD."
     }
   },
   "services": {
@@ -145,7 +194,10 @@
     "footerContact": "Fale conosco",
     "footerContactLead": "Conte o serviço e o horário — combinamos o valor no WhatsApp.",
     "footerTalk": "Falar com atendimento",
-    "footerCopy": "Mobilidade executiva com segurança e excelência."
+    "footerCopy": "Mobilidade executiva com segurança e excelência.",
+    "footerLegal": "Legal",
+    "footerTerms": "Termos de Uso",
+    "footerPrivacy": "Política de Privacidade"
   },
   "admin": {
     "title": "Painel administrativo",
@@ -215,6 +267,11 @@
     "refresh": "Atualizar",
     "confirm": "Confirmar",
     "cancel": "Cancelar",
+    "createReservation": "Nova reserva",
+    "createReservationTitle": "Nova reserva",
+    "createReservationLead": "Preencha o trajeto, o cliente e escolha um horário disponível. A reserva nasce em espera para você confirmar.",
+    "createReservationSubmit": "Criar reserva",
+    "createReservationHoldHint": "A reserva fica em espera até confirmação, preço real e sinal — como no fluxo público.",
     "reservationsEmpty": "Nenhuma reserva neste filtro.",
     "status": {
       "all": "Todas",

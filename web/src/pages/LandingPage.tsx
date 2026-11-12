@@ -398,7 +398,9 @@ export function LandingPage() {
             <span>
               © {new Date().getFullYear()} {tenant.name}. {t('landing.footerCopy')}
             </span>
-            <span>
+            <span className="footer-bottom__links">
+              <Link to="/termos">{t('landing.footerTerms')}</Link>
+              <Link to="/privacidade">{t('landing.footerPrivacy')}</Link>
               <Link to="/login">{t('nav.admin')}</Link>
             </span>
           </div>

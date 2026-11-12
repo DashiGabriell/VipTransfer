@@ -80,10 +80,59 @@
     "successCodeLabel": "Request code",
     "successHint": "Keep this code — it identifies your booking on WhatsApp and with our team.",
     "successDismiss": "Got it",
+    "termsAccept": "I have read and accept the <terms>Terms of Use</terms> and the <privacy>Privacy Policy</privacy>.",
+    "termsRequired": "Please accept the Terms of Use and Privacy Policy to send the request.",
     "services": {
       "ponto_a_b": "Point A → point B",
       "a_disposicao": "On demand (by time)",
       "concierge": "Concierge (by task)"
+    }
+  },
+  "legal": {
+    "kicker": "Legal documents",
+    "backHome": "Back to home",
+    "updatedLabel": "Updated on",
+    "navLabel": "Documents",
+    "contactLead": "Questions about these documents:",
+    "termos": {
+      "title": "Terms of Use",
+      "updated": "11/12/2026",
+      "lead": "These Terms govern the use of the JMD Transfer website and transfer requests. By submitting a request, you confirm that you have read and agree to this document.",
+      "s1Title": "1. Scope",
+      "s1Body": "JMD Transfer provides executive mobility services (point to point, hourly hire, and concierge), with fare agreed during support. The website lets you request time slots and start operational contact.",
+      "s2Title": "2. Request and hold",
+      "s2Body": "When you submit the form, the time slot may be held for a limited period until JMD confirms. A hold does not finalize the service without confirmation and fare alignment on WhatsApp.",
+      "s3Title": "3. Pricing and payment",
+      "s3Body": "We do not show a final price on the public form. The fare is negotiated and confirmed on WhatsApp. Any rate-card values are internal operational references only.",
+      "s4Title": "4. Customer responsibilities",
+      "s4Body": "Provide accurate details (name, phone, email, and addresses). Arrive on time, communicate changes in advance, and use the request code when contacting support.",
+      "s5Title": "5. Cancellation and changes",
+      "s5Body": "Cancellations and changes to time/place must be communicated via WhatsApp. Unconfirmed holds may expire automatically. Specific cancellation terms may be aligned when the service is confirmed.",
+      "s6Title": "6. Conduct and safety",
+      "s6Body": "Unlawful use of the service is prohibited. JMD may refuse or interrupt services that compromise the safety of staff, vehicles, or third parties.",
+      "s7Title": "7. Limitation",
+      "s7Body": "The website and WhatsApp channel are request and support tools. Traffic, weather, road restrictions, or force majeure may affect timing; we will keep you informed transparently.",
+      "s8Title": "8. Contact",
+      "s8Body": "For questions about these Terms or a request, use the official WhatsApp/email on the website and include the request code when available."
+    },
+    "privacidade": {
+      "title": "Privacy Policy",
+      "updated": "11/12/2026",
+      "lead": "This Policy explains how JMD Transfer processes personal data under Brazil’s LGPD (Law No. 13,709/2018) for the website and service requests.",
+      "s1Title": "1. Controller",
+      "s1Body": "JMD Transfer is responsible for personal data collected through the website and support channels linked to transfer requests.",
+      "s2Title": "2. Data we collect",
+      "s2Body": "We may collect full name, phone/WhatsApp, email, origin/destination/stop addresses, service/vehicle preferences, requested date/time, request code, and support messages.",
+      "s3Title": "3. Purposes",
+      "s3Body": "Data is used to process the request, hold the slot, confirm the service, agree the fare, provide support, meet legal obligations, and operate safely.",
+      "s4Title": "4. Legal bases",
+      "s4Body": "We process data for pre-contractual steps and service performance, to respond to data-subject requests, and to meet legal/regulatory duties when applicable.",
+      "s5Title": "5. Sharing",
+      "s5Body": "Data may be shared with drivers/operators involved in the ride and with infrastructure providers (hosting, database, messaging), only as needed to deliver the service.",
+      "s6Title": "6. Retention and security",
+      "s6Body": "We keep data for as long as needed for the request, operational history, and legal obligations. We apply reasonable technical and organizational safeguards.",
+      "s7Title": "7. Your rights",
+      "s7Body": "You may request access, correction, anonymization, portability, or deletion of your data, and information about processing, via the official website channels. We will respond under the LGPD."
     }
   },
   "services": {
@@ -145,7 +194,10 @@
     "footerContact": "Contact us",
     "footerContactLead": "Share the service and time — we agree the fare on WhatsApp.",
     "footerTalk": "Talk to our team",
-    "footerCopy": "Executive mobility with safety and excellence."
+    "footerCopy": "Executive mobility with safety and excellence.",
+    "footerLegal": "Legal",
+    "footerTerms": "Terms of Use",
+    "footerPrivacy": "Privacy Policy"
   },
   "admin": {
     "title": "Admin panel",
@@ -215,6 +267,11 @@
     "refresh": "Refresh",
     "confirm": "Confirm",
     "cancel": "Cancel",
+    "createReservation": "New reservation",
+    "createReservationTitle": "New reservation",
+    "createReservationLead": "Fill in the trip, customer, and pick an available slot. The booking starts on hold for you to confirm.",
+    "createReservationSubmit": "Create reservation",
+    "createReservationHoldHint": "The booking stays on hold until confirmation, final price, and deposit — same as the public flow.",
     "reservationsEmpty": "No reservations in this filter.",
     "status": {
       "all": "All",

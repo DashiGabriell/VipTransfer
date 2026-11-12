@@ -1000,6 +1000,45 @@
       justify-content: space-between;
       font-size: 0.75rem;
     }
+    .footer-bottom__links {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.85rem 1.1rem;
+      align-items: center;
+    }
+    .footer-bottom__links a:hover {
+      color: var(--paper);
+    }
+
+    .itinerary-terms {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin: 0.85rem 0 0.15rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .itinerary-terms input {
+      margin-top: 0.15rem;
+      width: 1.05rem;
+      height: 1.05rem;
+      flex: 0 0 auto;
+      accent-color: var(--ink);
+      cursor: pointer;
+    }
+    .itinerary-terms a {
+      color: var(--bronze-deep, #8a6a3d);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .itinerary-terms a:hover {
+      color: var(--ink);
+    }
 
     /* WhatsApp */
     .wa-fab {
@@ -1435,4 +1474,148 @@
   width: 100%;
   margin-top: 0.25rem;
   justify-self: stretch;
+}
+
+.legal-page {
+  min-height: 100svh;
+  background:
+    radial-gradient(120% 80% at 10% -10%, color-mix(in srgb, #b08d57 18%, transparent), transparent 55%),
+    linear-gradient(180deg, #f7f2ea 0%, #efe6d8 100%);
+  color: #152033;
+  font-family: "Public Sans", system-ui, sans-serif;
+}
+
+.legal-page__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem clamp(1.15rem, 4vw, 2.5rem);
+  border-bottom: 1px solid color-mix(in srgb, #152033 12%, transparent);
+  background: color-mix(in srgb, #f7f2ea 88%, transparent);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.legal-page__brand {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 1.15rem;
+  color: #152033;
+  text-decoration: none;
+}
+
+.legal-page__top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+}
+
+.legal-page__back {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5c554c;
+  text-decoration: none;
+}
+
+.legal-page__back:hover {
+  color: #152033;
+}
+
+.legal-page__main {
+  width: min(44rem, 100%);
+  margin: 0 auto;
+  padding: clamp(1.75rem, 5vw, 3rem) clamp(1.15rem, 4vw, 2rem) 3.5rem;
+}
+
+.legal-page__kicker {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a6a3d;
+}
+
+.legal-page__main h1 {
+  margin: 0;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: clamp(1.7rem, 4vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.legal-page__updated {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  color: #5c554c;
+}
+
+.legal-page__lead {
+  margin: 1rem 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #3d3830;
+}
+
+.legal-page__body {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.legal-page__body section {
+  padding: 0.95rem 0;
+  border-top: 1px solid color-mix(in srgb, #152033 12%, transparent);
+}
+
+.legal-page__body h2 {
+  margin: 0 0 0.4rem;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.legal-page__body p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #3d3830;
+}
+
+.legal-page__contact {
+  margin: 1.75rem 0 0;
+  font-size: 0.88rem;
+  color: #5c554c;
+}
+
+.legal-page__contact a {
+  color: #8a6a3d;
+}
+
+.legal-page__switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+.legal-page__switch a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid color-mix(in srgb, #152033 22%, transparent);
+  color: #152033;
+  text-decoration: none;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.legal-page__switch a.is-active,
+.legal-page__switch a:hover {
+  background: #152033;
+  color: #f7f2ea;
+  border-color: #152033;
 }

@@ -272,6 +272,11 @@
     "createReservationLead": "Fill in the trip, customer, and pick an available slot. The booking starts on hold for you to confirm.",
     "createReservationSubmit": "Create reservation",
     "createReservationHoldHint": "The booking stays on hold until confirmation, final price, and deposit — same as the public flow.",
+    "holdFilterAria": "On hold, {{count}} open request(s)",
+    "holdToastTitle": "New hold request",
+    "holdToastBody": "A reservation is waiting for your attention.",
+    "holdToastBodyNamed": "{{name}} — hold reservation waiting for attention.",
+    "holdToastView": "View holds",
     "reservationsEmpty": "No reservations in this filter.",
     "status": {
       "all": "All",

@@ -272,6 +272,11 @@
     "createReservationLead": "Preencha o trajeto, o cliente e escolha um horário disponível. A reserva nasce em espera para você confirmar.",
     "createReservationSubmit": "Criar reserva",
     "createReservationHoldHint": "A reserva fica em espera até confirmação, preço real e sinal — como no fluxo público.",
+    "holdFilterAria": "Em espera, {{count}} solicitação(ões) aberta(s)",
+    "holdToastTitle": "Nova solicitação em espera",
+    "holdToastBody": "Há uma reserva aguardando sua atenção.",
+    "holdToastBodyNamed": "{{name}} — reserva em espera aguardando atenção.",
+    "holdToastView": "Ver em espera",
     "reservationsEmpty": "Nenhuma reserva neste filtro.",
     "status": {
       "all": "Todas",

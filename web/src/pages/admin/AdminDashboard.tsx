@@ -28,7 +28,9 @@ import { AdminNotificationBell } from '../../components/admin/AdminNotificationB
 import { NotificationsInbox } from '../../components/admin/NotificationsInbox'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
 import { AdminCreateReservationModal } from '../../components/admin/AdminCreateReservationModal'
+import { AdminHoldToast } from '../../components/admin/AdminHoldToast'
 import { ReservationDetailModal } from '../../components/admin/ReservationDetailModal'
+import { useHoldAttention } from '../../hooks/useHoldAttention'
 import {
   RouteNavPicker,
   ViewRouteButton,
@@ -442,8 +444,9 @@ export function AdminDashboard() {
 
           {membership && (
             <div key={tab} className="admin-panel-enter">
-              {tab === 'reservas' && canOperate(role) && (
+              {tab === 'reservas' && canOperate(role) && orgId && (
                 <ReservationsPanel
+                  organizationId={orgId}
                   reservations={reservations}
                   statusFilter={statusFilter}
                   onFilter={setStatusFilter}
@@ -739,6 +742,7 @@ function ReservationActions(props: {
 }
 
 function ReservationsPanel(props: {
+  organizationId: string
   reservations: Reservation[]
   statusFilter: ReservationStatus | 'all'
   onFilter: (s: ReservationStatus | 'all') => void
@@ -763,23 +767,55 @@ function ReservationsPanel(props: {
     useState<Reservation | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
 
+  const { holdCount, toast, dismissToast, refreshHoldCount } = useHoldAttention(
+    {
+      organizationId: props.organizationId,
+      enabled: true,
+      suppressToast: createOpen,
+      onHoldAppeared: props.onRefresh,
+    },
+  )
+
+  useEffect(() => {
+    void refreshHoldCount()
+  }, [props.reservations, refreshHoldCount])
+
+  const holdAlert = holdCount > 0
+
   return (
     <section className="admin-res space-y-4">
       <div className="admin-res-filters flex flex-wrap items-center gap-2">
-        {STATUS_FILTERS.map((status) => (
-          <button
-            key={status}
-            type="button"
-            onClick={() => props.onFilter(status)}
-            className={`rounded-full px-3 py-1 text-xs ${
-              props.statusFilter === status
-                ? 'bg-primary text-text-primary-dark'
-                : 'bg-surface-light text-text-secondary-light'
-            }`}
-          >
-            {t(`admin.status.${status}`)}
-          </button>
-        ))}
+        {STATUS_FILTERS.map((status) => {
+          const isHold = status === 'hold'
+          const isActive = props.statusFilter === status
+          return (
+            <button
+              key={status}
+              type="button"
+              onClick={() => props.onFilter(status)}
+              className={[
+                'admin-res-filters__chip',
+                isActive ? 'is-active' : '',
+                isHold && holdAlert ? 'is-hold-alert' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              aria-label={
+                isHold && holdAlert
+                  ? t('admin.holdFilterAria', { count: holdCount })
+                  : undefined
+              }
+            >
+              {isHold && holdAlert ? (
+                <span className="admin-res-filters__dot" aria-hidden="true" />
+              ) : null}
+              <span>{t(`admin.status.${status}`)}</span>
+              {isHold && holdAlert ? (
+                <span className="admin-res-filters__count">{holdCount}</span>
+              ) : null}
+            </button>
+          )
+        })}
         <div className="admin-res-filters__actions ml-auto flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -790,13 +826,29 @@ function ReservationsPanel(props: {
           </button>
           <button
             type="button"
-            onClick={props.onRefresh}
+            onClick={() => {
+              props.onRefresh()
+              void refreshHoldCount()
+            }}
             className="text-xs text-primary hover:underline"
           >
             {t('admin.refresh')}
           </button>
         </div>
       </div>
+
+      {toast ? (
+        <AdminHoldToast
+          toast={toast}
+          onDismiss={dismissToast}
+          onView={() => {
+            props.onFilter('hold')
+            props.onRefresh()
+            void refreshHoldCount()
+            dismissToast()
+          }}
+        />
+      ) : null}
 
       {/* Mobile cards; desktop table only (visibility in admin-layout.css) */}
       <ul className="admin-res-cards">
@@ -988,6 +1040,7 @@ function ReservationsPanel(props: {
             setCreateOpen(false)
             setDetailReservation(reservation)
             props.onRefresh()
+            void refreshHoldCount()
           }}
         />
       ) : null}

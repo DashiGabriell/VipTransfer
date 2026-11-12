@@ -3231,3 +3231,201 @@
   font-size: 0.8rem;
   padding: 0.45rem 0.85rem;
 }
+
+.admin-res-filters__chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  cursor: pointer;
+  background: var(--admin-paper, #f2ebe0);
+  color: var(--admin-ink, #152033);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.admin-res-filters__chip.is-active {
+  background: var(--admin-bronze, #b08d57);
+  color: #1a140c;
+}
+
+.admin-res-filters__chip.is-hold-alert {
+  border-color: color-mix(in srgb, #c45c26 55%, transparent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, #c45c26 45%, transparent);
+  animation: adminHoldChipPulse 1.55s ease-out infinite;
+}
+
+.admin-res-filters__chip.is-hold-alert.is-active {
+  border-color: color-mix(in srgb, #8a3d12 40%, transparent);
+}
+
+.admin-res-filters__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #c45c26;
+  flex-shrink: 0;
+  animation: adminHoldDotBlink 1s ease-in-out infinite;
+}
+
+.admin-res-filters__chip.is-active .admin-res-filters__dot {
+  background: #5c2208;
+}
+
+.admin-res-filters__count {
+  min-width: 1.15rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #c45c26 18%, #fff);
+  color: #8a3d12;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.admin-res-filters__chip.is-active .admin-res-filters__count {
+  background: color-mix(in srgb, #5c2208 16%, #fff);
+  color: #3d1606;
+}
+
+@keyframes adminHoldChipPulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, #c45c26 42%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 0.55rem color-mix(in srgb, #c45c26 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, #c45c26 0%, transparent);
+  }
+}
+
+@keyframes adminHoldDotBlink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+}
+
+.admin-hold-toast {
+  position: fixed;
+  z-index: 80;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.9rem 0.95rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, #c45c26 28%, #d9d0c3);
+  background: #fffdf8;
+  color: #152033;
+  box-shadow:
+    0 12px 32px color-mix(in srgb, #0e1624 18%, transparent),
+    0 0 0 1px color-mix(in srgb, #c45c26 8%, transparent);
+  animation: adminHoldToastIn 0.28s ease-out;
+}
+
+.admin-hold-toast__pulse {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: #c45c26;
+  flex-shrink: 0;
+  animation: adminHoldDotBlink 1s ease-in-out infinite;
+}
+
+.admin-hold-toast__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-hold-toast__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #152033;
+}
+
+.admin-hold-toast__text {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #5c554c;
+}
+
+.admin-hold-toast__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.admin-hold-toast__view {
+  appearance: none;
+  border: 0;
+  border-radius: 0.45rem;
+  padding: 0.35rem 0.55rem;
+  background: #152033;
+  color: #fffdf8;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.admin-hold-toast__view:hover {
+  background: #1f2d45;
+}
+
+.admin-hold-toast__close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #5c554c;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+.admin-hold-toast__close:hover {
+  color: #152033;
+}
+
+@keyframes adminHoldToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-hold-toast {
+    left: max(0.75rem, env(safe-area-inset-left));
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: max(4.75rem, env(safe-area-inset-bottom));
+    width: auto;
+  }
+}

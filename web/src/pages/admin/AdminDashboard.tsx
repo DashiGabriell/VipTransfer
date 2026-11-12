@@ -27,6 +27,7 @@ import { FleetPanel } from '../../components/admin/FleetPanel'
 import { AdminNotificationBell } from '../../components/admin/AdminNotificationBell'
 import { NotificationsInbox } from '../../components/admin/NotificationsInbox'
 import { ProfilePanel } from '../../components/admin/ProfilePanel'
+import { AdminCreateReservationModal } from '../../components/admin/AdminCreateReservationModal'
 import { ReservationDetailModal } from '../../components/admin/ReservationDetailModal'
 import {
   RouteNavPicker,
@@ -760,6 +761,7 @@ function ReservationsPanel(props: {
   )
   const [detailReservation, setDetailReservation] =
     useState<Reservation | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   return (
     <section className="admin-res space-y-4">
@@ -778,13 +780,22 @@ function ReservationsPanel(props: {
             {t(`admin.status.${status}`)}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={props.onRefresh}
-          className="ml-auto text-xs text-primary hover:underline"
-        >
-          {t('admin.refresh')}
-        </button>
+        <div className="admin-res-filters__actions ml-auto flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="admin-clients__btn is-primary"
+            onClick={() => setCreateOpen(true)}
+          >
+            {t('admin.createReservation')}
+          </button>
+          <button
+            type="button"
+            onClick={props.onRefresh}
+            className="text-xs text-primary hover:underline"
+          >
+            {t('admin.refresh')}
+          </button>
+        </div>
       </div>
 
       {/* Mobile cards; desktop table only (visibility in admin-layout.css) */}
@@ -969,6 +980,17 @@ function ReservationsPanel(props: {
           onClose={() => setRouteReservation(null)}
         />
       )}
+
+      {createOpen ? (
+        <AdminCreateReservationModal
+          onClose={() => setCreateOpen(false)}
+          onCreated={(reservation) => {
+            setCreateOpen(false)
+            setDetailReservation(reservation)
+            props.onRefresh()
+          }}
+        />
+      ) : null}
 
       {detailReservation
         ? (() => {

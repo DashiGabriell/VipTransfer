@@ -3194,3 +3194,40 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Nova reserva (admin) — reusa .itinerary dentro do modal */
+.admin-form-modal__panel.admin-create-reservation {
+  width: min(1100px, 100%);
+  max-height: min(94vh, 960px);
+}
+
+.admin-create-reservation .itinerary {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.admin-create-reservation .itinerary-board {
+  gap: 1rem;
+}
+
+.admin-create-reservation .form-note,
+.admin-create-reservation .form-status,
+.admin-create-reservation .agenda-selected {
+  color: var(--admin-muted, #5c554c);
+}
+
+.admin-create-reservation .form-status.is-error {
+  color: #b42318;
+}
+
+.admin-create-reservation .form-status.is-ok {
+  color: #027a48;
+}
+
+.admin-res-filters__actions .admin-clients__btn {
+  font-size: 0.8rem;
+  padding: 0.45rem 0.85rem;
+}

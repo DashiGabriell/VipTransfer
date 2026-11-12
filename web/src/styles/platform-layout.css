@@ -6,6 +6,99 @@
   color: #f7efdf;
 }
 
+.platform-access-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #fffdf8;
+}
+
+.platform-access-card__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.platform-access-card__copy h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font-serif, 'Libre Baskerville', serif);
+}
+
+.platform-access-card__copy p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--admin-muted, #4f483f);
+  max-width: 36rem;
+}
+
+.platform-switch {
+  flex: 0 0 auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 5.75rem;
+  height: 2.35rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  background: #ebe4d8;
+  color: var(--admin-ink, #152033);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.platform-switch.is-on {
+  background: color-mix(in srgb, var(--admin-bronze, #5b8c9e) 28%, #fffdf8);
+  border-color: color-mix(in srgb, var(--admin-bronze, #5b8c9e) 55%, #d8cfc0);
+}
+
+.platform-switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.platform-switch__knob {
+  position: absolute;
+  top: 0.28rem;
+  left: 0.28rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  background: #fffdf8;
+  border: 1px solid var(--admin-line, #d8cfc0);
+  transition: transform 0.2s ease;
+}
+
+.platform-switch.is-on .platform-switch__knob {
+  transform: translateX(3.15rem);
+  border-color: color-mix(in srgb, var(--admin-bronze, #5b8c9e) 50%, #d8cfc0);
+}
+
+.platform-switch__text {
+  width: 100%;
+  padding-left: 1.85rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.platform-switch.is-on .platform-switch__text {
+  padding-left: 0;
+  padding-right: 1.85rem;
+  text-align: left;
+}
+
+@media (max-width: 720px) {
+  .platform-access-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .platform-layout {
   --admin-ink: #101820;
   --admin-ink-deep: #0a1016;

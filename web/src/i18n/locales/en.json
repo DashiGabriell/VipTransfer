@@ -727,6 +727,7 @@
     "modeLabel": "Authentication mode",
     "login": "Sign in",
     "signup": "Create account",
+    "signupDisabled": "Account creation is currently disabled. Sign in or request an invite.",
     "signOut": "Sign out",
     "email": "Email",
     "password": "Password",
@@ -939,12 +940,20 @@
     "opsDevOnly": "Destructive actions are limited to the dev role.",
     "recentWebhooks": "Recent Asaas webhooks",
     "noWebhooks": "No recent events.",
-    "settingsTitle": "Platform settings",
-    "settingsLead": "Feature flags and maintenance mode.",
+    "settingsTitle": "Maintenance and banner",
+    "settingsLead": "Operational flags for the public surface.",
     "flagMaintenance": "Public maintenance",
     "flagBlockReservations": "Block new reservations",
     "bannerMessage": "Banner message",
     "saveSettings": "Save flags",
-    "settingsSaved": "Settings saved."
+    "settingsSaved": "Settings saved.",
+    "signupControlTitle": "Access · Create account",
+    "signupControlLead": "Controls the Create account button on the login screen. Sign-in and invite acceptance remain available.",
+    "signupToggleLabel": "Create account button",
+    "signupToggleHelp": "When off, the button is hidden on /login and the server blocks driver auto-signup. Email invites are unaffected.",
+    "signupVisible": "Visible on /login",
+    "signupHidden": "Hidden on /login",
+    "on": "On",
+    "off": "Off"
   }
 }

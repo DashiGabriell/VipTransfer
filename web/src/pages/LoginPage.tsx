@@ -10,6 +10,7 @@ import {
   getMyDriverProfile,
 } from '../services/coreV2'
 import { listMyMemberships, canOperate } from '../services/admin'
+import { fetchPublicPlatformFlags } from '../services/platform'
 
 function safeNextPath(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/admin/reservas'
@@ -34,8 +35,35 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [postLoginPath, setPostLoginPath] = useState<string | null>(null)
+  const [signupEnabled, setSignupEnabled] = useState(true)
+  const [flagsLoaded, setFlagsLoaded] = useState(false)
 
   const orgId = tenant.organizationId
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const flags = await fetchPublicPlatformFlags()
+        if (!cancelled) {
+          setSignupEnabled(flags.public_signup_enabled !== false)
+        }
+      } catch {
+        if (!cancelled) setSignupEnabled(true)
+      } finally {
+        if (!cancelled) setFlagsLoaded(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (flagsLoaded && !signupEnabled && mode === 'signup') {
+      setMode('login')
+    }
+  }, [flagsLoaded, signupEnabled, mode])
 
   async function resolveLandingPath(preferred: string): Promise<string> {
     if (preferred.startsWith('/motorista')) return preferred
@@ -89,6 +117,12 @@ export function LoginPage() {
         setPostLoginPath(path)
         navigate(path, { replace: true })
       } else {
+        const flags = await fetchPublicPlatformFlags()
+        if (flags.public_signup_enabled === false) {
+          setSignupEnabled(false)
+          setMode('login')
+          throw new Error(t('auth.signupDisabled'))
+        }
         await signUp(email.trim(), password)
         // If session is available immediately, provision driver profile now.
         if (orgId) {
@@ -153,34 +187,40 @@ export function LoginPage() {
             {mode === 'login' ? t('auth.loginLead') : t('auth.signupLead')}
           </p>
 
-          <div className="login-modes" role="tablist" aria-label={t('auth.modeLabel')}>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'login'}
-              className={mode === 'login' ? 'is-active' : undefined}
-              onClick={() => {
-                setMode('login')
-                setError(null)
-                setMessage(null)
-              }}
+          {signupEnabled ? (
+            <div
+              className="login-modes"
+              role="tablist"
+              aria-label={t('auth.modeLabel')}
             >
-              {t('auth.login')}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'signup'}
-              className={mode === 'signup' ? 'is-active' : undefined}
-              onClick={() => {
-                setMode('signup')
-                setError(null)
-                setMessage(null)
-              }}
-            >
-              {t('auth.signup')}
-            </button>
-          </div>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'login'}
+                className={mode === 'login' ? 'is-active' : undefined}
+                onClick={() => {
+                  setMode('login')
+                  setError(null)
+                  setMessage(null)
+                }}
+              >
+                {t('auth.login')}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'signup'}
+                className={mode === 'signup' ? 'is-active' : undefined}
+                onClick={() => {
+                  setMode('signup')
+                  setError(null)
+                  setMessage(null)
+                }}
+              >
+                {t('auth.signup')}
+              </button>
+            </div>
+          ) : null}
 
           <form className="login-form" onSubmit={onSubmit} noValidate>
             <div className="login-row">

@@ -136,6 +136,8 @@ export type PlatformFlags = {
   public_maintenance?: boolean
   block_new_reservations?: boolean
   banner_message?: string
+  /** Quando false, oculta "Criar conta" e bloqueia auto-provisionamento. */
+  public_signup_enabled?: boolean
 }
 
 function assertClient() {
@@ -326,6 +328,7 @@ export async function fetchPublicPlatformFlags(): Promise<PlatformFlags> {
       public_maintenance: false,
       block_new_reservations: false,
       banner_message: '',
+      public_signup_enabled: true,
     }
   }
   const { data, error } = await supabase.rpc('platform_public_flags')
@@ -336,6 +339,7 @@ export async function fetchPublicPlatformFlags(): Promise<PlatformFlags> {
     block_new_reservations: Boolean(raw.block_new_reservations),
     banner_message:
       typeof raw.banner_message === 'string' ? raw.banner_message : '',
+    public_signup_enabled: raw.public_signup_enabled !== false,
   }
 }
 

@@ -727,6 +727,7 @@
     "modeLabel": "Modo de autenticação",
     "login": "Entrar",
     "signup": "Criar conta",
+    "signupDisabled": "Criação de conta está desativada no momento. Faça login ou peça um convite.",
     "signOut": "Sair",
     "email": "E-mail",
     "password": "Senha",
@@ -939,12 +940,20 @@
     "opsDevOnly": "Ações destrutivas só para papel dev.",
     "recentWebhooks": "Webhooks Asaas recentes",
     "noWebhooks": "Nenhum evento recente.",
-    "settingsTitle": "Configuração da plataforma",
-    "settingsLead": "Feature flags e modo manutenção.",
+    "settingsTitle": "Manutenção e banner",
+    "settingsLead": "Flags operacionais da superfície pública.",
     "flagMaintenance": "Manutenção pública",
     "flagBlockReservations": "Bloquear novas reservas",
     "bannerMessage": "Mensagem de banner",
     "saveSettings": "Salvar flags",
-    "settingsSaved": "Configuração salva."
+    "settingsSaved": "Configuração salva.",
+    "signupControlTitle": "Acesso · Criar conta",
+    "signupControlLead": "Controla a exibição do botão Criar conta na tela de login. Login e aceitação de convites continuam disponíveis.",
+    "signupToggleLabel": "Botão Criar conta",
+    "signupToggleHelp": "Quando desligado, o botão some da /login e o servidor bloqueia o auto-cadastro de motorista. Convites por e-mail não são afetados.",
+    "signupVisible": "Visível na /login",
+    "signupHidden": "Oculto na /login",
+    "on": "Ligado",
+    "off": "Desligado"
   }
 }

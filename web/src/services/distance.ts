@@ -57,28 +57,33 @@ export function resolveAirportCode(text: string): AirportCode | null {
   return AIRPORT_ALIASES[n] ?? null
 }
 
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException('Aborted', 'AbortError'))
-      return
-    }
-    const timer = window.setTimeout(resolve, ms)
-    signal?.addEventListener(
-      'abort',
-      () => {
-        window.clearTimeout(timer)
-        reject(new DOMException('Aborted', 'AbortError'))
-      },
-      { once: true },
-    )
-  })
-}
-
 export type GeocodeHit = {
   coords: LonLat
   /** Human-readable label from Photon / airport alias. */
   label: string
+}
+
+/** In-memory cache so field validation + distance don't hit Photon twice. */
+const GEOCODE_CACHE = new Map<string, GeocodeHit>()
+const GEOCODE_CACHE_MAX = 80
+
+function geocodeCacheKey(query: string): string {
+  return normalizePlace(query)
+}
+
+function readGeocodeCache(query: string): GeocodeHit | null {
+  return GEOCODE_CACHE.get(geocodeCacheKey(query)) ?? null
+}
+
+function writeGeocodeCache(query: string, hit: GeocodeHit): void {
+  const key = geocodeCacheKey(query)
+  if (GEOCODE_CACHE.has(key)) GEOCODE_CACHE.delete(key)
+  GEOCODE_CACHE.set(key, hit)
+  while (GEOCODE_CACHE.size > GEOCODE_CACHE_MAX) {
+    const oldest = GEOCODE_CACHE.keys().next().value
+    if (oldest == null) break
+    GEOCODE_CACHE.delete(oldest)
+  }
 }
 
 type PhotonProps = {
@@ -139,6 +144,9 @@ export async function geocodePlace(
     ? trimmed
     : `${trimmed}, São Paulo, Brasil`
 
+  const cached = readGeocodeCache(query)
+  if (cached) return cached
+
   const url = new URL(PHOTON_SEARCH)
   url.searchParams.set('q', query)
   url.searchParams.set('limit', '1')
@@ -168,10 +176,12 @@ export async function geocodePlace(
   }
 
   const label = formatPhotonLabel(feature?.properties) || trimmed
-  return {
+  const hit: GeocodeHit = {
     coords: [Number(coords[0]), Number(coords[1])],
     label,
   }
+  writeGeocodeCache(query, hit)
+  return hit
 }
 
 export async function geocodeAddress(
@@ -201,12 +211,10 @@ export async function measureDrivingDistanceKm(
     throw new DistanceError('NEED_ORIGIN_DESTINATION')
   }
 
-  const points: LonLat[] = []
-  for (let i = 0; i < cleaned.length; i++) {
-    // Light throttle to be polite with public Photon
-    if (i > 0) await sleep(250, signal)
-    points.push(await geocodeAddress(cleaned[i], signal))
-  }
+  // Parallel geocode — cache hits from field validation make this near-instant.
+  const points = await Promise.all(
+    cleaned.map((place) => geocodeAddress(place, signal)),
+  )
 
   const path = points.map(([lon, lat]) => `${lon},${lat}`).join(';')
   const url = new URL(`${OSRM_ROUTE}/${path}`)

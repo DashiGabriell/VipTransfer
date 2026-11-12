@@ -43,7 +43,7 @@ import { SlotAgenda } from './SlotAgenda'
 
 const AIRPORTS: AirportCode[] = ['GRU', 'CGH', 'VCP']
 const MAX_STOPS = 8
-const DISTANCE_DEBOUNCE_MS = 700
+const DISTANCE_DEBOUNCE_MS = 420
 
 export type ReservationFormProps = {
   variant?: 'public' | 'admin'

@@ -20,7 +20,8 @@ export type GeocodeFieldState = {
 }
 
 const MIN_CHARS = 8
-const DEBOUNCE_MS = 650
+/** Wait for typing to settle before calling Photon (was 650ms — felt sluggish). */
+const DEBOUNCE_MS = 380
 
 /**
  * Valida endereço via Photon (geocodePlace).
@@ -56,7 +57,11 @@ export function useGeocodedAddress(
 
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      setState({ status: 'checking', label: null })
+      setState((prev) => ({
+        status: 'checking',
+        // Keep last good label while revalidating — feels less “stuck”.
+        label: prev.status === 'ok' ? prev.label : null,
+      }))
       void geocodePlace(trimmed, controller.signal)
         .then((hit) => {
           if (!controller.signal.aborted) {

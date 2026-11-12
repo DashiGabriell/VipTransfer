@@ -129,9 +129,6 @@ export function LandingPage() {
             <li>
               <a href="#contato">{t('nav.contact')}</a>
             </li>
-            <li>
-              <Link to="/login">{t('nav.admin')}</Link>
-            </li>
           </ul>
         </nav>
         <div className="nav-actions">
@@ -180,9 +177,6 @@ export function LandingPage() {
         >
           {t('landing.ctaQuote')}
         </a>
-        <Link to="/login" onClick={() => setDrawerOpen(false)}>
-          {t('nav.admin')}
-        </Link>
         <InstallAppButton
           className="nav-drawer__install"
           variant="landing"
@@ -433,7 +427,6 @@ export function LandingPage() {
             <span className="footer-bottom__links">
               <Link to="/termos">{t('landing.footerTerms')}</Link>
               <Link to="/privacidade">{t('landing.footerPrivacy')}</Link>
-              <Link to="/login">{t('nav.admin')}</Link>
             </span>
           </div>
         </div>

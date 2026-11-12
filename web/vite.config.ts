@@ -12,6 +12,8 @@ export default defineConfig({
       includeAssets: [
         'favicon.ico',
         'logo-1.png',
+        'icons/favicon-32.png',
+        'icons/favicon-48.png',
         'icons/pwa-180.png',
         'icons/pwa-192.png',
         'icons/pwa-512.png',

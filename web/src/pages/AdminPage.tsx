@@ -7,6 +7,7 @@ import {
   ensureDriverProfileForSignup,
   getMyDriverProfile,
 } from '../services/coreV2'
+import { getMyPlatformRole } from '../services/platform'
 
 export function AdminPage() {
   const { user, loading } = useAuth()
@@ -29,6 +30,11 @@ export function AdminPage() {
         return
       }
       try {
+        const platformRole = await getMyPlatformRole()
+        if (platformRole) {
+          if (!cancelled) setGate('admin')
+          return
+        }
         const memberships = await listMyMemberships()
         const membership = memberships.find((m) => m.organization_id === orgId)
         if (membership && canOperate(membership.role)) {

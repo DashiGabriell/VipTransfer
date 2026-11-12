@@ -16,6 +16,7 @@ type Props = {
   brand: string
   email?: string | null
   role?: string | null
+  showPlatformLink?: boolean
   onToggleCollapsed: () => void
   onSignOut: () => void
 }
@@ -25,6 +26,7 @@ export function AdminSidebar({
   brand,
   email,
   role,
+  showPlatformLink = false,
   onToggleCollapsed,
   onSignOut,
 }: Props) {
@@ -109,6 +111,21 @@ export function AdminSidebar({
           </span>
           <span className="admin-sidebar__label">{t('admin.site')}</span>
         </NavLink>
+
+        {showPlatformLink ? (
+          <NavLink
+            to="/dashitecnology"
+            className="admin-sidebar__link"
+            title={t('platform.title')}
+          >
+            <span className="admin-sidebar__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 7h16M4 12h16M4 17h10" />
+              </svg>
+            </span>
+            <span className="admin-sidebar__label">{t('platform.short')}</span>
+          </NavLink>
+        ) : null}
 
         <button
           type="button"

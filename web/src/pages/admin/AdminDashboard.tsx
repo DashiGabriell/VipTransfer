@@ -8,7 +8,9 @@ import {
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useImpersonation } from '../../context/ImpersonationContext'
 import { useTenant } from '../../context/TenantContext'
+import { ImpersonationBanner } from '../../components/dashitecnology/ImpersonationBanner'
 import { AdminMobileNav } from '../../components/admin/AdminMobileNav'
 import {
   AdminSidebar,
@@ -51,6 +53,8 @@ import {
   upsertFreightRule,
   type Membership,
 } from '../../services/admin'
+import { getMyPlatformRole } from '../../services/platform'
+import type { PlatformRole } from '../../types/database'
 import {
   listAssignmentsForReservations,
   listDrivers,
@@ -104,7 +108,9 @@ export function AdminDashboard() {
     driverId?: string
   }>()
   const { user, signOut } = useAuth()
+  const { active: impersonation } = useImpersonation()
   const tenant = useTenant()
+  const [platformRole, setPlatformRole] = useState<PlatformRole | null>(null)
   const tab: Tab = customerId
     ? 'clientes'
     : driverId
@@ -133,7 +139,25 @@ export function AdminDashboard() {
     useState<Reservation | null>(null)
 
   const orgId = tenant.organizationId
-  const role: OrgRole | null = membership?.role ?? null
+  const role: OrgRole | null =
+    membership?.role ??
+    (impersonation?.target.role as OrgRole | null) ??
+    (platformRole ? 'admin' : null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const r = await getMyPlatformRole()
+        if (!cancelled) setPlatformRole(r)
+      } catch {
+        if (!cancelled) setPlatformRole(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   const agendaDayReservations = useMemo(() => {
     if (!agendaFocus) return []
@@ -305,11 +329,13 @@ export function AdminDashboard() {
         brand={tenant.name}
         email={user?.email}
         role={role}
+        showPlatformLink={Boolean(platformRole)}
         onToggleCollapsed={() => setCollapsed((v) => !v)}
         onSignOut={handleSignOut}
       />
 
       <div className="admin-main">
+        <ImpersonationBanner />
         <header className="admin-topbar">
           <div className="admin-topbar__brand" aria-hidden="true">
             <span className="admin-topbar__mark">JMD</span>

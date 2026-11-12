@@ -36,10 +36,13 @@ export type I18nText = {
   [key: string]: string | undefined
 }
 
+export type OrgStatus = 'active' | 'paused'
+
 export type Organization = {
   id: string
   slug: string
   name: string
+  status: OrgStatus
   settings: Json
   created_at: string
   updated_at: string

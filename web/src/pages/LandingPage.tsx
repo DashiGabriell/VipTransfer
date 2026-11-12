@@ -7,6 +7,7 @@ import { LeadCaptureForm } from '../components/LeadCaptureForm'
 import { FleetParade } from '../components/landing/FleetParade'
 import { ReservationForm } from '../components/ReservationForm'
 import { useTenant } from '../context/TenantContext'
+import { fetchPublicPlatformFlags } from '../services/platform'
 
 export function LandingPage() {
   const { t } = useTranslation()
@@ -14,6 +15,31 @@ export function LandingPage() {
   const wa = tenant.whatsapp.replace(/\D/g, '') || '5511949247258'
   const [navSolid, setNavSolid] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [platformBanner, setPlatformBanner] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const flags = await fetchPublicPlatformFlags()
+        if (cancelled) return
+        const msg = flags.banner_message?.trim()
+        if (flags.public_maintenance || flags.block_new_reservations || msg) {
+          setPlatformBanner(
+            msg ||
+              (flags.public_maintenance
+                ? t('platform.flagMaintenance')
+                : t('platform.flagBlockReservations')),
+          )
+        }
+      } catch {
+        /* ignore — landing works without flags RPC */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [t])
 
   useEffect(() => {
     const onScroll = () => setNavSolid(window.scrollY > 16)
@@ -69,6 +95,12 @@ export function LandingPage() {
       <a className="skip" href="#cotacao">
         {t('landing.skip')}
       </a>
+
+      {platformBanner ? (
+        <div className="platform-public-banner" role="status">
+          {platformBanner}
+        </div>
+      ) : null}
 
       <header
         className={`site-nav${navSolid ? ' is-solid' : ''}`}

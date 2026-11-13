@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  FLEET_BRANDS,
+  brandsForBody,
   FLEET_COLORS,
   fleetYearOptions,
   modelsForBrand,
@@ -34,6 +34,8 @@ const YEAR_OPTIONS = fleetYearOptions()
 function brandLabel(brand: string): string {
   if (brand === 'LandRover') return 'Land Rover'
   if (brand === 'CaoaChery') return 'Caoa Chery'
+  if (brand === 'Citroen') return 'Citroën'
+  if (brand === 'Mini') return 'MINI'
   return brand
 }
 
@@ -75,7 +77,11 @@ export function FleetPanel(props: Props) {
   const [saving, setSaving] = useState(false)
   const [busyVehicleId, setBusyVehicleId] = useState<string | null>(null)
 
-  const modelOptions = useMemo(() => modelsForBrand(brand), [brand])
+  const brandOptions = useMemo(() => brandsForBody(bodyType), [bodyType])
+  const modelOptions = useMemo(
+    () => modelsForBrand(brand, bodyType),
+    [brand, bodyType],
+  )
   const isEditing = Boolean(editingId)
   const activeDrivers = useMemo(
     () => props.drivers.filter((d) => d.active),
@@ -362,12 +368,25 @@ export function FleetPanel(props: Props) {
             <select
               value={categoryId}
               onChange={(e) => {
-                setCategoryId(e.target.value)
-                const cat = categoryById.get(e.target.value)
+                const nextCategoryId = e.target.value
+                setCategoryId(nextCategoryId)
+                const cat = categoryById.get(nextCategoryId)
                 const def = STANDARD_VEHICLE_CATEGORIES.find(
                   (c) => c.code === cat?.code,
                 )
-                if (def) setBodyType(def.default_body)
+                if (def) {
+                  setBodyType(def.default_body)
+                  const nextBrands = brandsForBody(def.default_body)
+                  if (brand && !nextBrands.includes(brand)) {
+                    setBrand('')
+                    setModel('')
+                  } else if (
+                    model &&
+                    !modelsForBrand(brand, def.default_body).includes(model)
+                  ) {
+                    setModel('')
+                  }
+                }
               }}
               required
               disabled={!activeCategories.length}
@@ -400,6 +419,34 @@ export function FleetPanel(props: Props) {
           </label>
 
           <label className="admin-fleet__field">
+            <span>{t('admin.fleet.body')}</span>
+            <select
+              value={bodyType}
+              onChange={(e) => {
+                const next = e.target.value as VehicleBodyType
+                setBodyType(next)
+                const nextBrands = brandsForBody(next)
+                if (brand && !nextBrands.includes(brand)) {
+                  setBrand('')
+                  setModel('')
+                } else if (
+                  model &&
+                  !modelsForBrand(brand, next).includes(model)
+                ) {
+                  setModel('')
+                }
+              }}
+              required
+            >
+              {VEHICLE_BODY_TYPES.map((body) => (
+                <option key={body} value={body}>
+                  {t(`admin.fleet.bodyTypes.${body}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="admin-fleet__field">
             <span>{t('admin.fleet.brand')}</span>
             <select
               value={brand}
@@ -411,12 +458,12 @@ export function FleetPanel(props: Props) {
               disabled={!activeCategories.length && !isEditing}
             >
               <option value="">{t('admin.fleet.brandPlaceholder')}</option>
-              {FLEET_BRANDS.map((b) => (
+              {brandOptions.map((b) => (
                 <option key={b} value={b}>
                   {brandLabel(b)}
                 </option>
               ))}
-              {brand && !FLEET_BRANDS.includes(brand) ? (
+              {brand && !brandOptions.includes(brand) ? (
                 <option value={brand}>{brandLabel(brand)}</option>
               ) : null}
             </select>
@@ -480,21 +527,6 @@ export function FleetPanel(props: Props) {
               {color && !FLEET_COLORS.some((c) => c.value === color) ? (
                 <option value={color}>{color}</option>
               ) : null}
-            </select>
-          </label>
-
-          <label className="admin-fleet__field">
-            <span>{t('admin.fleet.body')}</span>
-            <select
-              value={bodyType}
-              onChange={(e) => setBodyType(e.target.value as VehicleBodyType)}
-              required
-            >
-              {VEHICLE_BODY_TYPES.map((body) => (
-                <option key={body} value={body}>
-                  {t(`admin.fleet.bodyTypes.${body}`)}
-                </option>
-              ))}
             </select>
           </label>
 

@@ -14,11 +14,12 @@ import {
   isValidFullName,
 } from '../../domain/customerFields'
 import {
-  FLEET_BRANDS,
+  brandsForBody,
   FLEET_COLORS,
   VEHICLE_BODY_TYPES,
   fleetYearOptions,
   modelsForBrand,
+  STANDARD_VEHICLE_CATEGORIES,
   type VehicleBodyType,
 } from '../../domain/fleet'
 
@@ -27,6 +28,8 @@ const YEAR_OPTIONS = fleetYearOptions()
 function brandLabel(brand: string): string {
   if (brand === 'LandRover') return 'Land Rover'
   if (brand === 'CaoaChery') return 'Caoa Chery'
+  if (brand === 'Citroen') return 'Citroën'
+  if (brand === 'Mini') return 'MINI'
   return brand
 }
 import {
@@ -77,7 +80,16 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
     () => categories.filter((c) => c.active),
     [categories],
   )
-  const modelOptions = useMemo(() => modelsForBrand(brand), [brand])
+  const brandOptions = useMemo(() => brandsForBody(bodyType), [bodyType])
+  const modelOptions = useMemo(
+    () => modelsForBrand(brand, bodyType),
+    [brand, bodyType],
+  )
+  const categoryById = useMemo(() => {
+    const map = new Map<string, VehicleCategory>()
+    for (const c of categories) map.set(c.id, c)
+    return map
+  }, [categories])
   const isEditing = Boolean(editingId)
 
   useEffect(() => {
@@ -365,7 +377,27 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
             <span>{t('admin.drivers.category')}</span>
             <select
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={(e) => {
+                const nextCategoryId = e.target.value
+                setCategoryId(nextCategoryId)
+                const cat = categoryById.get(nextCategoryId)
+                const def = STANDARD_VEHICLE_CATEGORIES.find(
+                  (c) => c.code === cat?.code,
+                )
+                if (def) {
+                  setBodyType(def.default_body)
+                  const nextBrands = brandsForBody(def.default_body)
+                  if (brand && !nextBrands.includes(brand)) {
+                    setBrand('')
+                    setModel('')
+                  } else if (
+                    model &&
+                    !modelsForBrand(brand, def.default_body).includes(model)
+                  ) {
+                    setModel('')
+                  }
+                }
+              }}
               required
             >
               <option value="">{t('admin.drivers.categoryPlaceholder')}</option>
@@ -374,6 +406,32 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
                   {(c.name_i18n as { pt?: string; en?: string })[lang] ||
                     c.name_i18n.pt ||
                     c.code}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="admin-clients__field">
+            <span>{t('admin.drivers.body')}</span>
+            <select
+              value={bodyType}
+              onChange={(e) => {
+                const next = e.target.value as VehicleBodyType
+                setBodyType(next)
+                const nextBrands = brandsForBody(next)
+                if (brand && !nextBrands.includes(brand)) {
+                  setBrand('')
+                  setModel('')
+                } else if (
+                  model &&
+                  !modelsForBrand(brand, next).includes(model)
+                ) {
+                  setModel('')
+                }
+              }}
+            >
+              {VEHICLE_BODY_TYPES.map((b) => (
+                <option key={b} value={b}>
+                  {t(`admin.fleet.bodyTypes.${b}`)}
                 </option>
               ))}
             </select>
@@ -389,12 +447,12 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
               required
             >
               <option value="">{t('admin.fleet.brandPlaceholder')}</option>
-              {FLEET_BRANDS.map((b) => (
+              {brandOptions.map((b) => (
                 <option key={b} value={b}>
                   {brandLabel(b)}
                 </option>
               ))}
-              {brand && !FLEET_BRANDS.includes(brand) ? (
+              {brand && !brandOptions.includes(brand) ? (
                 <option value={brand}>{brandLabel(brand)}</option>
               ) : null}
             </select>
@@ -461,19 +519,6 @@ export function DriversPanel({ organizationId, categories, onError }: Props) {
           <label className="admin-clients__field">
             <span>{t('admin.drivers.plate')}</span>
             <input value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} />
-          </label>
-          <label className="admin-clients__field">
-            <span>{t('admin.drivers.body')}</span>
-            <select
-              value={bodyType}
-              onChange={(e) => setBodyType(e.target.value as VehicleBodyType)}
-            >
-              {VEHICLE_BODY_TYPES.map((b) => (
-                <option key={b} value={b}>
-                  {t(`admin.fleet.bodyTypes.${b}`)}
-                </option>
-              ))}
-            </select>
           </label>
         </div>
 

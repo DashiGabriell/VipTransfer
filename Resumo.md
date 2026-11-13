@@ -1,12 +1,33 @@
-# Resumo.md — JMD Transfer / VipTransfer
+# Resumo.md — Inventário completo da plataforma JMD Transfer / VipTransfer
 
-Documento de referência completa da plataforma. Objetivo: quem ler este arquivo deve entender **o que é o produto**, **para quem é**, **como funciona ponta a ponta**, **o que cada superfície faz**, **como os dados se relacionam** e **o que está implementado versus o que ainda é roadmap**.
+Documento de referência **comercial e técnica** da plataforma.  
+**Objetivo:** servir de parâmetro para **precificação de venda** (licença, cessão, white-label, spin-off ou operação), descrevendo **tudo o que existe no produto hoje** — superfícies, fluxos, pagamentos, SEO, console de plataforma, legal e stack.
+
+> Atualizado em **12/11/2026**. Fonte da verdade: código em `web/`, `supabase/`, `n8n/`, `docs/` e este arquivo.
+
+---
+
+## 0. Como usar este documento na precificação
+
+Ao precificar (venda total, licença SaaS, white-label, ou “setup + operação”), considerar este inventário como **ativo entregue**:
+
+| Dimensão de valor | O que este produto já inclui |
+|-------------------|------------------------------|
+| Aquisição | Landing indexável no Google, PWA, leads, cotação com hold, WhatsApp |
+| Conversão / caixa | Preço real, sinal + restante via Asaas, gate de confirmação, liquidação |
+| Operação | Admin 9 áreas, agenda, frota, frete, despacho, clientes, motoristas |
+| Entrega | App motorista (ofertas/aceitas/perfil), convites, fotos, trajeto |
+| Escala | Multi-tenant + console `/dashitecnology` (orgs, roles, audit, flags) |
+| Governança | RLS, audit, impersonation, Termos/LGPD, SEO/noindex de áreas privadas |
+| Marca | Identidade editorial, bilingue PT/EN, domínio público `www.jmdtransfer.com` |
+
+**Não inventar no valuation:** marketplace aberto, app nativo iOS/Android, conta de cliente final, Google Maps pago, toll/noite automáticos.
 
 ---
 
 ## 1. Em uma frase
 
-**JMD Transfer** é uma plataforma multi-tenant de **transfer executivo premium** em São Paulo: o cliente solicita no site (sem ver preço), a operação confirma e despacha no painel admin, o motorista aceita no app, e o valor é combinado no WhatsApp — com rastreio financeiro, frota, agenda e código público de cada serviço (`JAN26-0001`).
+**JMD Transfer** é uma plataforma multi-tenant de **transfer executivo premium** em São Paulo: o cliente solicita no site (sem ver preço), a operação confirma e cobra (sinal/restante via Asaas), despacha no admin, o motorista aceita no app, e cada serviço tem código público rastreável (`JAN26-0001`) — com financeiro, frota, agenda, SEO e console root da plataforma.
 
 ---
 
@@ -15,49 +36,55 @@ Documento de referência completa da plataforma. Objetivo: quem ler este arquivo
 | Item | Detalhe |
 |------|---------|
 | **Nome de marca** | JMD Transfer / JMD TRANSFER |
-| **Nome do repositório / projeto** | VipTransfer (GitHub / Supabase) |
-| **Tagline** | Mobilidade executiva com segurança e discrição; pontualidade · segurança · discrição |
+| **Repo / projeto** | VipTransfer (GitHub) · Supabase project `bicjcqtzctljsygougsh` |
+| **Tagline** | Mobilidade executiva com segurança e discrição |
 | **Mercado** | São Paulo capital, Grande SP e aeroportos **GRU · CGH · VCP** |
 | **Público** | Executivos, empresas e clientes VIP |
-| **O que NÃO é** | App de mobilidade genérico, limusine de festa, marketplace aberto de motoristas |
-| **Modelo comercial implícito** | Cliente não vê preço no site; fechamento no WhatsApp; comissão da plataforma sobre o bruto; repasse ao motorista; liquidação com comprovantes |
-| **Contato publicado** | `contato@jmdtransfer.com.br` · WhatsApp `+55 11 94924-7258` |
-| **Tenant seed** | Organização slug `jmd`, nome “JMD Transfer” |
-
-Documentos de produto relacionados: `PRODUCT.md`, `docs/v1-spec.md`, `README.md`.
+| **O que NÃO é** | App genérico de mobilidade, limusine de festa, marketplace aberto |
+| **Modelo comercial** | Sem preço no site; fechamento operacional; comissão da plataforma; repasse ao motorista; cobrança cliente via Asaas |
+| **Contato** | `contato@jmdtransfer.com.br` · WhatsApp `+55 11 94924-7258` |
+| **Site público** | `https://www.jmdtransfer.com` |
+| **Tenant seed** | slug `jmd`, nome “JMD Transfer” |
+| **Console plataforma** | `/dashitecnology` (Dashi Technology — `dev` / `platform_owner`) |
 
 ---
 
-## 3. Visão geral das superfícies
-
-A mesma aplicação (`web/`) entrega **três mundos**:
+## 3. Superfícies de produto (mapa completo)
 
 ```text
-┌─────────────────────┐
-│  Site público (/)   │  Cotação, hold, WhatsApp, leads, PWA install
-└──────────┬──────────┘
-           │ cria reserva (hold)
-           ▼
-┌─────────────────────┐
-│  Admin (/admin/*)   │  Confirma, agenda, frota, frete, motoristas,
-│                     │  clientes, despacho, financeiro, perfil
-└──────────┬──────────┘
-           │ oferece demanda
-           ▼
-┌─────────────────────┐
-│ Motorista (/motorista/*) │ Ofertas, aceitas, perfil/veículo
-└─────────────────────┘
+┌──────────────────────────┐
+│ Site público (/)         │  SEO, cotação, hold, WhatsApp, leads, PWA
+│ /termos · /privacidade   │
+└────────────┬─────────────┘
+             │
+┌────────────▼─────────────┐
+│ /login                   │  Staff / motorista (signup toggleável)
+│ /aceitar-convite         │
+└────────────┬─────────────┘
+       ┌─────┴──────┐
+       ▼            ▼
+┌─────────────┐  ┌──────────────────┐
+│ /admin/*    │  │ /motorista/*     │
+│ Operação    │  │ App do motorista │
+└──────┬──────┘  └──────────────────┘
+       │
+┌──────▼───────────────────┐
+│ /dashitecnology/*        │  Console multi-tenant (root)
+└──────────────────────────┘
 ```
 
-| Rota | Superfície | Quem acessa |
-|------|------------|-------------|
-| `/` | Landing + formulário de reserva + captura de lead | Público |
-| `/login` | Autenticação staff / motorista | Contas Supabase Auth |
-| `/aceitar-convite` | Ativação de convite de motorista | Convidado por e-mail |
-| `/admin/*` | Painel operacional | Membership `owner` / `admin` / `operador` / `leitura` |
-| `/motorista/ofertas` | Demandas oferecidas | Motorista vinculado |
-| `/motorista/aceitas` | Corridas aceitas / concluídas | Motorista vinculado |
-| `/motorista/perfil` | Dados pessoais, veículo, fotos, disponibilidade | Motorista vinculado |
+| Rota | Superfície | Quem |
+|------|------------|------|
+| `/` | Landing + reserva + leads + FleetParade | Público |
+| `/termos` | Termos de Uso (pagamento, inadimplemento, protesto) | Público |
+| `/privacidade` | Política LGPD | Público |
+| `/login` | Login + Criar conta (flag de plataforma) | Contas Auth |
+| `/aceitar-convite` | Ativação de convite de motorista | Convidado |
+| `/admin/*` | Painel operacional (9 abas) | `owner` / `admin` / `operador` / `leitura` (+ platform staff) |
+| `/motorista/ofertas` · `/aceitas` · `/perfil` | App motorista | Motorista vinculado |
+| `/dashitecnology` · `/orgs` · `/users` · `/audit` · `/ops` · `/settings` | Console Dashi | `dev` / `platform_owner` |
+
+Catch-all `*` → `/`.
 
 ---
 
@@ -67,10 +94,10 @@ A mesma aplicação (`web/`) entrega **três mundos**:
 
 ```text
 jmdtransfer/
-├── web/                 # App Vite (landing + admin + motorista + PWA)
-├── supabase/            # Migrations, seed, Edge Function invite-driver
-├── n8n/                 # Workflows Gmail importáveis
-├── docs/                # Spec v1, fluxo Asaas (roadmap)
+├── web/                 # App Vite (landing + admin + motorista + platform + PWA)
+├── supabase/            # Migrations + Edge Functions (invite, Asaas checkout/webhook)
+├── n8n/                 # Workflows Gmail (reserva criada, convite motorista)
+├── docs/                # Spec v1 (legado), fluxo Asaas, credenciais Asaas
 ├── PRODUCT.md
 ├── README.md
 ├── Resumo.md            # Este documento
@@ -86,473 +113,428 @@ jmdtransfer/
 | i18n | i18next · react-i18next (`pt-BR` / `en`) |
 | Backend | Supabase Auth · Postgres · RLS · Storage · `pg_cron` · Edge Functions |
 | Distância | Photon (geocode) + OSRM (rota) — sem API key |
-| Automação | n8n opcional (`reservation.created` → Gmail; convite motorista) |
-| Deploy | Vercel (`Root Directory` = `web`, output `dist`) |
+| Pagamentos | Asaas Checkout + webhook (Edge Functions) |
+| Automação | n8n opcional (reserva criada; convite motorista) |
+| Deploy | Vercel (Root Directory `web`, output `dist`, SPA rewrite) |
 | PWA | `vite-plugin-pwa` · Workbox · install prompt |
+| Tipografia | Libre Baskerville (display) + Public Sans |
 | Lint | oxlint |
 
 ### 4.3 Multi-tenant
 
-- Cada negócio é uma **organization** (`slug`, `name`, `settings`).
-- Tabelas de negócio carregam `organization_id` e são protegidas por **RLS**.
-- Resolução do tenant no front (`web/src/lib/tenant.ts` + `TenantContext`):
-  - subdomínio (`jmd.localhost`, `jmd.…`) → slug do host;
-  - apex / preview Vercel → `VITE_DEFAULT_TENANT_SLUG` (tipicamente `jmd`).
-- Settings da org incluem, entre outros: WhatsApp, e-mail de contato, `%` de comissão da plataforma.
+- Cada negócio = `organizations` (`slug`, `name`, `settings`, `status` active/paused).
+- Tabelas de negócio com `organization_id` + **RLS**.
+- Resolução de tenant: subdomínio (`jmd.…`) ou apex/preview → `VITE_DEFAULT_TENANT_SLUG` (`jmd`).
+- Settings: WhatsApp, e-mail, `%` comissão da plataforma, etc.
 
 ### 4.4 Variáveis de ambiente (web)
-
-Ver `web/.env.example`:
 
 | Variável | Uso |
 |----------|-----|
 | `VITE_SUPABASE_URL` | Projeto Supabase |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Chave pública (anon) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Chave pública |
 | `VITE_DEFAULT_TENANT_SLUG` | Fallback de tenant |
-| `VITE_N8N_WEBHOOK_URL` | Opcional — webhook de reserva criada |
-| `VITE_PUBLIC_SITE_URL` | Origem pública (links WhatsApp / PWA) |
+| `VITE_N8N_WEBHOOK_URL` | Webhook reserva criada (opcional) |
+| `VITE_PUBLIC_SITE_URL` | Origem pública (`https://www.jmdtransfer.com`) |
+
+Secrets Asaas **somente** no Supabase Edge (`ASAAS_API_KEY`, `ASAAS_ENV`, `ASAAS_WEBHOOK_TOKEN`, `SITE_URL`) — nunca no Vite.
 
 ---
 
-## 5. Fluxo comercial completo (cliente → operação → motorista → caixa)
+## 5. SEO e indexação no Google — **implementado**
+
+| Peça | Detalhe |
+|------|---------|
+| Domínio canônico | `https://www.jmdtransfer.com` |
+| `robots.txt` | Allow `/`, `/termos`, `/privacidade`; Disallow `/login`, `/admin`, `/motorista`, `/dashitecnology`, `/aceitar-convite` |
+| `sitemap.xml` | Home + Termos + Privacidade (`lastmod` 2026-11-12) |
+| Meta dinâmica | `DocumentMeta` — title, description, canonical, Open Graph, Twitter |
+| JSON-LD | LocalBusiness na landing |
+| noindex | Áreas privadas (login/admin/motorista/platform/convite) |
+| Favicon | Multi-size (incl. correção para resultados Google) |
+| Intent | Site público indexável; painéis operacionais fora do índice |
+
+Isso é **ativo de aquisição orgânica** já entregue no produto.
+
+---
+
+## 6. Fluxo comercial completo (cliente → caixa)
 
 ```text
-1. Cliente preenche cotação no site
-2. Sistema cria reservation status = hold (ex.: 60 min)
-3. Abre WhatsApp com texto pré-preenchido (código JAN26-0001, sem preço)
-4. Staff vê hold no admin / notificação
-5. Staff confirma → status confirmado (+ upsert de customer)
-6. Staff define preço real (override_price) e despacha motorista
-7. Motorista recebe oferta (app + WhatsApp opcional)
-8. Motorista aceita ou recusa
-9. Após a corrida, staff conclui job → financial_entry
-10. Financeiro liquida com comprovantes (cliente→plataforma e plataforma→motorista)
+1. Cliente preenche cotação no site (aceita Termos + Privacidade)
+2. Sistema cria reservation status = hold (12 h) + service_code
+3. Abre WhatsApp com resumo (código, sem preço)
+4. Staff vê hold (admin + notificação Realtime)
+5. Staff define preço real (override_price)
+6. Staff emite cobrança do SINAL (Asaas) → cliente paga
+7. Staff confirma reserva (gate: sinal pago quando há preço real)
+8. Staff despacha motorista → app + WhatsApp opcional
+9. Motorista aceita / recusa
+10. Após serviço: staff pode emitir RESTANTE (Asaas)
+11. Staff conclui job → financial_entry (comissão + repasse)
+12. Financeiro liquida com comprovantes (cliente→plataforma e plataforma→motorista)
 ```
 
-### 5.1 Código público do serviço (`service_code`)
+### 6.1 Código público (`service_code`)
 
-- Formato: **`MMMYY-NNNN`** — três letras do mês em português + ano com 2 dígitos + sequência mensal da organização.
-- Exemplos: `JAN26-0001`, `FEV26-0012`, `NOV26-0048`.
-- Meses: `JAN FEV MAR ABR MAI JUN JUL AGO SET OUT NOV DEZ`.
-- Fuso usado na geração: `America/Sao_Paulo`.
-- Imutável após criação; único por `(organization_id, service_code)`.
-- Contador em `reservation_service_code_counters`.
-- Aparece em: admin (lista/cards/detalhe/financeiro), app motorista, WhatsApp (cliente e despacho), feedback pós-reserva, notificações internas.
+- Formato **`MMMYY-NNNN`** (ex.: `NOV26-0009`).
+- Meses PT: JAN…DEZ · fuso `America/Sao_Paulo`.
+- Imutável; único por org; contador `reservation_service_code_counters`.
+- Presente em admin, motorista, WhatsApp, notificações, financeiro.
 
 ---
 
-## 6. Tipos de serviço
-
-Definidos em `web/src/types/database.ts` e no enum Postgres `service_type`:
+## 7. Tipos de serviço
 
 | Código | Nome (PT) | Comportamento |
 |--------|-----------|---------------|
-| `ponto_a_b` | Ponto A a ponto B | Origem + destino + até 8 paradas; aeroporto opcional; distância via Photon/OSRM |
-| `a_disposicao` | À disposição (por tempo) | Horas reservadas; destino opcional; distância se houver waypoints |
-| `concierge` | Concierge (por serviço) | Demanda sob medida (compras, recados, acompanhamentos); notas obrigatórias; sem fórmula pública de preço |
+| `ponto_a_b` | Ponto A a ponto B | Origem + destino + até 8 paradas; aeroporto opcional; km Photon/OSRM |
+| `a_disposicao` | À disposição | Por horas; destino opcional |
+| `concierge` | Concierge | Sob medida; notas obrigatórias |
 
-**Preço ao cliente:** nunca exibido no site. Tabelas de frete no admin são **referência interna** da operação; o valor negociado entra como `override_price` no despacho/conclusão.
-
----
-
-## 7. Site público (Landing)
-
-Arquivo principal: `web/src/pages/LandingPage.tsx`.
-
-### 7.1 Seções
-
-1. **Nav** — Serviços, Frota, Atuação, Contato, Admin (`/login`), idioma, botão **Baixar app** (PWA), CTA cotação.
-2. **Hero (`#inicio`)** — Marca, headline editorial, lead, Install PWA, **formulário de reserva** embutido.
-3. **Serviços (`#servicos`)** — Três formatos (A→B, à disposição, concierge) com imagens locais em `web/public/`.
-4. **Frota (`#frota`)** — Apresentação SUV/Sedan + CTA.
-5. **Atuação (`#atuacao`)** — SP / Grande SP / GRU / CGH / VCP.
-6. **Contato (`#contato`)** — Formulário **Fale com a JMD** (`LeadCaptureForm`) — último bloco antes do rodapé.
-7. **Rodapé** — Contato, serviços, WhatsApp FAB / dock mobile.
-
-### 7.2 Formulário de reserva (`ReservationForm`)
-
-- Valida nome, telefone BR, e-mail, endereços, tipo de serviço, veículo/categoria, slot da agenda.
-- Agenda: componente `SlotAgenda` + RPC `list_day_slots`.
-- Distância: `web/src/services/distance.ts` (Photon `lang=en` — `lang=pt` retorna 400; OSRM para km).
-- Submit chama RPC `create_reservation_with_hold` → gera `service_code` + hold.
-- Abre `wa.me` com resumo (`domain/whatsapp.ts`).
-- Dispara webhook n8n opcional (`notifyReservationWebhook`).
-
-### 7.3 Captação de leads
-
-- Independente da reserva.
-- Persiste em `leads` (nome, telefone, e-mail, mensagem, source).
-
-### 7.4 PWA
-
-- Manifest “JMD Transfer”, `display: standalone`, tema escuro `#0e1624`.
-- Botão de instalação na landing e no perfil admin; **oculto** quando já está em modo standalone.
-- Permissões de localização e notificação no perfil admin (`DevicePermissionsCard`).
+**Preço ao cliente:** nunca no site. Tabelas de frete = referência interna; valor negociado = `override_price`.
 
 ---
 
-## 8. Agenda, capacidade e hold
+## 8. Site público (Landing)
 
-| Conceito | Valor atual no código |
-|----------|------------------------|
-| Duração do slot | **60 minutos** |
-| Hold padrão | **12 horas** (`capacity_settings.hold_minutes` = 720) |
-| Timezone seed JMD | `America/Sao_Paulo` |
-| Janela típica | Seg–sáb 06:00–22:00 (seed) |
-| Expiração de holds | Cron `expire-reservation-holds` a cada **5 min** → status `hold_expirado` |
-| Capacidade | Por bucket de slot (`default_capacity`) |
-| Blackouts / janelas | `availability_windows` (admin agenda) |
+Arquivo: `web/src/pages/LandingPage.tsx`.
 
-Status de reserva:
+### 8.1 Seções
 
-| Status | Significado |
-|--------|-------------|
-| `hold` | Horário reservado temporariamente |
-| `hold_expirado` | Hold venceu sem confirmação |
-| `confirmado` | Operação confirmou |
-| `cancelado` | Cancelada |
-| `concluido` | Job finalizado (gera lançamento financeiro) |
+1. **Nav** — Serviços, Frota, Atuação, Contato, idioma, Install PWA, CTA (sem link Admin — removido da LP pública).
+2. **Hero** — Marca + formulário de reserva.
+3. **Serviços** — A→B, à disposição, concierge (imagens locais).
+4. **Frota** — FleetParade (carrossel infinito: SUV, Sedan, Van, blindados).
+5. **Atuação** — SP / Grande SP / GRU / CGH / VCP.
+6. **Contato** — `LeadCaptureForm` → tabela `leads`.
+7. **Rodapé** — Termos, Privacidade, WhatsApp FAB.
+8. **Banner de plataforma** — manutenção / bloqueio de reservas / mensagem (flags).
+
+### 8.2 Formulário de reserva
+
+- Validação completa (nome, telefone BR, e-mail, endereços, serviço, veículo, slot).
+- **Aceite obrigatório** Termos + Privacidade.
+- Agenda `SlotAgenda` + `list_day_slots`.
+- Distância Photon (`lang=en`) + OSRM; cache; aeroportos por alias.
+- RPC `create_reservation_with_hold` → hold + código.
+- WhatsApp pré-preenchido **sem preço**.
+- Webhook n8n opcional.
+- Variante admin: criar reserva pelo painel (sem checkbox legal na UI).
+
+### 8.3 PWA
+
+- Manifest “JMD Transfer”, standalone, tema `#0e1624`.
+- Install na landing e no admin; oculto em standalone.
+- Permissões device no perfil admin.
 
 ---
 
-## 9. Autenticação e papéis
+## 9. Agenda, capacidade e hold
 
-### 9.1 Papéis de organização (`OrgRole`)
+| Conceito | Valor |
+|----------|-------|
+| Slot | **60 minutos** |
+| Hold | **12 horas** (`hold_minutes` = 720) |
+| TZ | `America/Sao_Paulo` |
+| Janela seed | Seg–sáb 06:00–22:00 |
+| Expiração | Cron a cada **5 min** → `hold_expirado` |
+| Capacidade | Por bucket (`default_capacity`) |
+| Blackouts | `availability_windows` |
 
-| Role | Poder típico |
-|------|----------------|
+**Status:** `hold` · `hold_expirado` · `confirmado` · `cancelado` · `concluido`.
+
+**Reagendamento:** RPC `reschedule_reservation_slot`.
+
+---
+
+## 10. Autenticação e papéis
+
+### 10.1 Organização (`OrgRole`)
+
+| Role | Poder |
+|------|-------|
 | `owner` | Controle total da org |
-| `admin` | Frota, frete, motoristas, financeiro, blackouts (+ operação) |
-| `operador` | Reservas, agenda, clientes (sem config sensível) |
+| `admin` | Frota, frete, motoristas, financeiro, blackouts + operação |
+| `operador` | Reservas, agenda, clientes |
 | `leitura` | Visualização |
 
-Helpers de UI (`services/admin.ts`):
+UI: `canOperate` = owner\|admin\|operador · `canAdmin` = owner\|admin.
 
-- `canOperate` → owner | admin | operador  
-- `canAdmin` → owner | admin  
+### 10.2 Plataforma (`platform_admins`)
 
-### 9.2 Papéis de plataforma
+| Role | Poder |
+|------|-------|
+| `dev` | Console completo + ações técnicas (ex.: expire holds) |
+| `platform_owner` | Governança de negócio; promoção de papéis |
 
-- `dev` / `platform_owner` — previstos no modelo (administração cross-tenant); uso operacional diário é por membership da org.
+### 10.3 Entrada
 
-### 9.3 Fluxos de entrada
-
-1. **Login / signup** (`LoginPage` + `AuthContext`) — e-mail/senha Supabase.
-2. Contas novas pelo formulário público de auth tendem a virar **perfil de motorista** (`ensureDriverProfileForSignup`), não owner automático.
-3. **Admin** (`AdminPage`): se o usuário não tem membership operável, redireciona para `/motorista`.
-4. **Convite de motorista**:
-   - Admin convida → Edge Function `invite-driver` gera link Auth;
-   - n8n pode enviar e-mail com `action_link`;
-   - `/aceitar-convite` define senha + `acceptMyDriverInvite` → `/motorista`.
+1. Login / signup (`/login`) — signup **ligado/desligado** por flag `public_signup_enabled`.
+2. Contas novas tendem a perfil motorista (`ensure_driver_profile_for_signup`) — bloqueado no servidor se signup desligado.
+3. Admin sem membership operável → `/motorista` (exceto platform staff).
+4. Convite motorista: Edge `invite-driver` → n8n e-mail → `/aceitar-convite`.
 5. **Cliente final da landing não tem conta** (v1).
 
 ---
 
-## 10. Painel admin (`/admin`)
+## 11. Painel admin (`/admin`) — 9 áreas
 
-Shell: sidebar + conteúdo; nav em `components/admin/adminNav.tsx`.
+| Aba | Rota | Função |
+|-----|------|--------|
+| Reservas | `/admin/reservas` | Lista/filtros, hold attention/Realtime, criar reserva, detalhe, confirmar/cancelar, preço real, **painel Asaas**, despacho, trajeto |
+| Agenda | `/admin/agenda` | Grade do dia, ocupação, disponibilidade/blackouts |
+| Frota | `/admin/frota` | Categorias + veículos CRUD/foto/vínculo motorista |
+| Transfer | `/admin/frete` | R$/km, mínimo, R$/hora, taxas aeroporto, **% sinal por tipo de serviço** |
+| Clientes | `/admin/clientes` (+ `/:id`) | CRM operacional |
+| Motoristas | `/admin/motoristas` (+ `/:id`) | CRUD, skills, disponibilidade, convite, fotos |
+| Financeiro | `/admin/financeiro` | Comissão, extrato, ajuste, liquidação + proofs, relatório HTML/PDF |
+| Notificações | `/admin/notificacoes` | Inbox dedicada + sino Realtime |
+| Perfil | `/admin/perfil` | Nome, idioma, prefs, PWA/device |
 
-| Aba | Rota | Quem | Função |
-|-----|------|------|--------|
-| Reservas | `/admin/reservas` | canOperate | Lista/filtros, confirmar/cancelar, detalhe, trajeto, despacho |
-| Agenda | `/admin/agenda` | canOperate (+ disponibilidade se canAdmin) | Grade do dia, ocupação, blackouts |
-| Frota | `/admin/frota` | canAdmin | Categorias padrão + veículos CRUD/foto/vínculo motorista |
-| Transfer (Frete) | `/admin/frete` | canAdmin | R$/km, mínimo, R$/hora, taxas aeroporto |
-| Clientes | `/admin/clientes` | canOperate | Cadastro/consulta; detalhe `/admin/clientes/:id` |
-| Motoristas | `/admin/motoristas` | canAdmin | CRUD, skills, disponibilidade, convite, fotos; detalhe `/:id` |
-| Financeiro | `/admin/financeiro` | canAdmin | Comissão, extrato, liquidação, relatório |
-| Perfil | `/admin/perfil` | autenticado no admin | Nome, idioma, prefs de notificação, inbox, PWA/device |
+### 11.1 Despacho
 
-### 10.1 Reservas e despacho
+1. Preço real → 2. Motorista → 3. `assign_reservation_to_driver` (`oferecido`) → 4. WhatsApp motorista (sem nome cliente / sem preço) → 5. `complete_reservation_job`.
 
-- Confirmar: RPC `confirm_reservation` (também faz upsert de `customers`).
-- Cancelar: RPC `cancel_reservation`.
-- Detalhe: `ReservationDetailModal` (código, cliente, trajeto, serviço, ações).
-- Trajeto: `RouteNavPicker` / `ViewRouteButton` (abre apps de navegação).
-- Despacho (`DispatchControls`):
-  1. definir preço real (`override_price`);
-  2. escolher motorista;
-  3. `assign_reservation_to_driver` → assignment `oferecido`;
-  4. opcionalmente abrir WhatsApp do motorista (sem nome do cliente, sem preço);
-  5. ao final, `complete_reservation_job`.
+### 11.2 Gate de confirmação
 
-### 10.2 Frota
-
-- Categorias padrão tipicamente: SUV executivo, sedan luxo, van, blindados etc.
-- Veículos: marca/modelo/ano/cor/carroceria/placa/foto; vínculo opcional a motorista.
-- Domínio: `web/src/domain/fleet.ts`.
-
-### 10.3 Frete / Transfer (interno)
-
-- Regras por categoria e/ou tipo de serviço.
-- Taxas flat por aeroporto GRU/CGH/VCP.
-- Usado como referência operacional — **não** como cotação pública.
-
-### 10.4 Notificações (perfil)
-
-Canais: e-mail (via n8n), in-app, WhatsApp (quando configurado).  
-Eventos: hold, confirmada, cancelada, hold expirado.  
-Inbox in-app no perfil do staff.
+Com preço real definido: confirmação exige **sinal pago** (`reservation_deposit_gate`). Stub “marcar pago” disponível para sandbox/ops.
 
 ---
 
-## 11. App do motorista (`/motorista`)
+## 12. Pagamentos Asaas — **implementado**
 
-Layout persistente (`DriverLayout`) com bottom nav: Ofertas · Aceitas · Perfil.
+| Peça | Detalhe |
+|------|---------|
+| Modelo | `payment_charges` — `sinal` \| `restante` |
+| Status | `emitida` · `paga` · `expirada` · `cancelada` · `estornada` |
+| RPCs | `emit_deposit_charge`, `emit_remaining_charge`, `mark_payment_charge_paid`, `reservation_deposit_amount`, `reservation_deposit_gate` |
+| Edge | `create-asaas-checkout`, `asaas-webhook` |
+| Idempotência | `asaas_webhook_events` |
+| UI | `ReservationPaymentPanel` — emitir, WhatsApp com link, stub pago, justificativa se restante ≠ sugerido |
+| Stub | Sem Asaas configurado: checkout stub; staff pode marcar pago |
+| Separação | Cobrança cliente (Asaas) ≠ `financial_entries` (comissão/repasse) |
+| Docs | `docs/fluxo-pagamento-asaas.md`, `docs/asaas-credenciais.md` |
+| Notificações | Mudança de status de cobrança → inbox |
 
-### 11.1 Dados no shell
-
-- Carrega perfil do motorista, assignments e detalhes de job **uma vez** no layout.
-- Troca Ofertas ↔ Aceitas **não remonta** a página nem refaz o fetch completo (shell compartilhado).
-- Refresh manual/atualização fica em segundo plano sem “piscar” loading.
-
-### 11.2 Ofertas / Aceitas
-
-- Filtra assignments por status (`oferecido` vs `aceito`/`concluido`).
-- Mostra `service_code`, horário, tipo, rota, cliente (primeiro nome), km, ações.
-- Aceitar / recusar via `driver_respond_assignment`.
-- Ver trajeto com picker de navegação.
-
-### 11.3 Perfil
-
-- Dados pessoais, categoria, veículo, skills, disponibilidade semanal, até 4 fotos.
-- Self-service com upload no Storage Supabase.
-
-### 11.4 Ciclo do assignment
-
-| Status | Significado |
-|--------|-------------|
-| `oferecido` | Despachado; aguarda resposta |
-| `aceito` | Motorista confirmou |
-| `recusado` | Motorista recusou (motivo opcional) |
-| `cancelado` | Cancelado pela operação |
-| `concluido` | Corrida finalizada no fluxo financeiro |
-
-Skills padrão: `executivo`, `aeroporto`, `blindado`, `idiomas`, `eventos`, `longa_distancia`.
+**Ativo comercial:** pipeline de caixa online já no produto (não apenas roadmap).
 
 ---
 
-## 12. Financeiro
+## 13. App do motorista (`/motorista`)
 
-### 12.1 Comissão
+| Área | Capacidade |
+|------|------------|
+| Shell | Layout persistente; Ofertas ↔ Aceitas sem remount/refetch total |
+| Ofertas | Assignments `oferecido`; aceitar/recusar |
+| Aceitas | `aceito` / `concluido`; detalhe + trajeto |
+| Perfil | Dados, veículo, skills, disponibilidade, até **4 fotos** (Storage) |
+| Convite | Status `none` · `pending` · `accepted` |
+| Skills | executivo, aeroporto, blindado, idiomas, eventos, longa_distancia |
 
-- Percentual em `organizations.settings.platform_commission_percent`.
-- Ajustável no painel (`set_org_commission_percent` / leitura via helper).
+Assignment: `oferecido` · `aceito` · `recusado` · `cancelado` · `concluido`.
 
-### 12.2 Ao concluir o job
+---
 
-Com `override_price` (bruto):
+## 14. Financeiro (repasse)
 
 ```text
 commission_amount = round(gross * percent / 100)
 driver_amount     = gross - commission
 ```
 
-Cria `financial_entries` (status tipicamente `previsto` / `a_liquidar`).
-
-### 12.3 Status do lançamento
-
-| Status | Significado |
-|--------|-------------|
+| Status lançamento | Significado |
+|-------------------|-------------|
 | `previsto` | Previsto |
 | `a_liquidar` | Pronto para liquidar |
-| `liquidado` | Liquidado com provas |
+| `liquidado` | Com comprovantes |
 
-### 12.4 Liquidação
-
-- Upload de comprovantes:
-  - cliente → plataforma;
-  - plataforma → motorista.
-- RPC `liquidate_financial_entry` + Storage (`settlement-proofs`).
-
-### 12.5 Relatório
-
-- Exportação HTML (Blob URL / download se pop-up bloqueado) + impressão / salvar PDF.
-- Inclui código do serviço, cliente, valores e status.
-- Períodos: 7d / 30d / 90d / custom.
-
-### 12.6 Pagamento online (roadmap)
-
-- Asaas (sinal + restante, webhook, hold estendido) está documentado em `docs/fluxo-pagamento-asaas.md` — **ainda não implementado no runtime**.
+- Liquidação: proofs cliente→plataforma e plataforma→motorista (`settlement-proofs`).
+- Relatório HTML/PDF; períodos 7/30/90/custom.
+- Comissão ajustável na org (`platform_commission_percent`).
 
 ---
 
-## 13. Modelo de dados (entidades)
+## 15. Console de plataforma `/dashitecnology` — **implementado**
 
-Tipos TypeScript canônicos: `web/src/types/database.ts`.
+| Página | Capacidade |
+|--------|------------|
+| Overview | Métricas 24h/7d, holds, drivers, erros pagamento, orgs em atenção, audit recente |
+| Orgs | Lista/criar/pausar; detalhe settings; memberships; **personificação** |
+| Users | Busca; memberships; promover/remover `dev` / `platform_owner` |
+| Audit | Filtros + before/after + export CSV |
+| Ops | Holds, cobranças, webhooks Asaas; `expire_holds` (dev) |
+| Settings | Flags: manutenção, bloquear reservas, banner, **toggle Criar conta** |
 
-| Entidade | Papel |
-|-----------|-------|
-| `organizations` | Tenant (slug, settings) |
-| `profiles` / `organization_members` | Staff da org |
-| `platform_admins` | Admins globais |
-| `reservations` | Solicitação/serviço (código, status, trajeto, hold, preços) |
-| `reservation_service_code_counters` | Sequência mensal do código |
-| `customers` | CRM operacional (upsert no confirm) |
-| `drivers` | Motoristas (Auth opcional, veículo, skills, invite) |
-| `vehicle_categories` | Categorias da frota |
-| `fleet_vehicles` | Veículos da org |
-| `freight_rules` | Preço interno km/hora/mínimo |
-| `airport_fees` | Taxas GRU/CGH/VCP |
-| `capacity_settings` | Slot, hold, capacidade, TZ |
-| `availability_windows` | Disponibilidade / blackouts |
-| `job_assignments` | Despacho motorista ↔ reserva |
-| `financial_entries` | Extrato + proofs |
-| `leads` | Contatos do formulário “Fale com a JMD” |
-| `notifications` + prefs | Inbox e preferências staff |
-| `audit_logs` | Auditoria append-only |
+### 15.1 Personificação
 
----
+- Motivo obrigatório + duração (30/60/120 min).
+- Banner sticky no admin e no console.
+- `impersonation_sessions` + `audit_logs.impersonator_id`.
 
-## 14. Integrações
+### 15.2 Feature flags (`platform_settings`)
 
-| Integração | Função | Onde |
-|------------|--------|------|
-| **Supabase** | Auth, DB, RLS, Storage, Cron, Edge | Todo o backend |
-| **WhatsApp (`wa.me`)** | Handoff cliente e alerta de demanda ao motorista | `web/src/domain/whatsapp.ts` |
-| **Photon** | Geocoding | `https://photon.komoot.io/api/` |
-| **OSRM** | Distância de direção | `router.project-osrm.org` |
-| **n8n** | E-mail (reserva criada, convite motorista) | `VITE_N8N_WEBHOOK_URL` + Edge secret |
-| **Vercel** | Hosting SPA + rewrites | `web/vercel.json` |
-| **Asaas** | Pagamento online | Apenas docs (roadmap) |
+| Flag | Efeito |
+|------|--------|
+| `public_maintenance` | Banner / bloqueio operacional |
+| `block_new_reservations` | Bloqueia novos holds |
+| `banner_message` | Mensagem na landing |
+| `public_signup_enabled` | Exibe/esconde “Criar conta” + bloqueia auto-cadastro motorista |
+
+Org `paused` também bloqueia holds públicos.
 
 ---
 
-## 15. Internacionalização
+## 16. Legal — **implementado e atualizado**
 
-- Idiomas: **Português (Brasil)** e **English**.
-- Preferência persistida (`jmd.lang`).
-- Toggle com bandeiras na landing e no admin/motorista.
-- Conteúdo editável bilingue em categorias (`name_i18n` / `description_i18n`).
-- Arquivos: `web/src/i18n/locales/pt-BR.json`, `en.json`.
+| Documento | Conteúdo relevante à venda |
+|-----------|----------------------------|
+| **Termos de Uso** | Hold; preço alinhado na confirmação; **sinal + restante**; obrigação de pagar; atraso → cobrança formal (boleto/PIX); persistindo → **medidas cabíveis incluindo protesto em cartório quando legalmente aplicável** |
+| **Privacidade** | Controladora; dados; finalidades; bases; compartilhamento; retenção; **direitos LGPD** |
+| Aceite | Checkbox obrigatório no formulário público |
 
----
-
-## 16. Segurança e isolamento (visão prática)
-
-- Cliente anônimo pode **criar hold** via RPC security definer (com validações de slot/capacidade).
-- Staff autentica; RLS limita dados à(s) organização(ões) do membership.
-- Motorista só vê assignments e detalhes das próprias demandas (`get_driver_job_detail` valida vínculo).
-- Preço estimado interno e comissão **não** vão para o WhatsApp do cliente/motorista no despacho.
-- Comprovantes e fotos ficam em buckets Storage com políticas próprias.
+Ativo jurídico/comercial: aviso prévio de cobrança do saldo e caminho de recuperação documentado.
 
 ---
 
-## 17. RPCs e peças de backend (mapa conceitual)
+## 17. Modelo de dados (entidades runtime)
 
-| Capacidade | Função / artefato principal |
-|------------|-----------------------------|
-| Criar hold + código | `create_reservation_with_hold` |
-| Expirar holds | `expire_reservation_holds` (+ cron) |
+`organizations` (+ status) · `profiles` · `organization_members` · `platform_admins` · `platform_settings` · `impersonation_sessions` · `vehicle_categories` · `fleet_vehicles` · `freight_rules` (+ deposit %) · `airport_fees` · `capacity_settings` · `availability_windows` · `reservations` (+ stops, override_price, service_code) · `reservation_service_code_counters` · `customers` · `drivers` · `job_assignments` · `financial_entries` (+ settlement proofs) · `payment_charges` · `asaas_webhook_events` · `leads` · `notifications` · `notification_preferences` · `audit_logs`
+
+**Storage:** `fleet-photos` · `driver-vehicle-photos` · `settlement-proofs`.
+
+---
+
+## 18. Integrações
+
+| Integração | Status |
+|------------|--------|
+| Supabase (Auth/DB/RLS/Storage/Cron/Edge) | Produção |
+| WhatsApp `wa.me` | Cliente + motorista + links de cobrança |
+| Asaas Checkout + Webhook | **Implementado** |
+| Photon + OSRM | Geocode/rota (sem key; sem SLA contratado) |
+| n8n | Reserva criada · convite motorista |
+| Vercel | Hosting SPA |
+| Google (SEO) | robots + sitemap + meta + indexação pública |
+
+---
+
+## 19. RPCs e Edge (mapa de valor)
+
+| Capacidade | Artefato |
+|------------|----------|
+| Hold + código | `create_reservation_with_hold` |
+| Expirar holds | `expire_reservation_holds` (+ cron / platform ops) |
 | Confirmar / cancelar | `confirm_reservation`, `cancel_reservation` |
-| Agenda do dia | `list_day_slots` |
-| Despachar | `assign_reservation_to_driver` |
-| Resposta motorista | `driver_respond_assignment` |
-| Detalhe da demanda | `get_driver_job_detail` |
+| Agenda | `list_day_slots` |
 | Preço real | `set_reservation_override_price` |
-| Concluir job | `complete_reservation_job` |
-| Comissão org | `set_org_commission_percent` / leitura settings |
-| Liquidar | `liquidate_financial_entry` |
-| Convite | Edge `invite-driver` + `acceptMyDriverInvite` |
-| Gerar código | `private.next_reservation_service_code` |
-
-Migrations vivem em `supabase/migrations/` (fundação multi-tenant, core v2 motoristas/financeiro, frota, stops, service types, settlement proofs, service_code, slot 60 min, etc.).
-
----
-
-## 18. Domínios de front relevantes
-
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `domain/whatsapp.ts` | Textos e URLs WhatsApp (cliente e motorista) |
-| `domain/freight.ts` | Cálculo/referência interna de frete |
-| `domain/fleet.ts` | Marcas, modelos, cores, carrocerias |
-| `domain/drivers.ts` | Skills e disponibilidade |
-| `domain/customerFields.ts` | Validação nome/telefone BR |
-| `domain/serviceCode.ts` | Helpers do código público |
-| `services/reservations.ts` | Criação de hold + webhook |
-| `services/distance.ts` | Geocode + rota |
-| `services/admin.ts` | Operações do painel |
-| `services/coreV2.ts` | Motoristas, assignments, financeiro, leads |
+| Reagendar | `reschedule_reservation_slot` |
+| Despacho / resposta | `assign_reservation_to_driver`, `driver_respond_assignment` |
+| Conclusão | `complete_reservation_job` |
+| Pagamentos | `emit_deposit_charge`, `emit_remaining_charge`, `mark_payment_charge_paid`, gate |
+| Financeiro | `set_org_commission_percent`, `liquidate_financial_entry` |
+| Plataforma | `platform_*` (overview, orgs, users, audit, ops, settings, impersonation) |
+| Edge | `invite-driver`, `create-asaas-checkout`, `asaas-webhook` |
 
 ---
 
-## 19. Experiência visual (resumo)
+## 20. Segurança e compliance (relevantes à venda)
 
-- Linguagem editorial “dossiê”: papel creme (`#f2ebe0`), tinta navy (`#152033`), bronze (`#b08d57`).
-- Tipografia: Bodoni Moda (display) + Public Sans.
-- Admin e motorista seguem o mesmo DNA de marca, com layouts próprios (`admin-layout.css`, `driver-app.css`, `jmd-landing.css`).
-- Código do serviço aparece como badge monoespaçado (`.service-code`) para identificação rápida.
-
----
-
-## 20. O que está pronto vs. o que é evolução
-
-### Pronto (runtime)
-
-- Landing bilingue + reserva com hold + WhatsApp  
-- Leads  
-- Admin completo (reservas, agenda, frota, frete, clientes, motoristas, financeiro, perfil)  
-- App motorista (ofertas/aceitas/perfil)  
-- Despacho + WhatsApp motorista  
-- Código `JAN26-0001`  
-- Distância Photon/OSRM  
-- PWA instalável  
-- Notificações in-app + prefs  
-- Relatório financeiro exportável  
-- Multi-tenant por slug/host  
-
-### Roadmap / docs (não shipped no app)
-
-- Checkout Asaas (sinal + restante, hold alongado) — `docs/fluxo-pagamento-asaas.md`  
-- Autocomplete avançado de endereço (além do geocode atual)  
-- Personificação / ferramentas `dev` cross-tenant no dia a dia  
-- Spec antiga citava slots de 30 min e OpenRouteService — **código atual** usa 60 min e Photon+OSRM  
+1. Isolamento multi-tenant por **RLS** + RPCs security definer.  
+2. Cliente final **sem conta** (v1); holds via RPC validado.  
+3. Preço/comissão **não vazam** no WhatsApp de cliente/motorista no despacho.  
+4. Segredos Asaas **só no Edge**; webhook autenticado por token.  
+5. Confirmação condicionada a sinal pago (quando há preço real).  
+6. Impersonation com motivo, TTL, banner e audit.  
+7. Audit append-oriented.  
+8. Flags de manutenção / bloqueio / pause de org no servidor.  
+9. Signup público desligável (UI + server).  
+10. **noindex** de áreas privadas.  
+11. LGPD + Termos com cláusula de inadimplemento/protesto.  
+12. Storage com policies por papel.  
+13. Stub “marcar pago” — governar em produção.  
+14. Dependência Photon/OSRM sem SLA comercial.
 
 ---
 
-## 21. Como rodar (referência rápida)
+## 21. Internacionalização e UX
+
+- **PT-BR** e **EN** em landing, legal, admin, motorista e platform.
+- Preferência `jmd.lang`.
+- Visual editorial: papel creme `#f2ebe0`, navy `#152033`, bronze `#b08d57`.
+- Fontes: Libre Baskerville + Public Sans.
+- Layouts: `jmd-landing.css`, `admin-layout.css`, `driver-app.css`, `platform-layout.css`, `login.css`.
+
+---
+
+## 22. Pronto vs. evolução (fronteira clara)
+
+### Pronto no runtime (incluir no preço)
+
+- Landing bilingue + SEO/Google (robots, sitemap, meta, JSON-LD)  
+- Reserva com hold 12h + WhatsApp + leads + FleetParade  
+- Termos (sinal/restante/protesto) + Privacidade LGPD + aceite obrigatório  
+- Admin completo (9 abas) + criar reserva + hold attention  
+- **Asaas sinal/restante + webhook + painel**  
+- Despacho + app motorista + convites + fotos  
+- Financeiro + proofs + relatório  
+- PWA + Realtime notificações  
+- Multi-tenant + **console `/dashitecnology`** (orgs, users, audit, ops, flags, impersonation, toggle Criar conta)  
+- Photon/OSRM + n8n hooks  
+
+### Fora do runtime / não precificar como entregue
+
+- Marketplace aberto de motoristas  
+- App nativo store  
+- Conta de cliente final  
+- Google Maps / ORS (spec antiga)  
+- Integração Hairline product (só estética CSS)  
+- Push VAPID operacional fechado (env opcional)  
+- Spec v1 desatualizada (slots 30 min / hold 60 / pagamento out of scope)  
+
+---
+
+## 23. Como rodar (referência)
 
 ```bash
 cd web
-cp .env.example .env   # preencher Supabase (+ n8n opcional)
+cp .env.example .env
 npm install
-npm run dev            # http://localhost:5173
+npm run dev
 ```
-
-Supabase:
 
 ```bash
-npx supabase db push --remote --yes   # aplicar migrations no projeto linkado
+npx supabase db push --remote --yes
 ```
 
-Deploy Vercel: Root Directory `web`, build `npm run build`, output `dist`, rewrites SPA em `vercel.json`.
+Deploy Vercel: Root Directory `web`, build `npm run build`, output `dist`.
 
 ---
 
-## 22. Glossário rápido
+## 24. Glossário comercial
 
 | Termo | Significado |
 |-------|-------------|
-| **Hold** | Reserva temporária de slot até confirmação ou expiração |
-| **service_code** | ID visual público do serviço (`JAN26-0001`) |
-| **override_price** | Preço real negociado (obrigatório para concluir) |
-| **Assignment** | Oferta/vínculo de uma reserva a um motorista |
-| **Tenant / org** | Conta operacional isolada (ex.: `jmd`) |
-| **Transfer (aba Frete)** | Precificação interna; UI renomeada de “Frete” para “Transfer” |
-| **Concierge** | Serviço por tarefa, não por trajeto fixo |
-| **À disposição** | Motorista/veículo por bloco de horas |
+| Hold | Slot temporário até confirm/expiração |
+| service_code | ID público `JAN26-0001` |
+| override_price | Preço real negociado |
+| Sinal / Restante | Cobranças Asaas do cliente |
+| Assignment | Oferta motorista ↔ reserva |
+| Transfer (aba) | Precificação interna + % sinal |
+| Dashi / `/dashitecnology` | Console multi-tenant da plataforma |
+| Tenant / org | Conta operacional isolada (ex.: `jmd`) |
 
 ---
 
-## 23. Conclusão
+## 25. Conclusão para valuation
 
-A JMD Transfer é uma **plataforma operacional de transfer executivo**, não um marketplace genérico. O valor está na combinação de:
+A plataforma **já é um produto operacional completo**, não um protótipo de landing:
 
-1. **Entrada comercial limpa** (site + hold + WhatsApp sem preço),  
-2. **Operação completa** (agenda, frota, clientes, despacho, financeiro),  
-3. **App do motorista**,  
-4. **Identidade rastreável** de cada serviço (`service_code`),  
-5. **Isolamento multi-tenant** com Supabase/RLS.
+1. **Aquisição** — site indexável + PWA + hold + WhatsApp + leads  
+2. **Caixa** — Asaas (sinal/restante) + gate de confirmação + financeiro/liquidação  
+3. **Operação** — admin 9 áreas + despacho + frota + agenda  
+4. **Entrega** — app motorista + convites  
+5. **Escala / white-label** — multi-tenant + console root + flags  
+6. **Governança** — RLS, audit, impersonation, legal (LGPD + cláusula de cobrança/protesto)  
 
-Quem examinar este documento e o código em `web/` + `supabase/` tem o mapa completo do produto como ele existe hoje — e a fronteira clara do que ainda é roadmap (pagamento online Asaas e melhorias adjacentes).
+Quem precificar a venda (qualquer modalidade) deve usar **este inventário como checklist do que está incluso**, e tratar a seção 22 como fronteira explícita do que ainda não está shipped.
